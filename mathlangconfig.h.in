@@ -1,0 +1,2 @@
+#define MathLang_VERSION_MAJOR @MathLang_VERSION_MAJOR@
+#define MathLang_VERSION_MINOR @MathLang_VERSION_MINOR@
