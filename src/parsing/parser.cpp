@@ -121,6 +121,12 @@ std::unique_ptr<ASTNode> Parser::expression_n(Precedence min_precedence)
 				)
 			);
 		}
+
+		auto * expr = static_cast<ExpressionNode *>(left.get());
+		left->column = expr->left->column;
+		left->line = expr->left->line;
+		left->start_position = expr->left->start_position;
+		left->end_position = expr->right->end_position;
 	}
 
 	return left;
@@ -129,11 +135,17 @@ std::unique_ptr<ASTNode> Parser::expression_n(Precedence min_precedence)
 std::unique_ptr<ASTNode> Parser::operand_n(void)
 {
 	std::unique_ptr<OperandNode> operand_node { new OperandNode };
+	operand_node->line = curr_tk->line();
+	operand_node->column = curr_tk->column();
+	operand_node->start_position = curr_tk->position();
 
 	operand_node->op = operator_n(true);
 	if (operand_node->op)
 		consume_tk(); // consume operator
 	operand_node->primary = primary_n();
+
+	if (operand_node->primary)
+		operand_node->end_position = operand_node->primary->end_position;
 
 	if (!operand_node->op)
 	{
@@ -153,18 +165,28 @@ std::unique_ptr<ASTNode> Parser::primary_n(void)
 	}
 	else if (curr_tk->is_identifier())
 	{
-		return  identifier_n();
+		return identifier_n();
 	}
 	else if (curr_tk->type() == TokenType::T_LEFT_PAREN)
 	{
+		size_t line = curr_tk->line();
+		size_t column = curr_tk->column();
+		size_t start_position = curr_tk->position();
+
 		consume_tk(); // consume `(`
 		auto expr = expression_n(P_MIN);
+		expr->line = line;
+		expr->column = column;
+		expr->start_position = start_position;
 		expect_tk(TokenType::T_RIGHT_PAREN, "`)` expected");
+
+		expr->end_position = curr_tk->position() + 1;
+
 		return expr;
 	}
-	else if (curr_tk->type() == TokenType::T_ERROR)
+	else if (curr_tk->type() == TokenType::T_OPERATOR_SYM)
 	{
-		// skip the error
+		return operand_n();
 	}
 	else
 	{
@@ -181,16 +203,20 @@ std::unique_ptr<LiteralNode> Parser::literal_n(void)
 	switch (curr_tk->type())
 	{
 		case TokenType::T_INTEGER_LITERAL:
-			lit_node->type = Type::T_INTEGER;
+			lit_node->type = MathObjType::MO_INTEGER;
 			break;
 		case TokenType::T_REAL_LITERAL:
-			lit_node->type = Type::T_REAL;
+			lit_node->type = MathObjType::MO_REAL;
 			break;
 		
 		default: return nullptr;
 	}
 
 	lit_node->value = curr_tk->lexeme();
+	lit_node->line = curr_tk->line();
+	lit_node->column = curr_tk->column();
+	lit_node->start_position = curr_tk->position();
+	lit_node->end_position = lit_node->start_position + curr_tk->lexeme().length();
 	return lit_node;
 }
 
@@ -214,7 +240,7 @@ std::unique_ptr<OperatorNode> Parser::operator_n(bool unary)
 		return nullptr;
 	}
 
-	auto * op = operators->get_opinfo(curr_tk->lexeme(), unary);
+	auto * op = operators->find(curr_tk->lexeme());
 	if (!op)
 	{
 		if (unary)
@@ -225,8 +251,12 @@ std::unique_ptr<OperatorNode> Parser::operator_n(bool unary)
 	}
 
 	std::unique_ptr<OperatorNode> op_node {
-		new OperatorNode(curr_tk->lexeme(), op)
+		new OperatorNode(op)
 	};
+	op_node->line = curr_tk->line();
+	op_node->column = curr_tk->column();
+	op_node->start_position = curr_tk->position();
+	op_node->end_position = op_node->start_position + curr_tk->lexeme().length();
 	return op_node;
 }
 
@@ -237,20 +267,14 @@ std::unique_ptr<TypeNode> Parser::type_n(void)
 	switch (curr_tk->type())
 	{
 		case TokenType::T_INTEGER:
-			type_node->type = Type::T_INTEGER;
+			type_node->type = MathObjType::MO_INTEGER;
 			break;
 		case TokenType::T_REAL:
-			type_node->type = Type::T_REAL;
+			type_node->type = MathObjType::MO_REAL;
 			break;
 
 		default:
-			auto tmp = identifier_n();
-			if (!tmp)
-			{
-				register_syntax_error("type expected");
-				return nullptr;
-			}
-			type_node->type = std::move(tmp);
+			return nullptr;
 	}
 
 	return type_node;

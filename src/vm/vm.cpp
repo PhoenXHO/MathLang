@@ -4,6 +4,7 @@
 #include "vm.h"
 #include "globals.h"
 #include "error.h"
+#include "typechecker.h"
 
 bool config::print_lexer_output = false;
 bool config::print_parser_output = false;
@@ -28,6 +29,18 @@ VM::VM(std::string_view source) : source(source)
 	{
 		std::cout << "\n>>>>> Parse Tree <<<<<\n";
 		parser.get_ast().print();
+	}
+
+	TypeChecker type_checker(
+		parser.get_ast(),
+		std::move(parser.operators)
+	);
+	type_checker.check_types();
+
+	if (ErrorHandler::has_errors())
+	{
+		ErrorHandler::report_errors(source);
+		return;
 	}
 
 	compiler = std::make_unique<Compiler>(
@@ -63,7 +76,7 @@ void VM::run(void)
 
 	#define READ_BYTE()		(*(it++))
 	#define READ_CONSTANT()	(compiler->constants[READ_BYTE()])
-	#define READ_OPERATOR()	(compiler->operators[READ_BYTE()])
+	#define READ_OPERATOR()	(compiler->operators[READ_BYTE()].first)
 
 	uint8_t byte;
 	while (true)
@@ -92,15 +105,11 @@ void VM::run(void)
 					switch (op->type)
 					{
 						case OperatorType::O_BUILTIN:
-							{
-								auto * builtin_op = dynamic_cast<const BuiltinOperator *>(op);
-								if (!builtin_op)
-									throw std::logic_error("downcasting failed in `VM::run()`");
-
-								auto result = builtin_op->apply(*operand, NoneValue());
-								stack.push(result);
-							}
+						{
+							auto result = op->implementation(*operand, NoneValue());
+							stack.push(result);
 							break;
+						}
 						case OperatorType::O_CUSTOM:
 							throw std::runtime_error("custom operators not implemented");
 							break;
@@ -126,15 +135,11 @@ void VM::run(void)
 					switch (op->type)
 					{
 						case OperatorType::O_BUILTIN:
-							{
-								auto * builtin_op = dynamic_cast<const BuiltinOperator *>(op);
-								if (!builtin_op)
-									throw std::logic_error("downcasting failed in `VM::run()`");
-
-								auto result = builtin_op->apply(*lhs, *rhs);
-								stack.push(result);
-							}
+						{
+							auto result = op->implementation(*lhs, *rhs);
+							stack.push(result);
 							break;
+						}
 						case OperatorType::O_CUSTOM:
 							throw std::runtime_error("custom operators not implemented");
 							break;

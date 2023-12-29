@@ -43,7 +43,7 @@ std::unique_ptr<Token> Lexer::scan_tk(void)
 	{
 		if (curr == ':' && next == '-' && peek(2) == '>')
 		{
-			token = make_tk(TokenType::T_RETURN, ":->", column);
+			token = make_tk(TokenType::T_RETURN, ":->", column, pos);
 			advance(3);
 		}
 		else
@@ -55,28 +55,28 @@ std::unique_ptr<Token> Lexer::scan_tk(void)
 	{
 		// * SPECIAL SYMBOLS
 		case ',':
-			token = make_tk(TokenType::T_COMMA, ",", column);
+			token = make_tk(TokenType::T_COMMA, ",", column, pos);
 			break;
 		case ';':
-			token = make_tk(TokenType::T_SEMICOLON, ";", column);
+			token = make_tk(TokenType::T_SEMICOLON, ";", column, pos);
 			break;
 		case '(':
-			token = make_tk(TokenType::T_LEFT_PAREN, "(", column);
+			token = make_tk(TokenType::T_LEFT_PAREN, "(", column, pos);
 			break;
 		case ')':
-			token = make_tk(TokenType::T_RIGHT_PAREN, ")", column);
+			token = make_tk(TokenType::T_RIGHT_PAREN, ")", column, pos);
 			break;
 		case '[':
-			token = make_tk(TokenType::T_LEFT_SQR_BR, "[", column);
+			token = make_tk(TokenType::T_LEFT_SQR_BR, "[", column, pos);
 			break;
 		case ']':
-			token = make_tk(TokenType::T_RIGHT_SQR_BR, "]", column);
+			token = make_tk(TokenType::T_RIGHT_SQR_BR, "]", column, pos);
 			break;
 		case '{':
-			token = make_tk(TokenType::T_LEFT_CURL_BR, "{", column);
+			token = make_tk(TokenType::T_LEFT_CURL_BR, "{", column, pos);
 			break;
 		case '}':
-			token = make_tk(TokenType::T_RIGHT_CURL_BR, "}", column);
+			token = make_tk(TokenType::T_RIGHT_CURL_BR, "}", column, pos);
 			break;
 
 		// * OTHERS
@@ -85,7 +85,7 @@ std::unique_ptr<Token> Lexer::scan_tk(void)
 			break;
 		
 		default:
-			token = make_tk(TokenType::T_ERROR, "", column);
+			token = make_tk(TokenType::T_ERROR, "", column, pos);
 			break;
 	}
 
@@ -113,7 +113,7 @@ std::unique_ptr<Token> Lexer::make_operator_tk(void)
 	}
 	
 	std::string_view lexeme = source.substr(start_pos, lexeme_length);
-	return make_tk(TokenType::T_OPERATOR_SYM, lexeme, start_col);
+	return make_tk(TokenType::T_OPERATOR_SYM, lexeme, start_col, start_pos);
 }
 
 std::unique_ptr<Token> Lexer::make_word_tk(void)
@@ -133,7 +133,7 @@ std::unique_ptr<Token> Lexer::make_word_tk(void)
 	std::string_view lexeme = source.substr(start_pos, lexeme_length);
 	TokenType t_type = check_word_t_type(lexeme);
 
-	return make_tk(t_type, lexeme, start_col);
+	return make_tk(t_type, lexeme, start_col, start_pos);
 }
 
 std::unique_ptr<Token> Lexer::make_number_tk(void)
@@ -188,18 +188,19 @@ std::unique_ptr<Token> Lexer::make_number_tk(void)
 				TokenType::T_REAL_LITERAL :
 				TokenType::T_INTEGER_LITERAL),
 		lexeme,
-		start_col
+		start_col,
+		start_pos
 	);
 }
 
-std::unique_ptr<Token> Lexer::make_tk(TokenType type, std::string_view lexeme, size_t start_column)
+std::unique_ptr<Token> Lexer::make_tk(TokenType type, std::string_view lexeme, size_t start_column, size_t start_pos)
 {
 	return std::make_unique<Token>(
 		type,
 		lexeme,
 		line,
 		start_column,
-		pos
+		start_pos
 	);
 }
 

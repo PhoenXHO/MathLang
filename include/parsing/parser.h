@@ -18,7 +18,7 @@ private:
 	std::unique_ptr<Token> curr_tk;
 	std::unique_ptr<Token> next_tk;
 
-	bool panic_mode;
+	bool panic_mode = false;
 
 	bool consume_tk(void);
 	void expect_tk(TokenType type, std::string message);

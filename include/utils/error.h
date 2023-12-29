@@ -29,7 +29,8 @@ struct Error
 	size_t position(void) { return _pos_; }
 
 	virtual std::string_view get_additional_info(void) const = 0;
-	virtual size_t length(void) const = 0;
+	virtual size_t length(void) const
+	{ return _len_; }
 
 protected:
 	Error(ErrorType type, std::string msg, size_t l, size_t c, size_t pos, size_t len) :
@@ -59,8 +60,6 @@ struct LexicalError : Error
 
 	std::string_view get_additional_info(void) const override
 	{ return lexeme; }
-	size_t length(void) const override
-	{ return lexeme.length(); }
 
 private:
 	std::string_view lexeme;
@@ -74,8 +73,19 @@ struct SyntaxError : Error
 
 	std::string_view get_additional_info(void) const override
 	{ return ""; }
-	size_t length(void) const override
-	{ return _len_; }
+};
+
+struct SemanticError : Error
+{
+	std::string additional_info;
+
+	SemanticError(std::string msg, std::string additional_info, size_t l, size_t c, size_t pos, size_t len) :
+		Error(ErrorType::SEMANTIC_ERR, msg, l, c, pos, len),
+		additional_info(additional_info)
+	{}
+	
+	std::string_view get_additional_info(void) const override
+	{ return additional_info; }
 };
 
 class ErrorHandler

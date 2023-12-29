@@ -35,11 +35,6 @@ enum class NodeType
 	N_OPERATOR,
 	N_TYPE
 };
-enum class Type
-{
-	T_INTEGER,
-	T_REAL
-};
 
 // <statement> ::= <expression-statement> | <variable-declaration>
 struct AST
@@ -51,6 +46,9 @@ struct AST
 
 struct ASTNode
 {
+	size_t line, column;
+	size_t start_position, end_position;
+
 	const NodeType n_type;
 	ASTNode(NodeType n_type) : n_type(n_type) {}
 	virtual ~ASTNode() = default;
@@ -107,7 +105,7 @@ struct OperandNode : public ASTNode
 
 struct LiteralNode : public ASTNode
 {
-	Type type;
+	MathObjType type;
 	std::string_view value;
 
 	LiteralNode(void) : ASTNode(NodeType::N_LITERAL) {}
@@ -124,11 +122,10 @@ struct IdentifierNode : public ASTNode
 
 struct OperatorNode : public ASTNode
 {
-	std::string_view op_sym;
 	const Operator * op_info;
+	const OperatorFunction * op_func;
 
-	OperatorNode(std::string_view op_sym, const Operator * op_info) :
-		op_sym(op_sym),
+	OperatorNode(const Operator * op_info) :
 		op_info(op_info),
 		ASTNode(NodeType::N_OPERATOR)
 	{}
@@ -137,10 +134,7 @@ struct OperatorNode : public ASTNode
 
 struct TypeNode : public ASTNode
 {
-	std::variant<
-		Type,
-		std::unique_ptr<IdentifierNode>
-	> type;
+	MathObjType type;
 
 	TypeNode(void) : ASTNode(NodeType::N_TYPE) {}
 	virtual void print(int depth) const override;

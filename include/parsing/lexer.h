@@ -23,7 +23,7 @@ private:
 	char peek(int lookahead);
 	char peek_next(void);
 
-	std::unique_ptr<Token> make_tk(TokenType type, std::string_view lexeme, size_t start_column);
+	std::unique_ptr<Token> make_tk(TokenType type, std::string_view lexeme, size_t start_column, size_t start_pos);
 	std::unique_ptr<Token> make_number_tk(void); // Integer/real token
 	std::unique_ptr<Token> make_word_tk(void); // Identifier/keyword token
 	std::unique_ptr<Token> make_operator_tk(void); // Operator token

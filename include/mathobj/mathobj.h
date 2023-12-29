@@ -2,14 +2,16 @@
 #define MATHOBJ_H
 
 #include <string>
+#include <memory>
 
 struct  MathObj
 {
-	enum class MathObjType
+	// A type A is convertible to type B if and only if B == 2 * A or B == A.
+	enum MathObjType
 	{
-		MO_INTEGER,
-		MO_REAL,
-		MO_NONE
+		MO_NONE = -1,
+		MO_INTEGER = 1,
+		MO_REAL = 2 * MO_INTEGER
 	};
 
 	virtual ~MathObj() = default;
@@ -17,21 +19,25 @@ struct  MathObj
 
 	virtual std::string to_string(void) const = 0;
 	virtual MathObjType type(void) const = 0;
+	virtual std::shared_ptr<MathObj> default_value(void) const = 0;
 };
 typedef MathObj::MathObjType MathObjType;
 
-struct RealValue : public MathObj
+inline bool can_convert(MathObjType from, MathObjType to)
+{ return from == to || 2 * from == to; }
+
+struct Real : public MathObj
 {
 protected:
 	double _value_;
 
 public:
-	RealValue(double value) : _value_(value) {}
+	Real(double value) : _value_(value) {}
 	bool operator==(const MathObj & other) const override
 	{
 		if (other.type() != MathObjType::MO_REAL)
 			return false;
-		return _value_ == static_cast<const RealValue &>(other).value();
+		return _value_ == static_cast<const Real &>(other).value();
 	}
 
 	std::string to_string(void) const override
@@ -42,11 +48,14 @@ public:
 
 	double value(void) const
 	{ return _value_; }
+
+	std::shared_ptr<MathObj> default_value(void) const override
+	{ return std::make_shared<Real>(0.0); }
 };
 
-struct IntegerValue : public RealValue
+struct IntegerValue : public Real
 {
-	IntegerValue(int value) : RealValue(value) {}
+	IntegerValue(int value) : Real(value) {}
 	bool operator==(const MathObj & other) const override
 	{
 		if (other.type() != MathObjType::MO_INTEGER)
@@ -62,6 +71,9 @@ struct IntegerValue : public RealValue
 
 	int value(void) const
 	{ return _value_; }
+
+	std::shared_ptr<MathObj> default_value(void) const override
+	{ return std::make_shared<IntegerValue>(0); }
 };
 
 struct NoneValue : public MathObj
@@ -74,6 +86,9 @@ struct NoneValue : public MathObj
 
 	MathObjType type(void) const override
 	{ return MathObjType::MO_NONE; }
+
+	std::shared_ptr<MathObj> default_value(void) const override
+	{ return std::make_shared<NoneValue>(); }
 };
 
 #endif // MATHOBJ_H

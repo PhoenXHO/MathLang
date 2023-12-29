@@ -46,13 +46,13 @@ public:
 	};
 
 	std::vector<std::shared_ptr<MathObj>> constants;
-	std::vector<const Operator *> operators;
+	std::vector<std::pair<const OperatorFunction *, std::string>> operators;
 
 	void compile_source(void);
 
 	void print_bytecode(void);
 	void print_constant(std::shared_ptr<MathObj> & constant);
-	void print_operator(const Operator * op);
+	void print_operator(std::pair<const OperatorFunction *, std::string> & op);
 
 	const std::vector<uint8_t> & bytecode(void) { return bytes; }
 };

@@ -1,4 +1,5 @@
 #include <iostream>
+#include <unordered_map>
 
 #include "error.h"
 #include "globals.h"
@@ -7,9 +8,16 @@
 std::vector<std::unique_ptr<Error>> ErrorHandler::errors;
 
 void report_error(std::unique_ptr<Error> & err, std::string_view source);
-const char * error_type_string(ErrorType type);
 size_t find_previous_line_start(std::string_view source, size_t start_from);
 size_t find_next_line_end(std::string_view source, size_t start_from);
+
+std::unordered_map<ErrorType, std::string> error_type_string =
+{
+	{ ErrorType::LEXICAL_ERR,	"LEXICAL_ERROR"		},
+	{ ErrorType::SYNTAX_ERR,	"SYNTAX_ERROR"		},
+	{ ErrorType::SEMANTIC_ERR,	"SEMANTIC_ERROR"	},
+	{ ErrorType::RUNTIME_ERR,	"RUNTIME_ERROR"		}
+};
 
 void ErrorHandler::report_errors(std::string_view source)
 {
@@ -21,24 +29,15 @@ void ErrorHandler::report_errors(std::string_view source)
 
 void report_error(std::unique_ptr<Error> & err, std::string_view source)
 {
-	std::string_view additional_info;
-
-	if (err->type() == ErrorType::LEXICAL_ERR)
-	{
-		LexicalError * lex_err = dynamic_cast<LexicalError *>(err.get());
-		if (lex_err != nullptr)
-			additional_info = lex_err->get_additional_info();
-		else
-			throw std::logic_error("downcasting failed in `report_error()`");
-	}
+	std::string_view additional_info = err->get_additional_info();
 
 	std::cerr << "[error] " << file_name << ": "
 		<< "line " << err->line()
 		<< ", column " << err->column() << "\n"
-		<< error_type_string(err->type()) << ": "
+		<< error_type_string[err->type()] << ": "
 		<< err->message();
 	if (additional_info != "")
-		std::cerr << " : \"" << additional_info << '\"';
+		std::cerr << " : `" << additional_info << '`';
 
 	size_t line_start = find_previous_line_start(source, err->position()) + 1;
 	size_t line_end = find_next_line_end(source, err->position());
@@ -52,23 +51,6 @@ void report_error(std::unique_ptr<Error> & err, std::string_view source)
 	if (err_len > 0)
 		std::cout << std::string(err_len - 1, '~');
 	std::cout << std::endl;
-}
-
-const char * error_type_string(ErrorType type)
-{
-	switch (type)
-	{
-		case ErrorType::LEXICAL_ERR:
-			return "LEXICAL_ERROR";
-		case ErrorType::SYNTAX_ERR:
-			return "SYNTAX_ERROR";
-		case ErrorType::SEMANTIC_ERR:
-			return "SEMANTIC_ERROR";
-		case ErrorType::RUNTIME_ERR:
-			return "RUNTIME_ERROR";
-
-		default: return "";
-	}
 }
 
 void ErrorHandler::push_error(std::unique_ptr<Error> & err)

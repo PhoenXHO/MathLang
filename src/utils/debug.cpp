@@ -8,12 +8,8 @@
 #include "globals.h"
 #include "ast.h"
 #include "compiler.h"
+#include "mathobj.h"
 
-std::unordered_map<Type, const char *> type_to_string =
-{
-	{ Type::T_INTEGER,	"T_INTEGER" },
-	{ Type::T_REAL,		"T_REAL"	}
-};
 std::unordered_map<uint8_t, const char *> opcode_to_string =
 {
 	{ OpCode::OP_LOAD_CONST,	"LOAD_CONST"	},
@@ -64,14 +60,14 @@ void Compiler::print_constant(std::shared_ptr<MathObj> & constant)
 {
 	if (constant->type() == MathObjType::MO_REAL || constant->type() == MathObjType::MO_INTEGER)
 	{
-		auto real = dynamic_cast<RealValue *>(constant.get());
+		auto real = dynamic_cast<Real *>(constant.get());
 		std::cout << real->value();
 	}
 }
 
-void Compiler::print_operator(const Operator * op)
+void Compiler::print_operator(std::pair<const OperatorFunction *, std::string> & op)
 {
-	std::cout << op->name;
+	std::cout << op.second;
 }
 
 void d_print_token(std::unique_ptr<Token> & token)
@@ -171,22 +167,22 @@ void OperatorNode::print(int depth) const
 	if (!this)
 		return;
 	indent(depth);
-	std::cout << "Operator : " << op_sym << '\n';
+	std::cout << "Operator : " << op_info->name << '\n';
 }
 
 void TypeNode::print(int depth) const
 {
 	if (!this)
 		return;
-	indent(depth);
-	std::cout << "Type : ";
-	std::visit([&](auto & type) {
-		using T = std::decay_t<decltype(type)>;
-		if constexpr (std::is_same_v<T, Type>)
-			std::cout << type_to_string[type] <<'\n';
-		else if constexpr (std::is_same_v<T, std::unique_ptr<IdentifierNode>>)
-			std::cout << type->name << '\n';
-	}, type);
+	//indent(depth);
+	//std::cout << "Type : ";
+	//std::visit([&](auto & type) {
+	//	using T = std::decay_t<decltype(type)>;
+	//	if constexpr (std::is_same_v<T, MathObjType>)
+	//		std::cout << type_to_string[type] <<'\n';
+	//	else if constexpr (std::is_same_v<T, std::unique_ptr<IdentifierNode>>)
+	//		std::cout << type->name << '\n';
+	//}, type);
 }
 
 void indent(int depth)
