@@ -1,4 +1,5 @@
 #include "compiler.h"
+#include "error.h"
 
 std::shared_ptr<Compiler> compiler;
 
@@ -30,7 +31,30 @@ void Compiler::compile_statement(const ASTNode * statement_n)
 	// Variable declaration
 	else if (statement_n->n_type == NodeType::N_VAR_DECL)
 	{
+		auto var_decl_n = dynamic_cast<const VariableDeclarationNode *>(statement_n);
 
+		if (!var_decl_n)
+			throw std::logic_error("downcasting failed in `Compiler::compile_statement()`");
+
+		compile_variable_declaration(var_decl_n);
+	}
+}
+
+void Compiler::compile_variable_declaration(const VariableDeclarationNode * var_decl_n)
+{
+	if (variables.size() >= UINT8_MAX)
+	{
+		register_compile_error("too many variables", "", var_decl_n);
+		return;
+	}
+
+	uint8_t arg = variables.size();
+	variables.push_back(std::make_shared<Variable>(std::string(var_decl_n->name->name)));
+
+	if (var_decl_n->value)
+	{
+		compile_expression(var_decl_n->value.get());
+		emit(OP_SET_VAR, arg);
 	}
 }
 
@@ -110,7 +134,7 @@ void Compiler::compile_operand(const OperandNode * operand_n)
 
 void Compiler::compile_operator(const OperatorNode * operator_n, bool unary)
 {
-	auto * op_func = operator_n->op_func;
+	auto op_func = operator_n->op_func;
 	if (operators.size() >= UINT8_MAX)
 		throw std::runtime_error("too many operators");
 
@@ -128,7 +152,17 @@ void Compiler::compile_unary_operator(const OperatorNode * operator_n)
 
 void Compiler::compile_identifier(const IdentifierNode * identifier_n)
 {
-	// TODO for later
+	for (uint8_t i = 0; i < variables.size(); ++i)
+	{
+		if (variables[i]->name == identifier_n->name)
+		{
+			emit(OP_LOAD_VAR, i);
+			return;
+		}
+	}
+
+	// just in case of a bug
+	throw std::runtime_error("variable `" + std::string(identifier_n->name) + "` not found");
 }
 
 void Compiler::compile_literal(const LiteralNode * literal_n)
@@ -150,12 +184,20 @@ void Compiler::compile_constant(const LiteralNode * literal_n)
 
 	switch (literal_n->type)
 	{
-		case MathObjType::MO_INTEGER: case MathObjType::MO_REAL:
-			double value = std::stod(literal_n->value.data());
-			auto constant = std::make_shared<Real>(value);
+		case MathObjType::MO_INTEGER:
+		{
+			auto constant = std::make_shared<Integer>(std::stoi(literal_n->value.data()));
 			constants.push_back(constant);
 			emit(OP_LOAD_CONST, constants.size() - 1);
 			break;
+		}
+		case MathObjType::MO_REAL:
+		{
+			auto constant = std::make_shared<Real>(std::stod(literal_n->value.data()));
+			constants.push_back(constant);
+			emit(OP_LOAD_CONST, constants.size() - 1);
+			break;
+		}
 	}
 }
 
@@ -167,4 +209,17 @@ void Compiler::emit(uint8_t op_code, uint8_t arg)
 {
 	emit(op_code);
 	emit(arg);
+}
+
+void Compiler::register_compile_error(std::string message, std::string additional_info, const ASTNode * node)
+{
+	std::unique_ptr<Error> err { new CompileError(
+		message,
+		additional_info,
+		node->line,
+		node->column,
+		node->start_position,
+		node->end_position - node->start_position
+	)};
+	ErrorHandler::push_error(err);
 }

@@ -18,18 +18,24 @@ class Compiler
 	void emit(uint8_t op_code);
 	void emit(uint8_t op_code, uint8_t arg);
 
-	void compile_statement			(const ASTNode * statement_n)					;
-	void compile_expression			(const ASTNode * expression_n)					;
-	void compile_operand			(const OperandNode * operand_n)					;
-	void compile_operator			(const OperatorNode * operator_n, bool unary)	;
-	void compile_binary_operator	(const OperatorNode * operator_n)				;
-	void compile_unary_operator		(const OperatorNode * operator_n)				;
-	void compile_identifier			(const IdentifierNode * identifier_n)			;
-	void compile_literal			(const LiteralNode * literal_n)					;
-	void compile_constant			(const LiteralNode * literal_n)					;
+	void compile_statement				(const ASTNode * statement_n)					;
+	void compile_variable_declaration	(const VariableDeclarationNode * var_decl_n)	;
+	void compile_expression				(const ASTNode * expression_n)					;
+	void compile_operand				(const OperandNode * operand_n)					;
+	void compile_operator				(const OperatorNode * operator_n, bool unary)	;
+	void compile_binary_operator		(const OperatorNode * operator_n)				;
+	void compile_unary_operator			(const OperatorNode * operator_n)				;
+	void compile_identifier				(const IdentifierNode * identifier_n)			;
+	void compile_literal				(const LiteralNode * literal_n)					;
+	void compile_constant				(const LiteralNode * literal_n)					;
+
+	void register_compile_error(std::string message, std::string additional_info, const ASTNode * node);
 
 public:
-	Compiler(const AST & ast, std::unique_ptr<OperatorTable> & operator_table) :
+	Compiler(
+		const AST & ast,
+		std::unique_ptr<OperatorTable> & operator_table
+	) :
 		ast(ast),
 		operator_table(std::move(operator_table))
 	{}
@@ -37,6 +43,9 @@ public:
 	enum OpCode
 	{
 		OP_LOAD_CONST,
+
+		OP_SET_VAR,
+		OP_LOAD_VAR,
 
 		OP_UNARY_OP,
 		OP_BINARY_OP,
@@ -46,13 +55,14 @@ public:
 	};
 
 	std::vector<std::shared_ptr<MathObj>> constants;
-	std::vector<std::pair<const OperatorFunction *, std::string>> operators;
+	std::vector<std::shared_ptr<Variable>> variables;
+	std::vector<std::pair<std::shared_ptr<const OperatorFunction>, std::string>> operators;
 
 	void compile_source(void);
 
 	void print_bytecode(void);
 	void print_constant(std::shared_ptr<MathObj> & constant);
-	void print_operator(std::pair<const OperatorFunction *, std::string> & op);
+	void print_operator(std::pair<std::shared_ptr<const OperatorFunction>, std::string> & op);
 
 	const std::vector<uint8_t> & bytecode(void) { return bytes; }
 };

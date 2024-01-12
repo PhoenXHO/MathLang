@@ -37,21 +37,33 @@ MathObjType TypeChecker::check_types(const std::unique_ptr<ASTNode> & node)
 			auto * var_decl = static_cast<VariableDeclarationNode *>(node.get());
 			MathObjType var_type = var_decl->type->type;
 
-			if (var_decl->expression)
+			if (var_decl->value)
 			{
-				MathObjType expr_type = check_types(var_decl->expression);
+				MathObjType expr_type = check_types(var_decl->value);
 				if (!can_convert(expr_type, var_type))
 				{
 					register_semantic_error(
 						"cannot implicitly convert `" + type_to_string[expr_type] + "` to `" + type_to_string[var_type] + "`",
 						"",
-						var_decl->expression.get()
+						var_decl->value.get()
 					);
 				}
 			}
 
+			// Look for a variable with the same name in the current scope
+			auto it = variables.find(var_decl->name->name);
+			if (it != variables.end())
+			{
+				register_semantic_error(
+					"variable `" + std::string(var_decl->name->name) + "` is already defined in this scope",
+					"",
+					var_decl->name.get()
+				);
+				return var_type;
+			}
+			
 			// Add the variable to the list of variables
-			variables[var_decl->name->name] = std::make_tuple(var_type, std::make_shared<NoneValue>());
+			variables[var_decl->name->name] = var_type;
 
 			return var_type;
 		}
@@ -67,24 +79,49 @@ MathObjType TypeChecker::check_types(const std::unique_ptr<ASTNode> & node)
 			auto candidates = operator_table->get_implementations(op->op_info->name);
 			if (candidates.first != candidates.second)
 			{
+				std::vector<std::pair<std::shared_ptr<OperatorFunction>, int>> matching_candidates;
+
 				// Iterate over the candidate operators and check if any of them match the operand types
 				for (auto & it = candidates.first; it != candidates.second; ++it)
 				{
 					auto arg_types = it->second->arg_types;
-					if (can_convert(left_type, arg_types.first) && can_convert(right_type, arg_types.second))
-					{
-						op->op_func = it->second.get();
-						return it->second->return_type;
-					}
+					int specificity = calculate_specificity(left_type, right_type, arg_types.first, arg_types.second);
+
+					if (specificity > 0)
+						matching_candidates.push_back({ it->second, specificity });
 				}
-				// No matching operator found
+				
+				if (!matching_candidates.empty())
+				{
+					// Sort the matching candidates by specificity
+					std::sort(matching_candidates.begin(), matching_candidates.end(), [](auto & a, auto & b) {
+						return a.second > b.second;
+					});
+
+					// Check if there's a unique maximum specificity
+					if (matching_candidates[0].second == matching_candidates[1].second)
+					{
+						register_semantic_error(
+							"ambiguous call to operator `" + op->op_info->name + "`",
+							"",
+							op.get()
+						);
+						return MathObjType::MO_NONE;
+					}
+
+					// Get the most specific candidate
+					auto & candidate = matching_candidates[0];
+					op->op_func = candidate.first;
+					return candidate.first->return_type;
+
+					// No matching operator found
+					register_semantic_error(
+						"no binary operator `" + op->op_info->name + "` matches these operand types",
+						type_to_string[left_type] + "`, `" + type_to_string[right_type],
+						op.get()
+					);
+				}
 			}
-			
-			register_semantic_error(
-				"no binary operator `" + op->op_info->name + "` matches these operand types",
-				type_to_string[left_type] + "`, `" + type_to_string[right_type],
-				op.get()
-			);
 			break;
 		}
 		case NodeType::N_OPERAND:
@@ -105,7 +142,7 @@ MathObjType TypeChecker::check_types(const std::unique_ptr<ASTNode> & node)
 					auto arg_type = it->second->arg_types.first;
 					if (can_convert(operand_type, arg_type))
 					{
-						op->op_func = it->second.get();
+						op->op_func = it->second;
 						return it->second->return_type;
 					}
 				}
@@ -123,6 +160,21 @@ MathObjType TypeChecker::check_types(const std::unique_ptr<ASTNode> & node)
 		{
 			auto * literal = static_cast<LiteralNode *>(node.get());
 			return literal->type;
+		}
+		case NodeType::N_IDENTIFIER:
+		{
+			auto * identifier = static_cast<IdentifierNode *>(node.get());
+			auto it = variables.find(identifier->name);
+			if (it == variables.end())
+			{
+				register_semantic_error(
+					"variable `" + std::string(identifier->name) + "` is not defined in this scope",
+					"",
+					identifier
+				);
+				return MathObjType::MO_NONE;
+			}
+			return it->second;
 		}
 	}
 	return MathObjType::MO_NONE;

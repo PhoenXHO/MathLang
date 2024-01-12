@@ -76,77 +76,93 @@ void VM::run(void)
 
 	#define READ_BYTE()		(*(it++))
 	#define READ_CONSTANT()	(compiler->constants[READ_BYTE()])
+	#define READ_VARIABLE()	(compiler->variables[READ_BYTE()])
 	#define READ_OPERATOR()	(compiler->operators[READ_BYTE()].first)
 
-	uint8_t byte;
 	while (true)
 	{
+	uint8_t byte;
 	switch (byte = READ_BYTE())
 	{
 		case OpCode::OP_LOAD_CONST:
-			{
-				auto constant = READ_CONSTANT();
-				stack.push(constant);
-			}
+		{
+			auto constant = READ_CONSTANT();
+			stack.push(constant);
 			break;
+		}
+
+		case OpCode::OP_SET_VAR:
+		{
+			auto variable = READ_VARIABLE();
+			variable->value = stack.top();
+			stack.pop();
+			break;
+		}
+
+		case OpCode::OP_LOAD_VAR:
+		{
+			auto variable = READ_VARIABLE();
+			stack.push(variable->value);
+			break;
+		}
 
 		case OpCode::OP_UNARY_OP:
+		{
+			auto op = READ_OPERATOR();
+			if (op->type == OperatorType::O_CUSTOM)
 			{
-				auto * op = READ_OPERATOR();
-				if (op->type == OperatorType::O_CUSTOM)
-				{
-					throw std::runtime_error("custom operators not implemented");
-				}
-				else
-				{
-					auto operand = stack.top();
-					stack.pop();
+				throw std::runtime_error("custom operators not implemented");
+			}
+			else
+			{
+				auto operand = stack.top();
+				stack.pop();
 
-					switch (op->type)
+				switch (op->type)
+				{
+					case OperatorType::O_BUILTIN:
 					{
-						case OperatorType::O_BUILTIN:
-						{
-							auto result = op->implementation(*operand, NoneValue());
-							stack.push(result);
-							break;
-						}
-						case OperatorType::O_CUSTOM:
-							throw std::runtime_error("custom operators not implemented");
-							break;
+						auto result = op->implementation(*operand, None());
+						stack.push(result);
+						break;
 					}
+					case OperatorType::O_CUSTOM:
+						throw std::runtime_error("custom operators not implemented");
+						break;
 				}
 			}
 			break;
+		}
 
 		case OpCode::OP_BINARY_OP:
+		{
+			auto op = READ_OPERATOR();
+			if (op->type == OperatorType::O_CUSTOM)
 			{
-				auto * op = READ_OPERATOR();
-				if (op->type == OperatorType::O_CUSTOM)
-				{
-					throw std::runtime_error("custom operators not implemented");
-				}
-				else
-				{
-					auto rhs = stack.top();
-					stack.pop();
-					auto lhs = stack.top();
-					stack.pop();
+				throw std::runtime_error("custom operators not implemented");
+			}
+			else
+			{
+				auto rhs = stack.top();
+				stack.pop();
+				auto lhs = stack.top();
+				stack.pop();
 
-					switch (op->type)
+				switch (op->type)
+				{
+					case OperatorType::O_BUILTIN:
 					{
-						case OperatorType::O_BUILTIN:
-						{
-							auto result = op->implementation(*lhs, *rhs);
-							stack.push(result);
-							break;
-						}
-						case OperatorType::O_CUSTOM:
-							throw std::runtime_error("custom operators not implemented");
-							break;
+						auto result = op->implementation(*lhs, *rhs);
+						stack.push(result);
+						break;
 					}
+					case OperatorType::O_CUSTOM:
+						throw std::runtime_error("custom operators not implemented");
+						break;
 				}
 			}
 			break;
+		}
 
 		case OpCode::OP_POP:
 			stack.pop();

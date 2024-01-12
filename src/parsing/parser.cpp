@@ -44,6 +44,8 @@ std::unique_ptr<VariableDeclarationNode> Parser::variable_declaration_n(void)
 {
 	consume_tk(); // consume `let`
 	std::unique_ptr<VariableDeclarationNode> var_dec_node { new VariableDeclarationNode };
+	var_dec_node->line = curr_tk->line();
+	var_dec_node->start_position = curr_tk->position();
 
 	var_dec_node->type = type_n();
 	if (!var_dec_node->type)
@@ -61,14 +63,16 @@ std::unique_ptr<VariableDeclarationNode> Parser::variable_declaration_n(void)
 	if (curr_tk->type() == TokenType::T_OPERATOR_SYM && curr_tk->lexeme() == ":=")
 	{
 		consume_tk(); // consume `:=`
-		var_dec_node->expression = expression_n(P_MIN);
+		var_dec_node->value = expression_n(P_MIN);
 	}
 	else
 	{
-		var_dec_node->expression = nullptr;
+		var_dec_node->value = nullptr;
 	}
 	expect_tk(TokenType::T_SEMICOLON, "`;` expected after variable declaration");
 
+	var_dec_node->column = var_dec_node->name->column;
+	var_dec_node->end_position = curr_tk->position() + 1;
 	return var_dec_node;
 }
 
@@ -123,8 +127,8 @@ std::unique_ptr<ASTNode> Parser::expression_n(Precedence min_precedence)
 		}
 
 		auto * expr = static_cast<ExpressionNode *>(left.get());
-		left->column = expr->left->column;
 		left->line = expr->left->line;
+		left->column = expr->left->column;
 		left->start_position = expr->left->start_position;
 		left->end_position = expr->right->end_position;
 	}
@@ -227,6 +231,11 @@ std::unique_ptr<IdentifierNode> Parser::identifier_n(void)
 	std::unique_ptr<IdentifierNode> id_node {
 		new IdentifierNode(curr_tk->lexeme())
 	};
+
+	id_node->line = curr_tk->line();
+	id_node->column = curr_tk->column();
+	id_node->start_position = curr_tk->position();
+	id_node->end_position = id_node->start_position + curr_tk->lexeme().length();
 	return id_node;
 }
 
@@ -240,7 +249,7 @@ std::unique_ptr<OperatorNode> Parser::operator_n(bool unary)
 		return nullptr;
 	}
 
-	auto * op = operators->find(curr_tk->lexeme());
+	auto op = operators->find(curr_tk->lexeme());
 	if (!op)
 	{
 		if (unary)

@@ -14,8 +14,8 @@ struct BuiltinOperator;
 
 struct AST;
 struct ASTNode;
-struct ExpressionStatementNode;
 struct VariableDeclarationNode;
+struct ExpressionStatementNode;
 struct ExpressionNode;
 struct OperandNode;
 struct LiteralNode;
@@ -55,23 +55,23 @@ struct ASTNode
 	virtual void print(int depth) const = 0;
 };
 
+// <variable-declaration> ::= "let" <type> <identifier> [ ":=" ( <expression> | <node> ) ]
+struct VariableDeclarationNode : public ASTNode
+{
+	std::unique_ptr<TypeNode> type;
+	std::unique_ptr<IdentifierNode> name;
+	std::unique_ptr<ASTNode> value;
+
+	VariableDeclarationNode(void) : ASTNode(NodeType::N_VAR_DECL) {}
+	virtual void print(int depth) const override;
+};
+
 // <expression-statement> ::= { <operand> | <expression> }
 struct ExpressionStatementNode : public ASTNode
 {
 	std::vector<std::unique_ptr<ASTNode>> expressions;
 
 	ExpressionStatementNode(void) : ASTNode(NodeType::N_EXPR_STMT) {}
-	virtual void print(int depth) const override;
-};
-
-// <variable-declaration> ::= "let" <type> <identifier> [ ":=" ( <expression> | <node> ) ]
-struct VariableDeclarationNode : public ASTNode
-{
-	std::unique_ptr<TypeNode> type;
-	std::unique_ptr<IdentifierNode> name;
-	std::unique_ptr<ASTNode> expression;
-
-	VariableDeclarationNode(void) : ASTNode(NodeType::N_VAR_DECL) {}
 	virtual void print(int depth) const override;
 };
 
@@ -122,10 +122,10 @@ struct IdentifierNode : public ASTNode
 
 struct OperatorNode : public ASTNode
 {
-	const Operator * op_info;
-	const OperatorFunction * op_func;
+	std::shared_ptr<const Operator> op_info;
+	std::shared_ptr<const OperatorFunction> op_func;
 
-	OperatorNode(const Operator * op_info) :
+	OperatorNode(std::shared_ptr<const Operator> op_info) :
 		op_info(op_info),
 		ASTNode(NodeType::N_OPERATOR)
 	{}

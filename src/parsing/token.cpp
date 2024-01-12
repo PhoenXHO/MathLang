@@ -3,8 +3,6 @@
 
 #include "token.h"
 
-TokenType match_keyword(std::string_view keyword, std::string_view str, TokenType type);
-
 std::unordered_map<std::string_view, TokenType> keywords = {
 	// * A - Z
 	{"Else", TokenType::T_ELSE},
@@ -35,13 +33,6 @@ TokenType check_word_t_type(std::string_view lexeme)
 	auto i = keywords.find(lexeme);
 	return i != keywords.end() ?
 		i->second :
-		TokenType::T_IDENTIFIER;
-}
-
-TokenType match_keyword(std::string_view keyword, std::string_view str, TokenType type)
-{
-	return str == keyword ?
-		type :
 		TokenType::T_IDENTIFIER;
 }
 

@@ -13,8 +13,8 @@
 struct Operator;
 struct OperatorFunction;
 using BuiltinOpFunc = std::function<std::shared_ptr<MathObj> (const MathObj &, const MathObj &)>;
-using OpImplementations = std::unordered_multimap<std::string, std::unique_ptr<OperatorFunction>>;
-using Operators = std::unordered_multimap<std::string, std::unique_ptr<Operator>>;
+using OpImplementations = std::unordered_multimap<std::string, std::shared_ptr<OperatorFunction>>;
+using Operators = std::unordered_multimap<std::string, std::shared_ptr<Operator>>;
 
 enum class Fixity
 {
@@ -87,11 +87,11 @@ public:
 	
 	void register_builtin_operators(void);
 
-	void register_operator(std::string name, std::unique_ptr<Operator> op);
-	void register_un_implementation(std::string name, std::unique_ptr<OperatorFunction> op_func);
-	void register_bin_implementation(std::string name, std::unique_ptr<OperatorFunction> op_func);
+	void register_operator(std::string name, std::shared_ptr<Operator> op);
+	void register_un_implementation(std::string name, std::shared_ptr<OperatorFunction> op_func);
+	void register_bin_implementation(std::string name, std::shared_ptr<OperatorFunction> op_func);
 
-	const Operator * find(std::string_view op_name) const;
+	std::shared_ptr<const Operator> find(std::string_view op_name) const;
 	std::pair<OpImplementations::const_iterator, OpImplementations::const_iterator> get_implementations(std::string_view op_name, bool unary = false) const;
 };
 

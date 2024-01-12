@@ -13,10 +13,11 @@ size_t find_next_line_end(std::string_view source, size_t start_from);
 
 std::unordered_map<ErrorType, std::string> error_type_string =
 {
-	{ ErrorType::LEXICAL_ERR,	"LEXICAL_ERROR"		},
-	{ ErrorType::SYNTAX_ERR,	"SYNTAX_ERROR"		},
-	{ ErrorType::SEMANTIC_ERR,	"SEMANTIC_ERROR"	},
-	{ ErrorType::RUNTIME_ERR,	"RUNTIME_ERROR"		}
+	{ ErrorType::LEXICAL_ERR,		"LEXICAL_ERROR"		},
+	{ ErrorType::SYNTAX_ERR,		"SYNTAX_ERROR"		},
+	{ ErrorType::SEMANTIC_ERR,		"SEMANTIC_ERROR"	},
+	{ ErrorType::COMPILE_ERR,		"COMPILATION_ERROR" },
+	{ ErrorType::RUNTIME_ERR,		"RUNTIME_ERROR"		}
 };
 
 void ErrorHandler::report_errors(std::string_view source)

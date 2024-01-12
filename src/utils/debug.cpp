@@ -14,11 +14,14 @@ std::unordered_map<uint8_t, const char *> opcode_to_string =
 {
 	{ OpCode::OP_LOAD_CONST,	"LOAD_CONST"	},
 
-	{ OpCode::OP_UNARY_OP,		"UNARY_OP"		},
-	{ OpCode::OP_BINARY_OP,		"BINARY_OP"		},
+	{ OpCode::OP_SET_VAR,		"SET_VAR   "	},
+	{ OpCode::OP_LOAD_VAR,		"LOAD_VAR  "	},
 
-	{ OpCode::OP_POP,			"POP"			},
-	{ OpCode::OP_RETURN,		"RETURN"		}
+	{ OpCode::OP_UNARY_OP,		"UNARY_OP  "	},
+	{ OpCode::OP_BINARY_OP,		"BINARY_OP "	},
+
+	{ OpCode::OP_POP,			"POP       "	},
+	{ OpCode::OP_RETURN,		"RETURN    "	}
 };
 
 void indent(int depth);
@@ -28,29 +31,33 @@ void Compiler::print_bytecode(void)
 	for (int i = 0; i < bytes.size(); i++)
 	{
 		std::cout << std::setw(2) << std::setfill('0') << std::hex;
+		std::cout << (int)bytes[i] << " |\t"
+			<< opcode_to_string[bytes[i]] << "\t\t";
 		switch (bytes[i])
 		{
 			case OpCode::OP_LOAD_CONST:
-				std::cout << (int)bytes[i] << " |\t"
-					<< opcode_to_string[bytes[i]] << '\t'
-					<< (int)bytes[++i] << "\t\'";
+				std::cout << (int)bytes[++i] << "\t\'";
+				print_constant(constants[bytes[i]]);
+				std::cout << "\'\n";
+				break;
+			
+			case OpCode::OP_SET_VAR:
+			case OpCode::OP_LOAD_VAR:
+				std::cout << (int)bytes[++i] << "\t\'";
 				print_constant(constants[bytes[i]]);
 				std::cout << "\'\n";
 				break;
 
 			case OpCode::OP_UNARY_OP:
 			case OpCode::OP_BINARY_OP:
-				std::cout << (int)bytes[i] << " |\t"
-					<< opcode_to_string[bytes[i]] << '\t'
-					<< (int)bytes[++i] << "\t\'";
+				std::cout << (int)bytes[++i] << "\t\'";
 				print_operator(operators[bytes[i]]);
 				std::cout << "\'\n";
 				break;
 
 			case OpCode::OP_POP:
 			case OpCode::OP_RETURN:
-				std::cout << (int)bytes[i] << " |\t"
-					<< opcode_to_string[bytes[i]] << '\n';
+				std::cout << '\n';
 				break;
 		}
 	}
@@ -63,9 +70,16 @@ void Compiler::print_constant(std::shared_ptr<MathObj> & constant)
 		auto real = dynamic_cast<Real *>(constant.get());
 		std::cout << real->value();
 	}
+	else if (constant->type() == MathObjType::MO_VARIABLE)
+	{
+		auto * variable = constant->as<Variable>();
+		std::cout << variable->name;
+	}
+	else
+		std::cout << "ERROR";
 }
 
-void Compiler::print_operator(std::pair<const OperatorFunction *, std::string> & op)
+void Compiler::print_operator(std::pair<std::shared_ptr<const OperatorFunction>, std::string> & op)
 {
 	std::cout << op.second;
 }
@@ -96,19 +110,15 @@ void AST::print(void) const
 
 void VariableDeclarationNode::print(int depth) const
 {
-	if (!this)
-		return;
 	indent(depth);
 	std::cout << "Variable Declaration :\n";
 	type->print(depth + 1);
 	name->print(depth + 1);
-	expression->print(depth + 1);
+	value->print(depth + 1);
 }
 
 void ExpressionStatementNode::print(int depth) const
 {
-	if (!this)
-		return;
 	indent(depth);
 	std::cout << "Expression Statement :\n";
 	for (auto & expr : expressions)
@@ -117,8 +127,6 @@ void ExpressionStatementNode::print(int depth) const
 
 void ExpressionNode::print(int depth) const
 {
-	if (!this)
-		return;
 	indent(depth);
 	std::cout << "Expression :\n";
 
@@ -129,8 +137,6 @@ void ExpressionNode::print(int depth) const
 
 void OperandNode::print(int depth) const
 {
-	if (!this)
-		return;
 	indent(depth);
 	std::cout << "Operand :\n";
 
@@ -148,32 +154,24 @@ void OperandNode::print(int depth) const
 
 void LiteralNode::print(int depth) const
 {
-	if (!this)
-		return;
 	indent(depth);
 	std::cout << "Literal : " << value << '\n';
 }
 
 void IdentifierNode::print(int depth) const
 {
-	if (!this)
-		return;
 	indent(depth);
 	std::cout << "Identifier : " << name << '\n';
 }
 
 void OperatorNode::print(int depth) const
 {
-	if (!this)
-		return;
 	indent(depth);
 	std::cout << "Operator : " << op_info->name << '\n';
 }
 
 void TypeNode::print(int depth) const
 {
-	if (!this)
-		return;
 	//indent(depth);
 	//std::cout << "Type : ";
 	//std::visit([&](auto & type) {

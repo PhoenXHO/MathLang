@@ -10,6 +10,7 @@ struct  MathObj
 	enum MathObjType
 	{
 		MO_NONE = -1,
+		MO_VARIABLE = 0,
 		MO_INTEGER = 1,
 		MO_REAL = 2 * MO_INTEGER
 	};
@@ -19,12 +20,32 @@ struct  MathObj
 
 	virtual std::string to_string(void) const = 0;
 	virtual MathObjType type(void) const = 0;
-	virtual std::shared_ptr<MathObj> default_value(void) const = 0;
+
+	template<typename T>
+	T * as(void)
+	{ return dynamic_cast<T *>(this); }
 };
 typedef MathObj::MathObjType MathObjType;
 
 inline bool can_convert(MathObjType from, MathObjType to)
 { return from == to || 2 * from == to; }
+
+inline int calculate_specificity(MathObjType left, MathObjType right, MathObjType argt_l, MathObjType argt_r)
+{
+	int specificity = 0;
+	
+	if (left == argt_l)
+		specificity += 2;
+	else if (can_convert(left, argt_l))
+		specificity += 1;
+
+	if (right == argt_r)
+		specificity += 2;
+	else if (can_convert(right, argt_r))
+		specificity += 1;
+
+	return specificity;
+}
 
 struct Real : public MathObj
 {
@@ -48,19 +69,16 @@ public:
 
 	double value(void) const
 	{ return _value_; }
-
-	std::shared_ptr<MathObj> default_value(void) const override
-	{ return std::make_shared<Real>(0.0); }
 };
 
-struct IntegerValue : public Real
+struct Integer : public Real
 {
-	IntegerValue(int value) : Real(value) {}
+	Integer(int value) : Real(value) {}
 	bool operator==(const MathObj & other) const override
 	{
 		if (other.type() != MathObjType::MO_INTEGER)
 			return false;
-		return _value_ == static_cast<const IntegerValue &>(other).value();
+		return _value_ == static_cast<const Integer &>(other).value();
 	}
 
 	std::string to_string(void) const override
@@ -71,24 +89,35 @@ struct IntegerValue : public Real
 
 	int value(void) const
 	{ return _value_; }
-
-	std::shared_ptr<MathObj> default_value(void) const override
-	{ return std::make_shared<IntegerValue>(0); }
 };
 
-struct NoneValue : public MathObj
+struct None : public MathObj
 {
 	bool operator==(const MathObj & other) const override
-	{ throw std::runtime_error("invalid comparison with `none`"); }
+	{ throw std::runtime_error("invalid comparison with `None`"); }
 
 	std::string to_string(void) const override
 	{ return "none"; }
 
 	MathObjType type(void) const override
 	{ return MathObjType::MO_NONE; }
+};
 
-	std::shared_ptr<MathObj> default_value(void) const override
-	{ return std::make_shared<NoneValue>(); }
+struct Variable : public MathObj
+{
+	std::string name;
+	MathObjType value_type;
+	std::shared_ptr<MathObj> value;
+
+	Variable(std::string name) : name(name), value(std::shared_ptr<None>()) {}
+	bool operator==(const MathObj & other) const override
+	{ return *value.get() == other; }
+
+	std::string to_string(void) const override
+	{ return name; }
+
+	MathObjType type(void) const override
+	{ return MathObjType::MO_VARIABLE; }
 };
 
 #endif // MATHOBJ_H

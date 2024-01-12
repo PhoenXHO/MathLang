@@ -19,6 +19,7 @@ struct Error
 		LEXICAL_ERR,
 		SYNTAX_ERR,
 		SEMANTIC_ERR,
+		COMPILE_ERR,
 		RUNTIME_ERR
 	};
 
@@ -81,6 +82,19 @@ struct SemanticError : Error
 
 	SemanticError(std::string msg, std::string additional_info, size_t l, size_t c, size_t pos, size_t len) :
 		Error(ErrorType::SEMANTIC_ERR, msg, l, c, pos, len),
+		additional_info(additional_info)
+	{}
+	
+	std::string_view get_additional_info(void) const override
+	{ return additional_info; }
+};
+
+struct CompileError : Error
+{
+	std::string additional_info;
+
+	CompileError(std::string msg, std::string additional_info, size_t l, size_t c, size_t pos, size_t len) :
+		Error(ErrorType::COMPILE_ERR, msg, l, c, pos, len),
 		additional_info(additional_info)
 	{}
 	

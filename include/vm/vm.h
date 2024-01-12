@@ -14,6 +14,7 @@ private:
 	std::string_view source;
 	std::unique_ptr<Compiler> compiler;
 	std::stack<std::shared_ptr<MathObj>> stack;
+	std::vector<std::shared_ptr<Variable>> variables;
 
 public:
 	VM(std::string_view source);
