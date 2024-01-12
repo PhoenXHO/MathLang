@@ -25,6 +25,17 @@ _This project is still a work in progress. If you are interested in contributing
 	- Print: `print`  (unary)
 
 	and more. These operators can be overloaded or extended (a planned features).
+
+6. **Variable Declaration**: MathLang allows you to declare variables using the `let` keyword followed by the variable type and identifier. Optionally, you can initialize the variable with an expression using the `:=` operator.
+
+	Syntax:
+
+		let <type> <identifier>;
+	or,
+
+		let <type> <identifier> := <expression>;
+
+_Note: Scopes are not supported yet. All variables are, currently, global variables._
 	
 # Future Features
 ## More literal types
@@ -32,16 +43,6 @@ Future versions of MathLang will introduce more literal types, expanding the lan
 
 - Strings
 - Boolean
-
-## Variable Declaration
-Future versions of MathLang will support variable declaration, allowing users to declare and initialize variables with specific types.
-
-Syntax:
-
-	let <type> <identifier>;
-or,
-
-	let <type> <identifier> := <expression>;
 
 ## Conditional Statements
 Conditional statements, such as `If` and `Else`, will be introduced to enable branching based on logical conditions.
@@ -59,6 +60,13 @@ Users will be able to define their own functions with custom logic.
 Syntax:
 
 	define <identifier>(<type> param1, ...) -> <type>;
+
+## User-Defined Operators
+MathLang will also allow users to define their own operators, that are at most four characters long, with custom behavior. This feature will provide flexibility and extensibility to the language, allowing developers to create domain-specific operators or redefine existing operators.
+
+## Symbolic Expressions
+Symbolic Expressions is an upcoming feature in MathLang that allows users to manipulate mathematical expressions symbolically, rather than numerically. With this feature, users will be able to work with variables, constants, and mathematical operations to create and manipulate complex mathematical expressions.
+
 
 # How to Contribute
 1. **Fork the Repository**: Fork the MathLang repository to your GitHub account. This will create a copy of the project under your account.
