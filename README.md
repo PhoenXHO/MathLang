@@ -61,6 +61,9 @@ Syntax:
 
 	define <identifier>(<type> param1, ...) -> <type>;
 
+## Classes and MathObjs
+Classes and MathObjs is a planned feature in MathLang that will introduce object-oriented programming capabilities to the language. With this feature, users will be able to define classes, create objects, and perform operations on those objects using methods and properties. This will enable users to organize their code into reusable and modular components, enhancing code readability and maintainability.
+
 ## User-Defined Operators
 MathLang will also allow users to define their own operators, that are at most four characters long, with custom behavior. This feature will provide flexibility and extensibility to the language, allowing developers to create domain-specific operators or redefine existing operators.
 
