@@ -10,7 +10,7 @@ bool config::print_lexer_output = false;
 bool config::print_parser_output = false;
 bool config::print_compiler_output = false;
 
-VM::VM(std::string_view source) : source(source)
+void VM::interpret_source(std::string_view source)
 {
 	if (config::print_lexer_output)
 		std::cout << ">>>>> Tokens <<<<<\n";
@@ -33,7 +33,8 @@ VM::VM(std::string_view source) : source(source)
 
 	TypeChecker type_checker(
 		parser.get_ast(),
-		std::move(parser.operators)
+		std::move(parser.operators),
+		current_scope
 	);
 	type_checker.check_types();
 
@@ -45,7 +46,8 @@ VM::VM(std::string_view source) : source(source)
 
 	compiler = std::make_unique<Compiler>(
 		parser.get_ast(),
-		parser.operators
+		parser.operators,
+		current_scope
 	);
 	compiler->compile_source();
 
@@ -60,12 +62,6 @@ VM::VM(std::string_view source) : source(source)
 		std::cout << "\n>>>>> Bytecode <<<<<\n";
 		compiler->print_bytecode();
 	}
-}
-
-void VM::interpret_source(void)
-{
-	if (!compiler)
-		return;
 
 	run();
 }
@@ -74,10 +70,10 @@ void VM::run(void)
 {
 	auto it = compiler->bytecode().begin();
 
-	#define READ_BYTE()		(*(it++))
-	#define READ_CONSTANT()	(compiler->constants[READ_BYTE()])
-	#define READ_VARIABLE()	(compiler->variables[READ_BYTE()])
-	#define READ_OPERATOR()	(compiler->operators[READ_BYTE()].first)
+	#define READ_BYTE()				(*(it++))
+	#define READ_CONSTANT()			(compiler->constants[READ_BYTE()])
+	#define READ_VARIABLE()			(compiler->variables[READ_BYTE()])
+	#define READ_OPERATOR()			(compiler->operators[READ_BYTE()].first)
 
 	while (true)
 	{
@@ -90,6 +86,14 @@ void VM::run(void)
 			stack.push(constant);
 			break;
 		}
+
+		case OpCode::OP_ENTER_BLOCK:
+			enter_scope(current_scope, 0);
+			break;
+		
+		case OpCode::OP_LEAVE_BLOCK:
+			pop_scope(current_scope);
+			break;
 
 		case OpCode::OP_SET_VAR:
 		{

@@ -34,8 +34,6 @@ _This project is still a work in progress. If you are interested in contributing
 	or,
 
 		let <type> <identifier> := <expression>;
-
-_Note: Scopes are not supported yet. All variables are, currently, global variables._
 	
 # Future Features
 ## More literal types

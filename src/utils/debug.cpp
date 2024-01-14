@@ -10,19 +10,50 @@
 #include "compiler.h"
 #include "mathobj.h"
 
-std::unordered_map<uint8_t, const char *> opcode_to_string =
+std::unordered_map<TokenType, const char *> tk_type_string =
 {
-	{ OpCode::OP_LOAD_CONST,	"LOAD_CONST"	},
+	{ TokenType::T_IDENTIFIER,		"IDENTIFIER   " },
 
-	{ OpCode::OP_SET_VAR,		"SET_VAR   "	},
-	{ OpCode::OP_LOAD_VAR,		"LOAD_VAR  "	},
+	{ TokenType::T_OPERATOR_SYM,	"OPERATOR_SYM " },
 
-	{ OpCode::OP_UNARY_OP,		"UNARY_OP  "	},
-	{ OpCode::OP_BINARY_OP,		"BINARY_OP "	},
+	{ TokenType::T_INTEGER_LITERAL,	"INTEGER      " },
+	{ TokenType::T_REAL_LITERAL,	"REAL         " },
+	
+	{ TokenType::T_COMMA,			"COMMA        " },
+	{ TokenType::T_SEMICOLON,		"SEMICOLON    " },
+	{ TokenType::T_LEFT_PAREN,		"LEFT_PAREN   " },
+	{ TokenType::T_RIGHT_PAREN,		"RIGHT_PAREN  " },
+	{ TokenType::T_LEFT_BRACE,		"LEFT_BRACE   " },
+	{ TokenType::T_RIGHT_BRACE,		"RIGHT_BRACE  " },
+	{ TokenType::T_LEFT_BRACKET,	"LEFT_BRACKET " },
+	{ TokenType::T_RIGHT_BRACKET,	"RIGHT_BRACKET" },
 
-	{ OpCode::OP_POP,			"POP       "	},
-	{ OpCode::OP_RETURN,		"RETURN    "	}
+	{ TokenType::T_ERROR,			"ERROR        " },
+	{ TokenType::T_EOF,				"EOF          " }
 };
+
+const char * tk_type_to_string(TokenType t_type)
+{ return tk_type_string.find(t_type) != tk_type_string.end() ? tk_type_string[t_type] : "KEYWORD	  "; }
+
+std::unordered_map<uint8_t, const char *> opcode_string =
+{
+	{ OpCode::OP_LOAD_CONST,	"LOAD_CONST "	},
+
+	{ OpCode::OP_ENTER_BLOCK,	"ENTER_BLOCK"	},
+	{ OpCode::OP_LEAVE_BLOCK,	"LEAVE_BLOCK"	},
+
+	{ OpCode::OP_SET_VAR,		"SET_VAR    "	},
+	{ OpCode::OP_LOAD_VAR,		"LOAD_VAR   "	},
+
+	{ OpCode::OP_UNARY_OP,		"UNARY_OP   "	},
+	{ OpCode::OP_BINARY_OP,		"BINARY_OP  "	},
+
+	{ OpCode::OP_POP,			"POP        "	},
+	{ OpCode::OP_RETURN,		"RETURN     "	}
+};
+
+const char * opcode_to_string(uint8_t opcode)
+{ return opcode_string[opcode]; }
 
 void indent(int depth);
 
@@ -32,7 +63,7 @@ void Compiler::print_bytecode(void)
 	{
 		std::cout << std::setw(2) << std::setfill('0') << std::hex;
 		std::cout << (int)bytes[i] << " |\t"
-			<< opcode_to_string[bytes[i]] << "\t\t";
+			<< opcode_to_string(bytes[i]) << "\t\t";
 		switch (bytes[i])
 		{
 			case OpCode::OP_LOAD_CONST:
@@ -55,8 +86,7 @@ void Compiler::print_bytecode(void)
 				std::cout << "\'\n";
 				break;
 
-			case OpCode::OP_POP:
-			case OpCode::OP_RETURN:
+			default:
 				std::cout << '\n';
 				break;
 		}
@@ -108,6 +138,14 @@ void AST::print(void) const
 		stmt->print(1);
 }
 
+void BlockNode::print(int depth) const
+{
+	indent(depth);
+	std::cout << "Block :\n";
+	for (auto & stmt : statements)
+		stmt->print(depth + 1);
+}
+
 void VariableDeclarationNode::print(int depth) const
 {
 	indent(depth);
@@ -130,8 +168,8 @@ void ExpressionNode::print(int depth) const
 	indent(depth);
 	std::cout << "Expression :\n";
 
-	left->print(depth + 1);
 	op->print(depth + 1);
+	left->print(depth + 1);
 	right->print(depth + 1);
 }
 

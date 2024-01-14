@@ -25,6 +25,7 @@ private:
 	void register_syntax_error(std::string message);
 	void synchronize(void);
 
+	std::unique_ptr<BlockNode>					block_n(void)							;
 	std::unique_ptr<ASTNode>					statement_n(void)						;
 	std::unique_ptr<VariableDeclarationNode>	variable_declaration_n(void)			;
 	std::unique_ptr<ExpressionStatementNode>	expression_statement_n(void)			;

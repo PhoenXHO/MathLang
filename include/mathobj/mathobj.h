@@ -106,10 +106,15 @@ struct None : public MathObj
 struct Variable : public MathObj
 {
 	std::string name;
-	MathObjType value_type;
+	MathObjType _value_type_;
 	std::shared_ptr<MathObj> value;
 
-	Variable(std::string name) : name(name), value(std::shared_ptr<None>()) {}
+	Variable(std::string_view name, MathObjType type) :
+		name(name),
+		_value_type_(type),
+		value(std::shared_ptr<None>())
+	{}
+	Variable(std::string name) : Variable(name, MathObjType::MO_NONE) {}
 	bool operator==(const MathObj & other) const override
 	{ return *value.get() == other; }
 
@@ -118,6 +123,9 @@ struct Variable : public MathObj
 
 	MathObjType type(void) const override
 	{ return MathObjType::MO_VARIABLE; }
+
+	MathObjType value_type(void) const
+	{ return _value_type_; }
 };
 
 #endif // MATHOBJ_H

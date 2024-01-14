@@ -1,8 +1,6 @@
 #include "compiler.h"
 #include "error.h"
 
-std::shared_ptr<Compiler> compiler;
-
 void Compiler::compile_source(void)
 {
 	for (auto & statement_n : ast.statements)
@@ -10,6 +8,24 @@ void Compiler::compile_source(void)
 		compile_statement(statement_n.get());
 	}
 	emit(OP_RETURN);
+}
+
+void Compiler::compile_block(const BlockNode * block_n)
+{
+	if (scope->children.size() >= UINT8_MAX)
+	{
+		register_compile_error("too many blocks", "", block_n);
+		return;
+	}
+
+	enter_scope(scope, block_n->relative_index);
+	emit(OP_ENTER_BLOCK);
+	for (auto & statement_n : block_n->statements)
+	{
+		compile_statement(statement_n.get());
+	}
+	leave_scope(scope);
+	emit(OP_LEAVE_BLOCK);
 }
 
 void Compiler::compile_statement(const ASTNode * statement_n)
@@ -38,6 +54,16 @@ void Compiler::compile_statement(const ASTNode * statement_n)
 
 		compile_variable_declaration(var_decl_n);
 	}
+	// Block
+	else if (statement_n->n_type == NodeType::N_BLOCK)
+	{
+		auto block_n = dynamic_cast<const BlockNode *>(statement_n);
+
+		if (!block_n)
+			throw std::logic_error("downcasting failed in `Compiler::compile_statement()`");
+
+		compile_block(block_n);
+	}
 }
 
 void Compiler::compile_variable_declaration(const VariableDeclarationNode * var_decl_n)
@@ -49,7 +75,9 @@ void Compiler::compile_variable_declaration(const VariableDeclarationNode * var_
 	}
 
 	uint8_t arg = variables.size();
-	variables.push_back(std::make_shared<Variable>(std::string(var_decl_n->name->name)));
+	auto variable = scope->find_variable(var_decl_n->name->name);
+	variables.push_back(variable->second);
+	scope->variable_indices[std::string(var_decl_n->name->name)] = arg;
 
 	if (var_decl_n->value)
 	{
@@ -152,17 +180,9 @@ void Compiler::compile_unary_operator(const OperatorNode * operator_n)
 
 void Compiler::compile_identifier(const IdentifierNode * identifier_n)
 {
-	for (uint8_t i = 0; i < variables.size(); ++i)
-	{
-		if (variables[i]->name == identifier_n->name)
-		{
-			emit(OP_LOAD_VAR, i);
-			return;
-		}
-	}
-
-	// just in case of a bug
-	throw std::runtime_error("variable `" + std::string(identifier_n->name) + "` not found");
+	std::string name = std::string(identifier_n->name);
+	uint8_t variable = scope->find_variable_index(name);
+	emit(OP_LOAD_VAR, variable);
 }
 
 void Compiler::compile_literal(const LiteralNode * literal_n)

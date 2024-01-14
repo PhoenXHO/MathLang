@@ -67,16 +67,16 @@ std::unique_ptr<Token> Lexer::scan_tk(void)
 			token = make_tk(TokenType::T_RIGHT_PAREN, ")", column, pos);
 			break;
 		case '[':
-			token = make_tk(TokenType::T_LEFT_SQR_BR, "[", column, pos);
+			token = make_tk(TokenType::T_LEFT_BRACKET, "[", column, pos);
 			break;
 		case ']':
-			token = make_tk(TokenType::T_RIGHT_SQR_BR, "]", column, pos);
+			token = make_tk(TokenType::T_RIGHT_BRACKET, "]", column, pos);
 			break;
 		case '{':
-			token = make_tk(TokenType::T_LEFT_CURL_BR, "{", column, pos);
+			token = make_tk(TokenType::T_LEFT_BRACE, "{", column, pos);
 			break;
 		case '}':
-			token = make_tk(TokenType::T_RIGHT_CURL_BR, "}", column, pos);
+			token = make_tk(TokenType::T_RIGHT_BRACE, "}", column, pos);
 			break;
 
 		// * OTHERS
@@ -224,6 +224,8 @@ void Lexer::skip_whites(void)
 			case '/':
 				if (peek_next() == '/')
 					skip_comment();
+				else
+					return;
 				break;
 
 			default: return;

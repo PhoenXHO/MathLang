@@ -11,7 +11,7 @@ void report_error(std::unique_ptr<Error> & err, std::string_view source);
 size_t find_previous_line_start(std::string_view source, size_t start_from);
 size_t find_next_line_end(std::string_view source, size_t start_from);
 
-std::unordered_map<ErrorType, std::string> error_type_string =
+std::unordered_map<ErrorType, const char *> error_type_string =
 {
 	{ ErrorType::LEXICAL_ERR,		"LEXICAL_ERROR"		},
 	{ ErrorType::SYNTAX_ERR,		"SYNTAX_ERROR"		},
@@ -19,6 +19,9 @@ std::unordered_map<ErrorType, std::string> error_type_string =
 	{ ErrorType::COMPILE_ERR,		"COMPILATION_ERROR" },
 	{ ErrorType::RUNTIME_ERR,		"RUNTIME_ERROR"		}
 };
+
+const char * error_type_to_string(ErrorType type)
+{ return error_type_string[type]; }
 
 void ErrorHandler::report_errors(std::string_view source)
 {
@@ -35,7 +38,7 @@ void report_error(std::unique_ptr<Error> & err, std::string_view source)
 	std::cerr << "[error] " << file_name << ": "
 		<< "line " << err->line()
 		<< ", column " << err->column() << "\n"
-		<< error_type_string[err->type()] << ": "
+		<< error_type_to_string(err->type()) << ": "
 		<< err->message();
 	if (additional_info != "")
 		std::cerr << " : `" << additional_info << '`';

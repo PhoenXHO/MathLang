@@ -42,8 +42,8 @@ struct Token
 		// Special symbols
 		T_COMMA, T_SEMICOLON,
 		T_LEFT_PAREN, T_RIGHT_PAREN,
-		T_LEFT_SQR_BR, T_RIGHT_SQR_BR,
-		T_LEFT_CURL_BR, T_RIGHT_CURL_BR,
+		T_LEFT_BRACKET, T_RIGHT_BRACKET,
+		T_LEFT_BRACE, T_RIGHT_BRACE,
 		T_RETURN,
 
 		// Others
@@ -90,7 +90,6 @@ struct EOFToken : Token
 	{}
 };
 
-std::string tk_type_to_string(TokenType t_type);
 TokenType check_word_t_type(std::string_view lexeme);
 
 #endif // TOKEN_H

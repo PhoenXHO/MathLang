@@ -14,6 +14,7 @@ struct BuiltinOperator;
 
 struct AST;
 struct ASTNode;
+struct BlockNode;
 struct VariableDeclarationNode;
 struct ExpressionStatementNode;
 struct ExpressionNode;
@@ -26,6 +27,7 @@ struct TypeNode;
 enum class NodeType
 {
 	N_STATEMENT,
+	N_BLOCK,
 	N_EXPR_STMT,
 	N_VAR_DECL,
 	N_EXPR,
@@ -36,7 +38,7 @@ enum class NodeType
 	N_TYPE
 };
 
-// <statement> ::= <expression-statement> | <variable-declaration>
+// <statement> ::= <expression-statement> | <block> | <variable-declaration>
 struct AST
 {
 	std::vector<std::unique_ptr<ASTNode>> statements;
@@ -53,6 +55,16 @@ struct ASTNode
 	ASTNode(NodeType n_type) : n_type(n_type) {}
 	virtual ~ASTNode() = default;
 	virtual void print(int depth) const = 0;
+};
+
+// <block> ::= "{" { <statement> } "}"
+struct BlockNode : public ASTNode
+{
+	std::vector<std::unique_ptr<ASTNode>> statements;
+	uint8_t relative_index;
+
+	BlockNode(void) : ASTNode(NodeType::N_BLOCK) {}
+	virtual void print(int depth) const override;
 };
 
 // <variable-declaration> ::= "let" <type> <identifier> [ ":=" ( <expression> | <node> ) ]

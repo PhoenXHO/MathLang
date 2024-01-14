@@ -8,6 +8,7 @@
 #include "ast.h"
 #include "mathobj.h"
 #include "operator.h"
+#include "scope.h"
 
 class Compiler
 {
@@ -18,6 +19,7 @@ class Compiler
 	void emit(uint8_t op_code);
 	void emit(uint8_t op_code, uint8_t arg);
 
+	void compile_block					(const BlockNode * block_n)						;
 	void compile_statement				(const ASTNode * statement_n)					;
 	void compile_variable_declaration	(const VariableDeclarationNode * var_decl_n)	;
 	void compile_expression				(const ASTNode * expression_n)					;
@@ -34,15 +36,20 @@ class Compiler
 public:
 	Compiler(
 		const AST & ast,
-		std::unique_ptr<OperatorTable> & operator_table
+		std::unique_ptr<OperatorTable> & operator_table,
+		std::shared_ptr<Scope> & scope
 	) :
 		ast(ast),
-		operator_table(std::move(operator_table))
+		operator_table(std::move(operator_table)),
+		scope(scope)
 	{}
 
 	enum OpCode
 	{
 		OP_LOAD_CONST,
+
+		OP_ENTER_BLOCK,
+		OP_LEAVE_BLOCK,
 
 		OP_SET_VAR,
 		OP_LOAD_VAR,
@@ -54,6 +61,7 @@ public:
 		OP_RETURN
 	};
 
+	std::shared_ptr<Scope> scope;
 	std::vector<std::shared_ptr<MathObj>> constants;
 	std::vector<std::shared_ptr<Variable>> variables;
 	std::vector<std::pair<std::shared_ptr<const OperatorFunction>, std::string>> operators;

@@ -25,6 +25,28 @@ MathObjType TypeChecker::check_types(const std::unique_ptr<ASTNode> & node)
 
 	switch (node->n_type)
 	{
+		case NodeType::N_BLOCK:
+		{
+			if (scope->children.size() >= UINT8_MAX)
+			{
+				register_semantic_error(
+					"too many nested scopes",
+					"",
+					node.get()
+				);
+				return MathObjType::MO_NONE;
+			}
+
+			uint8_t index = scope->children.size();
+			push_scope(scope);
+			auto * block = static_cast<BlockNode *>(node.get());
+			block->relative_index = index;
+
+			for (const auto & statement : block->statements)
+				check_types(statement);
+			leave_scope(scope);
+			break;
+		}
 		case NodeType::N_EXPR_STMT:
 		{
 			auto * expr_stmt = static_cast<ExpressionStatementNode *>(node.get());
@@ -50,9 +72,9 @@ MathObjType TypeChecker::check_types(const std::unique_ptr<ASTNode> & node)
 				}
 			}
 
-			// Look for a variable with the same name in the current scope
-			auto it = variables.find(var_decl->name->name);
-			if (it != variables.end())
+			// Look for a variable with the same name
+			auto it = scope->find_variable(var_decl->name->name);
+			if (it != scope->variables.end())
 			{
 				register_semantic_error(
 					"variable `" + std::string(var_decl->name->name) + "` is already defined in this scope",
@@ -63,7 +85,7 @@ MathObjType TypeChecker::check_types(const std::unique_ptr<ASTNode> & node)
 			}
 			
 			// Add the variable to the list of variables
-			variables[var_decl->name->name] = var_type;
+			scope->variables[var_decl->name->name] = std::make_shared<Variable>(var_decl->name->name, var_type);
 
 			return var_type;
 		}
@@ -164,8 +186,8 @@ MathObjType TypeChecker::check_types(const std::unique_ptr<ASTNode> & node)
 		case NodeType::N_IDENTIFIER:
 		{
 			auto * identifier = static_cast<IdentifierNode *>(node.get());
-			auto it = variables.find(identifier->name);
-			if (it == variables.end())
+			auto it = scope->find_variable(identifier->name);
+			if (it == scope->variables.end())
 			{
 				register_semantic_error(
 					"variable `" + std::string(identifier->name) + "` is not defined in this scope",
@@ -174,7 +196,7 @@ MathObjType TypeChecker::check_types(const std::unique_ptr<ASTNode> & node)
 				);
 				return MathObjType::MO_NONE;
 			}
-			return it->second;
+			return it->second->value_type();
 		}
 	}
 	return MathObjType::MO_NONE;

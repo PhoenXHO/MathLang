@@ -25,12 +25,36 @@ Parser::Parser(Lexer & lexer) : lexer(std::make_unique<Lexer>(lexer))
 	operators->register_builtin_operators();
 }
 
+std::unique_ptr<BlockNode> Parser::block_n(void)
+{
+	std::unique_ptr<BlockNode> block_node { new BlockNode };
+	block_node->line = curr_tk->line();
+	block_node->column = curr_tk->column();
+	block_node->start_position = curr_tk->position();
+
+	while (consume_tk() && curr_tk->type() != TokenType::T_RIGHT_BRACE && curr_tk->type() != TokenType::T_EOF)
+	{
+		block_node
+			->statements
+			.push_back(statement_n());
+		panic_mode = false;
+	}
+
+	expect_tk(TokenType::T_RIGHT_BRACE, "`}` expected after block");
+
+	block_node->end_position = curr_tk->position() + 1;
+	return block_node;
+}
+
 std::unique_ptr<ASTNode> Parser::statement_n(void)
 {
 	switch (curr_tk->type())
 	{
 		case TokenType::T_LET:
 			return variable_declaration_n();
+
+		case TokenType::T_LEFT_BRACE:
+			return block_n();
 		
 		case TokenType::T_EOF:
 			return nullptr;

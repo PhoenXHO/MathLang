@@ -23,6 +23,8 @@ bool read_arguments(int argc, const char ** argv);
 size_t find_dot(std::string_view path);
 void check_file_extension(std::string_view path);
 std::string_view extract_file_name(std::string_view path);
+void tabs_to_spaces(std::string & source);
+
 void repl(void);
 
 std::string_view file_name;
@@ -42,6 +44,7 @@ int main(int argc, const char ** argv)
 	catch (const std::exception & e)
 	{
 		std::cerr << "error: " << e.what() << " (use `mathlang -h` for help)" << '\n';
+		return 1;
 	}
 
 	// If init_repl is still true, start the REPL
@@ -54,6 +57,7 @@ int main(int argc, const char ** argv)
 		catch (const std::exception & e)
 		{
 			std::cerr << "error: " << e.what() << '\n';
+			return 1;
 		}
 	}
 
@@ -65,6 +69,7 @@ void repl(void)
 	print_version(); // print version info
 	std::cout << "Type `quit` to terminate the interpreter\n";
 
+	VM vm;
 	// loop continuously to read user input
 	while (true)
 	{
@@ -86,8 +91,7 @@ void repl(void)
 			continue;
 		}
 
-		VM vm(line);
-		vm.interpret_source();
+		vm.interpret_source(line);
 		std::cout << std::endl;
 	}
 }
@@ -156,8 +160,10 @@ void open_file(std::string path)
 	buffer << file.rdbuf();
 
 	std::string source = buffer.str();
-	VM vm(source);
-	vm.interpret_source();
+	tabs_to_spaces(source);
+
+	VM vm;
+	vm.interpret_source(source);
 
 	file.close();
 }
@@ -200,6 +206,16 @@ size_t find_dot(std::string_view path)
 			return i;
 
 	return std::string::npos;
+}
+
+void tabs_to_spaces(std::string & source)
+{
+	size_t tab_index = source.find('\t');
+	while (tab_index != std::string::npos)
+	{
+		source.replace(tab_index, 1, "    ");
+		tab_index = source.find('\t');
+	}
 }
 
 

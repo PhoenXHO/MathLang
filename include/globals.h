@@ -19,6 +19,4 @@ struct config
 
 extern std::string_view file_name;
 
-extern std::shared_ptr<Compiler> compiler;
-
 #endif // GLOBALS_H

@@ -36,55 +36,6 @@ TokenType check_word_t_type(std::string_view lexeme)
 		TokenType::T_IDENTIFIER;
 }
 
-std::string tk_type_to_string(TokenType t_type)
-{
-	switch (t_type)
-	{
-		// * KEYWORDS
-		case TokenType::T_IDENTIFIER:
-			return "IDENTIFIER";
-
-		// * OPERATORS
-		case TokenType::T_OPERATOR_SYM:
-			return "OPERATOR_SYM";
-
-		// * LITERALS
-		case TokenType::T_INTEGER_LITERAL:
-			return "INT";
-		case TokenType::T_REAL_LITERAL:
-			return "REAL";
-
-		// * SPECIAL SYMBOLS
-		case TokenType::T_COMMA:
-			return "COMMA";
-		case TokenType::T_SEMICOLON:
-			return "SEMICOLON";
-		case TokenType::T_LEFT_PAREN:
-			return "LEFT PAREN";
-		case TokenType::T_RIGHT_PAREN:
-			return "RIGHT PAREN";
-		case TokenType::T_LEFT_SQR_BR:
-			return "LEFT SQUARE BR";
-		case TokenType::T_RIGHT_SQR_BR:
-			return "RIGHT SQUARE BR";
-		case TokenType::T_LEFT_CURL_BR:
-			return "LEFT CURLY BR";
-		case TokenType::T_RIGHT_CURL_BR:
-			return "RIGHT CURLY BR";
-		case TokenType::T_RETURN:
-			return "RETURN";
-
-		// * OTHERS
-		case TokenType::T_ERROR:
-			return "ERROR";
-		case TokenType::T_EOF:
-			return "EOF";
-
-		default:
-			return "KEYWORD";
-	}
-}
-
 bool Token::is_literal(void)
 { return _type_ == TokenType::T_INTEGER_LITERAL ||  _type_ == TokenType::T_REAL_LITERAL; }
 

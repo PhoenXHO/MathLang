@@ -6,6 +6,7 @@
 
 #include "ast.h"
 #include "mathobj.h"
+#include "scope.h"
 
 class TypeChecker
 {
@@ -17,11 +18,16 @@ class TypeChecker
 	void register_semantic_error(std::string message, std::string additional_info, const ASTNode * node);
 
 public:
-	std::unordered_map<std::string_view, MathObjType> variables;
+	std::shared_ptr<Scope> scope;
 	
-	TypeChecker(const AST & ast, std::unique_ptr<OperatorTable> operator_table) :
+	TypeChecker(
+		const AST & ast,
+		std::unique_ptr<OperatorTable> operator_table,
+		std::shared_ptr<Scope> & scope
+	) :
 		ast(ast),
-		operator_table(std::move(operator_table))
+		operator_table(std::move(operator_table)),
+		scope(scope)
 	{}
 
 	void check_types(void);
