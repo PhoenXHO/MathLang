@@ -2,7 +2,7 @@
 #include "globals.h"
 #include "ast.h"
 #include "error.h"
-#include <iostream>
+#include "debug.h"
 
 std::shared_ptr<Parser> parser;
 
@@ -25,6 +25,33 @@ Parser::Parser(Lexer & lexer) : lexer(std::make_unique<Lexer>(lexer))
 	operators->register_builtin_operators();
 }
 
+std::unique_ptr<ASTNode> Parser::statement_n(void)
+{
+	switch (curr_tk->type())
+	{
+		case TokenType::T_LET:
+			return variable_declaration_n();
+
+		case TokenType::T_LEFT_BRACE:
+			return block_n();
+
+		case TokenType::T_DEFINE:
+			return function_declaration_n();
+
+		case TokenType::T_RETURN:
+			return return_n();
+
+		case TokenType::T_COLON_ARROW:
+			return return_statement_n();
+		
+		case TokenType::T_EOF:
+			return nullptr;
+
+		default:
+			return expression_statement_n();
+	}
+}
+
 std::unique_ptr<BlockNode> Parser::block_n(void)
 {
 	std::unique_ptr<BlockNode> block_node { new BlockNode };
@@ -37,7 +64,6 @@ std::unique_ptr<BlockNode> Parser::block_n(void)
 		block_node
 			->statements
 			.push_back(statement_n());
-		panic_mode = false;
 	}
 
 	expect_tk(TokenType::T_RIGHT_BRACE, "`}` expected after block");
@@ -46,22 +72,175 @@ std::unique_ptr<BlockNode> Parser::block_n(void)
 	return block_node;
 }
 
-std::unique_ptr<ASTNode> Parser::statement_n(void)
+std::unique_ptr<ReturnNode> Parser::return_n(void)
 {
-	switch (curr_tk->type())
+	std::unique_ptr<ReturnNode> return_node { new ReturnNode };
+	return_node->line = curr_tk->line();
+	return_node->column = curr_tk->column();
+	return_node->start_position = curr_tk->position();
+	return_node->end_position = curr_tk->position() + curr_tk->lexeme().length();
+	consume_tk(); // consume `return`
+	expect_tk(TokenType::T_SEMICOLON, "`;` expected after return statement");
+	return return_node;
+}
+
+std::unique_ptr<ReturnStatementNode> Parser::return_statement_n(void)
+{
+	std::unique_ptr<ReturnStatementNode> return_stmt_node { new ReturnStatementNode };
+	return_stmt_node->line = curr_tk->line();
+	return_stmt_node->column = curr_tk->column();
+	return_stmt_node->start_position = curr_tk->position();
+
+	consume_tk(); // consume `:->`
+
+	return_stmt_node->value = expression_n(P_MIN);
+	if (!return_stmt_node->value)
 	{
-		case TokenType::T_LET:
-			return variable_declaration_n();
-
-		case TokenType::T_LEFT_BRACE:
-			return block_n();
-		
-		case TokenType::T_EOF:
-			return nullptr;
-
-		default:
-			return expression_statement_n();
+		register_syntax_error("expression expected after `:->`");
+		return nullptr;
 	}
+	expect_tk(TokenType::T_SEMICOLON, "`;` expected after return statement");
+
+	return_stmt_node->end_position = return_stmt_node->value->end_position;
+	return return_stmt_node;
+}
+
+std::unique_ptr<FunctionDeclarationNode> Parser::function_declaration_n(void)
+{
+	std::unique_ptr<FunctionDeclarationNode> func_dec_node { new FunctionDeclarationNode };
+	func_dec_node->line = curr_tk->line();
+	func_dec_node->column = curr_tk->column();
+	func_dec_node->start_position = curr_tk->position();
+
+	consume_tk(); // consume `define`
+
+	func_dec_node->name = identifier_n();
+	if (!func_dec_node->name)
+	{
+		register_syntax_error("identifier expected after `define`");
+		return nullptr;
+	}
+	consume_tk();
+
+	expect_tk(TokenType::T_LEFT_PAREN, "`(` expected after function name");
+	while (consume_tk()
+		&& curr_tk->type() != TokenType::T_RIGHT_PAREN
+		&& curr_tk->type() != TokenType::T_EOF)
+	{
+		func_dec_node
+			->parameters
+			.push_back(parameter_n());
+		panic_mode = false;
+
+		if (curr_tk->type() != TokenType::T_COMMA)
+			break;
+	}
+	expect_tk(TokenType::T_RIGHT_PAREN, "`)` expected after function parameters");
+
+	if (next_tk->type() == TokenType::T_ARROW)
+	{
+		consume_tk(); // consume `)`
+		consume_tk(); // consume `->`
+		func_dec_node->return_type = type_n();
+		if (!func_dec_node->return_type)
+		{
+			register_syntax_error("return type expected after `->`");
+			return nullptr;
+		}
+		func_dec_node->end_position = curr_tk->position() + curr_tk->lexeme().length();
+		consume_tk();
+	}
+	else
+	{
+		func_dec_node->end_position = curr_tk->position() + 1;
+		consume_tk(); // consume `)`
+		func_dec_node->return_type = std::make_unique<TypeNode>(MathObjType::MO_NONE);
+	}
+
+	expect_tk(TokenType::T_LEFT_BRACE, "`{` expected after function declaration");
+
+	func_dec_node->body = block_n();
+	if (!func_dec_node->body)
+	{
+		register_syntax_error("function body expected");
+		return nullptr;
+	}
+
+	return func_dec_node;
+}
+
+std::unique_ptr<FunctionCallNode> Parser::function_call_n(void)
+{
+	std::unique_ptr<FunctionCallNode> func_call_node { new FunctionCallNode };
+	func_call_node->line = curr_tk->line();
+	func_call_node->column = curr_tk->column();
+	func_call_node->start_position = curr_tk->position();
+
+	func_call_node->name = identifier_n();
+	if (!func_call_node->name)
+	{
+		register_syntax_error("identifier expected as function name");
+		return nullptr;
+	}
+	consume_tk();
+
+	// just in case of a bug
+	expect_tk(TokenType::T_LEFT_PAREN, "`(` expected after function name");
+	while (consume_tk()
+		&& curr_tk->type() != TokenType::T_RIGHT_PAREN
+		&& curr_tk->type() != TokenType::T_EOF)
+	{
+		func_call_node
+			->arguments
+			.push_back(expression_n(P_MIN));
+		panic_mode = false;
+
+		if (curr_tk->type() != TokenType::T_COMMA)
+			break;
+	}
+	expect_tk(TokenType::T_RIGHT_PAREN, "`)` expected after function arguments");
+
+	func_call_node->end_position = curr_tk->position() + 1;
+	return func_call_node;
+}
+
+std::unique_ptr<ParameterNode> Parser::parameter_n(void)
+{
+	std::unique_ptr<ParameterNode> param_node { new ParameterNode };
+	param_node->line = curr_tk->line();
+	param_node->column = curr_tk->column();
+	param_node->start_position = curr_tk->position();
+
+	param_node->name = identifier_n();
+	if (!param_node->name)
+	{
+		register_syntax_error("identifier expected as parameter name");
+		return nullptr;
+	}
+	consume_tk();
+
+	expect_tk(TokenType::T_COLON, "`:` expected after parameter name");
+	consume_tk(); // consume `:`
+	param_node->type = type_n();
+	if (!param_node->type)
+	{
+		register_syntax_error("type expected after `:`");
+		return nullptr;
+	}
+	consume_tk();
+
+	if (curr_tk->type() == TokenType::T_OPERATOR_SYM && curr_tk->lexeme() == "=")
+	{
+		consume_tk(); // consume `=`
+		param_node->default_value = expression_n(P_MIN);
+	}
+	else
+	{
+		param_node->default_value = nullptr;
+	}
+
+	param_node->end_position = curr_tk->position() + 1;
+	return param_node;
 }
 
 std::unique_ptr<VariableDeclarationNode> Parser::variable_declaration_n(void)
@@ -72,8 +251,11 @@ std::unique_ptr<VariableDeclarationNode> Parser::variable_declaration_n(void)
 	var_dec_node->start_position = curr_tk->position();
 
 	var_dec_node->type = type_n();
-	if (!var_dec_node->type)
+	if (!var_dec_node->type || var_dec_node->type->type == MathObjType::MO_NONE)
+	{
+		register_syntax_error("type expected after `let`");
 		return nullptr;
+	}
 	consume_tk();
 	
 	var_dec_node->name = identifier_n();
@@ -88,6 +270,11 @@ std::unique_ptr<VariableDeclarationNode> Parser::variable_declaration_n(void)
 	{
 		consume_tk(); // consume `:=`
 		var_dec_node->value = expression_n(P_MIN);
+		if (!var_dec_node->value)
+		{
+			register_syntax_error("expression expected after `:=`");
+			return nullptr;
+		}
 	}
 	else
 	{
@@ -105,6 +292,11 @@ std::unique_ptr<ExpressionStatementNode> Parser::expression_statement_n(void)
 	std::unique_ptr<ExpressionStatementNode> expr_stmt_node { new ExpressionStatementNode };
 
 	auto expr_node = expression_n(P_MIN);
+	if (!expr_node)
+	{
+		register_syntax_error("expression expected");
+		return nullptr;
+	}
 	expect_tk(TokenType::T_SEMICOLON, "`;` expected after expression");
 
 	expr_stmt_node
@@ -117,6 +309,8 @@ std::unique_ptr<ExpressionStatementNode> Parser::expression_statement_n(void)
 std::unique_ptr<ASTNode> Parser::expression_n(Precedence min_precedence)
 {
 	std::unique_ptr<ASTNode> left = operand_n();
+	if (!left)
+		return nullptr;
 	consume_tk();
 
 	while (!curr_tk->is_eof() && curr_tk->type() == TokenType::T_OPERATOR_SYM)
@@ -174,11 +368,13 @@ std::unique_ptr<ASTNode> Parser::operand_n(void)
 
 	if (operand_node->primary)
 		operand_node->end_position = operand_node->primary->end_position;
+	else
+		return nullptr;
 
 	if (!operand_node->op)
 	{
 		auto & primary = operand_node->primary;
-		if (primary && (primary->n_type == NodeType::N_EXPR || primary->n_type == NodeType::N_OPERAND))
+		if (primary)
 			return move(primary);
 	}
 	
@@ -190,6 +386,10 @@ std::unique_ptr<ASTNode> Parser::primary_n(void)
 	if (curr_tk->is_literal())
 	{
 		return literal_n();
+	}
+	else if (curr_tk->is_identifier() && next_tk->type() == TokenType::T_LEFT_PAREN)
+	{
+		return function_call_n();
 	}
 	else if (curr_tk->is_identifier())
 	{
@@ -203,6 +403,12 @@ std::unique_ptr<ASTNode> Parser::primary_n(void)
 
 		consume_tk(); // consume `(`
 		auto expr = expression_n(P_MIN);
+		if (!expr)
+		{
+			register_syntax_error("expression expected");
+			return nullptr;
+		}
+
 		expr->line = line;
 		expr->column = column;
 		expr->start_position = start_position;
@@ -216,10 +422,10 @@ std::unique_ptr<ASTNode> Parser::primary_n(void)
 	{
 		return operand_n();
 	}
-	else
-	{
-		register_syntax_error("expression expected");
-	}
+	//else
+	//{
+	//	register_syntax_error("expression expected");
+	//}
 
 	return nullptr;
 }
@@ -305,6 +511,9 @@ std::unique_ptr<TypeNode> Parser::type_n(void)
 		case TokenType::T_REAL:
 			type_node->type = MathObjType::MO_REAL;
 			break;
+		case TokenType::T_NONE:
+			type_node->type = MathObjType::MO_NONE;
+			break;
 
 		default:
 			return nullptr;
@@ -362,6 +571,12 @@ bool Parser::consume_tk(void)
 		curr_tk = lexer->scan_tk();
 		next_tk = lexer->scan_tk();
 	}
+
+	if (config::print_lexer_output)
+		d_print_token(curr_tk);
+	
+	if (curr_tk->type() == TokenType::T_ERROR)
+		panic_mode = true;
 
 	return curr_tk->type() != TokenType::T_EOF;
 }

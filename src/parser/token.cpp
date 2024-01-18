@@ -22,6 +22,7 @@ std::unordered_map<std::string_view, TokenType> keywords = {
 	{"none", TokenType::T_NONE},
 	{"operator", TokenType::T_OPERATOR},
 	{"print", TokenType::T_OPERATOR_SYM},
+	{"return", TokenType::T_RETURN},
 	{"use", TokenType::T_USE},
 };
 

@@ -34,8 +34,42 @@ _This project is still a work in progress. If you are interested in contributing
 	or,
 
 		let <type> <identifier> := <expression>;
+
+<!--7. **Variable Assignment**: MathLang allows you to assign values to variables using the `=` operator.-->
+
+7. **Functions**: MathLang allows you to define functions using the `define` keyword followed by the function name, parameter list, and return type. Optionally, you can specify the return type using the `->` operator (the type will be `none` if not specified).
+
+	Syntax:
+
+		define <name> (<param-list>) [-> <return-type>] {...}
+
+	You can use the `return` keyword to return from a non-returning function. As for returning functions, you can use the `:->` operator to return a value from the function.
+
+	Syntax:
+
+		return;
+	or,
+
+		:-> <return-value>;
+
+_Note: Function overloading is not supported yet. This feature is planned for future versions of MathLang. The same applies to default parameters._
+
+8. **Function Calls**: MathLang allows you to call functions using the function name and followed by a parameter list encapsulated in parentheses.
+
+	Syntax:
+
+		<name>(<param-list>);
+
+8. **Comments**: MathLang supports single-line comments only for now.
+
+	Syntax:
+
+		// single-line comment
 	
 # Future Features
+## REPL
+A Read-Eval-Print Loop (REPL) is in development. It will provide an interactive environment for users to experiment with MathLang code, execute expressions, and receive immediate feedback.
+
 ## More literal types
 Future versions of MathLang will introduce more literal types, expanding the language's support for various data types.
 
@@ -51,13 +85,6 @@ Syntax:
 	Else If [<condition2>] {...}
 	...
 	Else {...}
-
-## User-Defined Functions
-Users will be able to define their own functions with custom logic.
-
-Syntax:
-
-	define <identifier>(<type> param1, ...) -> <type>;
 
 ## Classes and MathObjs
 Classes and MathObjs is a planned feature in MathLang that will introduce object-oriented programming capabilities to the language. With this feature, users will be able to define classes, create objects, and perform operations on those objects using methods and properties. This will enable users to organize their code into reusable and modular components, enhancing code readability and maintainability.

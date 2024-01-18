@@ -16,20 +16,22 @@ using BuiltinOpFunc = std::function<std::shared_ptr<MathObj> (const MathObj &, c
 using OpImplementations = std::unordered_multimap<std::string, std::shared_ptr<OperatorFunction>>;
 using Operators = std::unordered_multimap<std::string, std::shared_ptr<Operator>>;
 
+// Fixity of an operator (left or right)
 enum class Fixity
 {
-	F_LEFT,
-	F_RIGHT
+	F_LEFT, // Left fixity
+	F_RIGHT // Right fixity
 };
 
+// Precedence of an operator
 enum Precedence
 {
-	P_MIN = 0,
+	P_MIN = 0, // Minimum precedence
 	P_ASSIGNMENT,
 	P_ADDITION,
 	P_MULTIPLICATION,
 	P_EXPONENTIATION,
-	P_UNARY
+	P_UNARY, // Unary operators
 };
 
 struct Operator
@@ -56,6 +58,7 @@ struct Operator
 };
 typedef Operator::OperatorType OperatorType;
 
+// Implementation of a builtin operator.
 struct OperatorFunction
 {
 	OperatorFunction(
@@ -76,22 +79,24 @@ struct OperatorFunction
 	MathObjType return_type;
 };
 
+// Table of operators
 class OperatorTable
 {
 	Operators operators;
-	OpImplementations binary_implemetations;
-	OpImplementations unary_implemetations;
+	OpImplementations binary_implemetations; // Binary operator implementations
+	OpImplementations unary_implemetations; // Unary operator implementations
 
 public:
-	friend class Compiler;
+	friend class Compiler; // Compiler needs access to the operator table
 	
 	void register_builtin_operators(void);
-
 	void register_operator(std::string name, std::shared_ptr<Operator> op);
-	void register_un_implementation(std::string name, std::shared_ptr<OperatorFunction> op_func);
-	void register_bin_implementation(std::string name, std::shared_ptr<OperatorFunction> op_func);
+	void register_unary_implementation(std::string name, std::shared_ptr<OperatorFunction> op_func);
+	void register_binary_implementation(std::string name, std::shared_ptr<OperatorFunction> op_func);
 
+	// Find an operator by name
 	std::shared_ptr<const Operator> find(std::string_view op_name) const;
+	// Find an operator implementation by name
 	std::pair<OpImplementations::const_iterator, OpImplementations::const_iterator> get_implementations(std::string_view op_name, bool unary = false) const;
 };
 

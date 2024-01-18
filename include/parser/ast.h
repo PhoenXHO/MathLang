@@ -15,6 +15,8 @@ struct BuiltinOperator;
 struct AST;
 struct ASTNode;
 struct BlockNode;
+struct FunctionDeclarationNode;
+struct ParameterNode;
 struct VariableDeclarationNode;
 struct ExpressionStatementNode;
 struct ExpressionNode;
@@ -28,6 +30,11 @@ enum class NodeType
 {
 	N_STATEMENT,
 	N_BLOCK,
+	N_RETURN,
+	N_RETURN_STMT,
+	N_FUNC_DECL,
+	N_PARAMETER,
+	N_FUNC_CALL,
 	N_EXPR_STMT,
 	N_VAR_DECL,
 	N_EXPR,
@@ -64,6 +71,55 @@ struct BlockNode : public ASTNode
 	uint8_t relative_index;
 
 	BlockNode(void) : ASTNode(NodeType::N_BLOCK) {}
+	virtual void print(int depth) const override;
+};
+
+// <return> ::= "return"
+struct ReturnNode : public ASTNode
+{
+	ReturnNode(void) : ASTNode(NodeType::N_RETURN) {}
+	virtual void print(int depth) const override;
+};
+
+// <return-statement> ::= ":->" <expression>
+struct ReturnStatementNode : public ASTNode
+{
+	std::unique_ptr<ASTNode> value;
+
+	ReturnStatementNode(void) : ASTNode(NodeType::N_RETURN_STMT) {}
+	virtual void print(int depth) const override;
+};
+
+// <function-declaration> ::= "define" <identifier> "(" [ <parameter> { "," <parameter> } ] ")" [ "->" <type> ] <block>
+struct FunctionDeclarationNode : public ASTNode
+{
+	std::unique_ptr<IdentifierNode> name;
+	std::vector<std::unique_ptr<ParameterNode>> parameters;
+	std::unique_ptr<TypeNode> return_type;
+	std::unique_ptr<BlockNode> body;
+
+	FunctionDeclarationNode(void) : ASTNode(NodeType::N_FUNC_DECL) {}
+	virtual void print(int depth) const override;
+};
+
+// <function-call> ::= <identifier> "(" [ <expression> { "," <expression> } ] ")"
+struct FunctionCallNode : public ASTNode
+{
+	std::unique_ptr<IdentifierNode> name;
+	std::vector<std::unique_ptr<ASTNode>> arguments;
+
+	FunctionCallNode(void) : ASTNode(NodeType::N_FUNC_CALL) {}
+	virtual void print(int depth) const override;
+};
+
+// <parameter> ::= <identifier> ":" <type> [ "=" <expression> ]
+struct ParameterNode : public ASTNode
+{
+	std::unique_ptr<IdentifierNode> name;
+	std::unique_ptr<TypeNode> type;
+	std::unique_ptr<ASTNode> default_value;
+
+	ParameterNode(void) : ASTNode(NodeType::N_PARAMETER) {}
 	virtual void print(int depth) const override;
 };
 
@@ -149,6 +205,7 @@ struct TypeNode : public ASTNode
 	MathObjType type;
 
 	TypeNode(void) : ASTNode(NodeType::N_TYPE) {}
+	TypeNode(MathObjType type) : type(type), ASTNode(NodeType::N_TYPE) {}
 	virtual void print(int depth) const override;
 };
 

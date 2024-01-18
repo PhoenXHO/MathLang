@@ -28,27 +28,37 @@ std::unique_ptr<Token> Lexer::scan_tk(void)
 	if (isdigit(curr) || (curr == '.' && isdigit(next)))
 	{
 		token = make_number_tk();
-		goto return_token;
+		return token;
 	}
 
 	// * IDENTIFIERS & KEYWORDS
 	if (isalpha(curr) || curr == '_')
 	{
 		token = make_word_tk();
-		goto return_token;
+		return token;
 	}
 
 	// * OPERATORS
 	if (is_operator_sym(curr))
 	{
-		if (curr == ':' && next == '-' && peek(2) == '>')
+		if (curr == ':' && next == '-' && peek(2) == '>' && !is_operator_sym(peek(3)))
 		{
-			token = make_tk(TokenType::T_RETURN, ":->", column, pos);
+			token = make_tk(TokenType::T_COLON_ARROW, ":->", column, pos);
 			advance(3);
+		}
+		else if (curr == ':' && !is_operator_sym(next))
+		{
+			token = make_tk(TokenType::T_COLON, ":", column, pos);
+			advance();
+		}
+		else if (curr == '-' && next == '>' && !is_operator_sym(peek(2)))
+		{
+			token = make_tk(TokenType::T_ARROW, "->", column, pos);
+			advance(2);
 		}
 		else
 			token = make_operator_tk();
-		goto return_token;
+		return token;
 	}
 	
 	switch (curr)
@@ -90,10 +100,6 @@ std::unique_ptr<Token> Lexer::scan_tk(void)
 	}
 
 	advance();
-
-return_token:
-	if (config::print_lexer_output)
-		d_print_token(token);
 
 	return token;
 }
@@ -235,9 +241,9 @@ void Lexer::skip_whites(void)
 
 void Lexer::skip_comment(void)
 {
-	char c = advance();
-	while (!at_end() && c != '\n')
-		c = advance();
+	advance();
+	while (!at_end() && peek() != '\n')
+		advance();
 }
 
 bool is_operator_sym(char c)
@@ -273,4 +279,4 @@ char Lexer::advance(int jump)
 }
 
 bool Lexer::at_end(void)
-{ return pos > source.length(); }
+{ return pos >= source.length() || source[pos] == '\0'; }

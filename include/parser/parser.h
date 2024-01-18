@@ -25,8 +25,13 @@ private:
 	void register_syntax_error(std::string message);
 	void synchronize(void);
 
-	std::unique_ptr<BlockNode>					block_n(void)							;
 	std::unique_ptr<ASTNode>					statement_n(void)						;
+	std::unique_ptr<BlockNode>					block_n(void)							;
+	std::unique_ptr<ReturnNode>					return_n(void)							;
+	std::unique_ptr<ReturnStatementNode>		return_statement_n(void)				;
+	std::unique_ptr<FunctionDeclarationNode>	function_declaration_n(void)			;
+	std::unique_ptr<FunctionCallNode>			function_call_n(void)					;
+	std::unique_ptr<ParameterNode>				parameter_n(void)						;
 	std::unique_ptr<VariableDeclarationNode>	variable_declaration_n(void)			;
 	std::unique_ptr<ExpressionStatementNode>	expression_statement_n(void)			;
 	std::unique_ptr<ASTNode>					expression_n(Precedence min_precedence)	;

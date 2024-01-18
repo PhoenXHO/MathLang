@@ -23,11 +23,11 @@ void OperatorTable::register_operator(std::string name, std::shared_ptr<Operator
 {
 	operators.insert({ name, std::move(op) });
 }
-void OperatorTable::register_un_implementation(std::string name, std::shared_ptr<OperatorFunction> op_func)
+void OperatorTable::register_unary_implementation(std::string name, std::shared_ptr<OperatorFunction> op_func)
 {
 	unary_implemetations.insert({ name, std::move(op_func) });
 }
-void OperatorTable::register_bin_implementation(std::string name, std::shared_ptr<OperatorFunction> op_func)
+void OperatorTable::register_binary_implementation(std::string name, std::shared_ptr<OperatorFunction> op_func)
 {
 	binary_implemetations.insert({ name, std::move(op_func) });
 }
@@ -38,9 +38,9 @@ void OperatorTable::register_builtin_operators(void)
 		register_operator(name, std::make_shared<Operator>(name, fixity, precedence))
 
 	#define REG_UN_IMP(name, implementation, type1, typ2, ret_type) \
-		register_un_implementation(name, std::make_shared<OperatorFunction>(OperatorType::O_BUILTIN, implementation, std::make_pair<MathObjType, MathObjType>(type1, typ2), ret_type))
+		register_unary_implementation(name, std::make_shared<OperatorFunction>(OperatorType::O_BUILTIN, implementation, std::make_pair<MathObjType, MathObjType>(type1, typ2), ret_type))
 	#define REG_BIN_IMP(name, implementation, type1, typ2, ret_type) \
-		register_bin_implementation(name, std::make_shared<OperatorFunction>(OperatorType::O_BUILTIN, implementation, std::make_pair<MathObjType, MathObjType>(type1, typ2), ret_type))
+		register_binary_implementation(name, std::make_shared<OperatorFunction>(OperatorType::O_BUILTIN, implementation, std::make_pair<MathObjType, MathObjType>(type1, typ2), ret_type))
 
 	// Initial register
 	REG_OP("+", Fixity::F_LEFT, Precedence::P_ADDITION);

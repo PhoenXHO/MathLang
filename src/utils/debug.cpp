@@ -42,6 +42,9 @@ std::unordered_map<uint8_t, const char *> opcode_string =
 	{ OpCode::OP_ENTER_BLOCK,	"ENTER_BLOCK"	},
 	{ OpCode::OP_LEAVE_BLOCK,	"LEAVE_BLOCK"	},
 
+	{ OpCode::OP_CALL_FUNCTION,	"CALL_FUNC  "	},
+	{ OpCode::OP_LEAVE_FUNCTION,"LEAVE_FUNC "	},
+
 	{ OpCode::OP_SET_VAR,		"SET_VAR    "	},
 	{ OpCode::OP_LOAD_VAR,		"LOAD_VAR   "	},
 
@@ -49,7 +52,8 @@ std::unordered_map<uint8_t, const char *> opcode_string =
 	{ OpCode::OP_BINARY_OP,		"BINARY_OP  "	},
 
 	{ OpCode::OP_POP,			"POP        "	},
-	{ OpCode::OP_RETURN,		"RETURN     "	}
+	{ OpCode::OP_RETURN,		"RETURN     "	},
+	{ OpCode::OP_RETURN_VALUE,	"RETURN_VAL "	}
 };
 
 const char * opcode_to_string(uint8_t opcode)
@@ -57,32 +61,52 @@ const char * opcode_to_string(uint8_t opcode)
 
 void indent(int depth);
 
-void Compiler::print_bytecode(void)
+void Compiler::disassemble(void)
 {
+	for (auto & func : *functions)
+	{
+		if (func->type == FunctionType::F_BUILTIN)
+			continue;
+		auto custom_func = std::static_pointer_cast<CustomFunction>(func);
+		disassemble(custom_func->chunk);
+	}
+	disassemble(chunk);
+}
+
+void Compiler::disassemble(std::shared_ptr<Chunk> & chunk)
+{
+	std::cout << chunk->name << ":\n";
+	auto & bytes = chunk->bytecode();
 	for (int i = 0; i < bytes.size(); i++)
 	{
 		std::cout << std::setw(2) << std::setfill('0') << std::hex;
 		std::cout << (int)bytes[i] << " |\t"
-			<< opcode_to_string(bytes[i]) << "\t\t";
+			<< opcode_to_string(bytes[i]) << "\t";
 		switch (bytes[i])
 		{
 			case OpCode::OP_LOAD_CONST:
 				std::cout << (int)bytes[++i] << "\t\'";
-				print_constant(constants[bytes[i]]);
+				print_constant(chunk->constants[bytes[i]]);
+				std::cout << "\'\n";
+				break;
+
+			case OpCode::OP_CALL_FUNCTION:
+				std::cout << (int)bytes[++i] << "\t\'";
+				print_function((*functions)[bytes[i]]);
 				std::cout << "\'\n";
 				break;
 			
 			case OpCode::OP_SET_VAR:
 			case OpCode::OP_LOAD_VAR:
 				std::cout << (int)bytes[++i] << "\t\'";
-				print_constant(constants[bytes[i]]);
+				print_variable((*variables)[bytes[i]]);
 				std::cout << "\'\n";
 				break;
 
 			case OpCode::OP_UNARY_OP:
 			case OpCode::OP_BINARY_OP:
 				std::cout << (int)bytes[++i] << "\t\'";
-				print_operator(operators[bytes[i]]);
+				print_operator((*operators)[bytes[i]]);
 				std::cout << "\'\n";
 				break;
 
@@ -91,6 +115,7 @@ void Compiler::print_bytecode(void)
 				break;
 		}
 	}
+	std::cout << '\n';
 }
 
 void Compiler::print_constant(std::shared_ptr<MathObj> & constant)
@@ -107,6 +132,16 @@ void Compiler::print_constant(std::shared_ptr<MathObj> & constant)
 	}
 	else
 		std::cout << "ERROR";
+}
+
+void Compiler::print_variable(std::shared_ptr<Variable> & variable)
+{
+	std::cout << variable->name;
+}
+
+void Compiler::print_function(std::shared_ptr<Function> & function)
+{
+	std::cout << function->name;
 }
 
 void Compiler::print_operator(std::pair<std::shared_ptr<const OperatorFunction>, std::string> & op)
@@ -144,6 +179,55 @@ void BlockNode::print(int depth) const
 	std::cout << "Block :\n";
 	for (auto & stmt : statements)
 		stmt->print(depth + 1);
+}
+
+void ReturnNode::print(int depth) const
+{
+	indent(depth);
+	std::cout << "Return\n";
+}
+
+void ReturnStatementNode::print(int depth) const
+{
+	indent(depth);
+	std::cout << "Return Statement :\n";
+	value->print(depth + 1);
+}
+
+void FunctionDeclarationNode::print(int depth) const
+{
+	indent(depth);
+	std::cout << "Function Declaration :\n";
+	name->print(depth + 1);
+	for (auto & param : parameters)
+		param->print(depth + 1);
+	if (return_type)
+		return_type->print(depth + 1);
+	body->print(depth + 1);
+}
+
+void FunctionCallNode::print(int depth) const
+{
+	indent(depth);
+	std::cout << "Function Call :\n";
+	name->print(depth + 1);
+	if (!arguments.empty())
+	{
+		indent(depth + 1);
+		std::cout << "Arguments :\n";
+		for (auto & arg : arguments)
+			arg->print(depth + 2);
+	}
+}
+
+void ParameterNode::print(int depth) const
+{
+	indent(depth);
+	std::cout << "Parameter :\n";
+	name->print(depth + 1);
+	type->print(depth + 1);
+	if (default_value)
+		default_value->print(depth + 1);
 }
 
 void VariableDeclarationNode::print(int depth) const
@@ -210,8 +294,8 @@ void OperatorNode::print(int depth) const
 
 void TypeNode::print(int depth) const
 {
-	//indent(depth);
-	//std::cout << "Type : ";
+	indent(depth);
+	std::cout << "Type : ";
 	//std::visit([&](auto & type) {
 	//	using T = std::decay_t<decltype(type)>;
 	//	if constexpr (std::is_same_v<T, MathObjType>)
@@ -219,6 +303,7 @@ void TypeNode::print(int depth) const
 	//	else if constexpr (std::is_same_v<T, std::unique_ptr<IdentifierNode>>)
 	//		std::cout << type->name << '\n';
 	//}, type);
+	std::cout << '\n';
 }
 
 void indent(int depth)

@@ -43,7 +43,7 @@ int main(int argc, const char ** argv)
 	}
 	catch (const std::exception & e)
 	{
-		std::cerr << "error: " << e.what() << " (use `mathlang -h` for help)" << '\n';
+		std::cerr << "\nerror: " << e.what() << " (use `mathlang -h` for help)" << '\n';
 		return 1;
 	}
 
