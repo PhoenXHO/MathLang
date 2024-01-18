@@ -52,7 +52,7 @@ _This project is still a work in progress. If you are interested in contributing
 
 		:-> <return-value>;
 
-_Note: Function overloading is not supported yet. This feature is planned for future versions of MathLang. The same applies to default parameters._
+	_Note: Function overloading is not supported yet. This feature is planned for future versions of MathLang. The same applies to default parameters._
 
 8. **Function Calls**: MathLang allows you to call functions using the function name and followed by a parameter list encapsulated in parentheses.
 
