@@ -104,7 +104,7 @@ Symbolic Expressions is an upcoming feature in MathLang that allows users to man
 
 2. **Clone your Fork**: Clone the forked repository to your local machine using the following command:
 
-		git clone https://github.com/<your-username>/mathlang.git
+		git clone https://github.com/PhoenXHO/MathLang.git
 	
 3. **Create a Branch**: Create a new branch for your changes. Use a descriptive name for your branch to indicate the purpose of your contribution:
 
