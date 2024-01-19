@@ -51,7 +51,7 @@ public:
 
 private:
 	const AST & ast;
-	const std::unique_ptr<OperatorTable> operator_table;
+	std::unique_ptr<OperatorTable> operator_table;
 
 	bool panic_mode = false;
 	std::stack<std::pair<ContextType, const ASTNode *>> context_stack;

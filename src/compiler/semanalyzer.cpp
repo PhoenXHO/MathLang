@@ -1,13 +1,15 @@
 #include "semanalyzer.h"
 #include "error.h"
-#include <iostream>
 
-std::unordered_map<MathObjType, std::string> type_to_string =
+std::unordered_map<MathObjType, std::string> mathobjtype_string =
 {
 	{ MathObjType::MO_NONE,		"None"		},
 	{ MathObjType::MO_INTEGER,	"Integer"	},
 	{ MathObjType::MO_REAL,		"Real"		}
 };
+
+std::string mathobjtype_to_string(MathObjType type)
+{ return mathobjtype_string[type]; }
 
 void SemanticAnalyzer::analyze_source(void)
 {
@@ -81,7 +83,7 @@ SemanticAnalyzer::AnalysisResult SemanticAnalyzer::analyze(ASTNode * node)
 						if (!can_convert(expr_type, func_decl->return_type->type))
 						{
 							register_semantic_error(
-								"cannot implicitly convert `" + type_to_string[expr_type] + "` to `"+ type_to_string[func_decl->return_type->type] + "`",
+								"cannot implicitly convert `" + mathobjtype_to_string(expr_type) + "` to `"+ mathobjtype_to_string(func_decl->return_type->type) + "`",
 								"",
 								return_stmt->value.get()
 							);
@@ -122,21 +124,54 @@ SemanticAnalyzer::AnalysisResult SemanticAnalyzer::analyze(ASTNode * node)
 					ContextType::C_NONRETURNING_FUNCTION : ContextType::C_RETURNING_FUNCTION,
 				func_decl));
 
-			// Look for a function with the same name
-			auto it = scope->find_function(name);
-			if (it != scope->functions.end())
+			// Look for a function with the same name and same arity and parameter types
+			auto candidates = scope->get_function_implementations(std::string(name));
+			if (!candidates.empty())
 			{
-				register_semantic_error(
-					"function `" + std::string(name) + "` is already defined in this scope",
-					"",
-					func_decl->name.get()
-				);
-				return MathObjType::MO_NONE;
+				bool found_match = false;
+				// Iterate over the candidate functions and check if any of them match the parameter types
+				for (auto it = candidates.begin(); it != candidates.end(); ++it)
+				{
+					auto & func = it->second;
+					if (func->parameters.size() != func_decl->parameters.size())
+						continue;
+
+					auto & params = func->parameters;
+
+					bool match = true;
+					// Check if the candidate function has the same parameter types as the function
+					// parameters can have different names
+					for (size_t i = 0; i < func_decl->parameters.size(); ++i)
+					{
+						if (func_decl->parameters[i]->type->type != params[i].second)
+						{
+							match = false;
+							break;
+						}
+					}
+
+					if (match)
+					{
+						found_match = true;
+						break;
+					}
+				}
+
+				if (found_match)
+				{
+					register_semantic_error(
+						"function `" + std::string(name) + "` with the same parameter types is already defined in this scope",
+						"",
+						func_decl->name.get()
+					);
+					return MathObjType::MO_NONE;
+				}
 			}
 
 			// Add the function to the list of functions
-			auto & function =
-			scope->functions[name] = std::make_shared<CustomFunction>(name, func_decl->return_type->type);
+			auto function = std::make_shared<CustomFunction>(name, func_decl->return_type->type);
+			scope->function_table.register_function(std::string(name), function);
+			func_decl->function = function;
 
 			if (scope->children.size() >= UINT8_MAX)
 			{
@@ -158,7 +193,7 @@ SemanticAnalyzer::AnalysisResult SemanticAnalyzer::analyze(ASTNode * node)
 			for (const auto & param : func_decl->parameters)
 			{
 				analyze(param.get());
-				function->parameters[std::string(param->name->name)] = param->type->type;
+				function->parameters.push_back(std::make_pair(std::string(param->name->name), param->type->type));
 			}
 
 			// Analyze the function body
@@ -173,9 +208,10 @@ SemanticAnalyzer::AnalysisResult SemanticAnalyzer::analyze(ASTNode * node)
 			auto * func_call = static_cast<FunctionCallNode *>(node);
 			auto & name = func_call->name->name;
 
-			// Look for a function with the same name
-			auto it = scope->find_function(name);
-			if (it == scope->functions.end())
+			// Look for a function with the same name and same types of arguments
+			auto candidates = scope->get_function_implementations(std::string(name));
+			auto candidates_copy = candidates;
+			if (candidates.empty())
 			{
 				register_semantic_error(
 					"function `" + std::string(name) + "` is not defined in this scope",
@@ -185,32 +221,133 @@ SemanticAnalyzer::AnalysisResult SemanticAnalyzer::analyze(ASTNode * node)
 				return MathObjType::MO_NONE;
 			}
 
-			// Check if the number of arguments matches the number of parameters
-			if (it->second->parameters.size() != func_call->arguments.size())
+			std::vector<std::pair<std::shared_ptr<Function>, int>> matching_candidates;
+			for (auto it = candidates.begin(); it != candidates.end(); ++it)
 			{
-				std::string message = "function `" + std::string(name) + "` expects ";
-				if (it->second->parameters.size() == 0)
-					message += "no arguments";
-				else if (it->second->parameters.size() == 1)
-					message += "1 argument";
-				else
-					message += std::to_string(it->second->parameters.size()) + " arguments";
-				
-				message += ", but ";
-				if (func_call->arguments.size() == 0)
-					message += "none were provided";
-				else if (func_call->arguments.size() == 1)
-					message += "1 was provided";
-				else
-					message += std::to_string(func_call->arguments.size()) + " were provided";
+				auto & func = it->second;
+				if (func->parameters.size() != func_call->arguments.size())
+					continue;
+
+				auto & params = func->parameters;
+
+				bool match = true;
+				// Check if the candidate function has the same parameter types as the function
+				// parameters can have different names
+				for (size_t i = 0; i < func_call->arguments.size(); ++i)
+				{
+					MathObjType arg_type = analyze(func_call->arguments[i].get()).type;
+					if (!can_convert(arg_type, params[i].second))
+					{
+						match = false;
+						break;
+					}
+				}
+
+				if (match)
+				{
+					int specificity = 0;
+					for (size_t i = 0; i < func_call->arguments.size(); ++i)
+					{
+						MathObjType arg_type = analyze(func_call->arguments[i].get()).type;
+						specificity += calculate_specificity(arg_type, params[i].second);
+					}
+					matching_candidates.push_back({ func, specificity });
+				}
+			}
+
+			if (matching_candidates.empty())
+			{
+				std::string additional_info = "`";
+				for (const auto & arg : func_call->arguments)
+				{
+					additional_info += mathobjtype_to_string(analyze(arg.get()).type) + "`, `";
+				}
+				additional_info.pop_back();
+				additional_info.pop_back();
+				additional_info.pop_back();
+
+				if (!candidates_copy.empty())
+				{
+					additional_info += "\nCandidates are : \n";
+					for (auto it = candidates_copy.begin(); it != candidates_copy.end(); ++it)
+					{
+						auto & func = it->second;
+						additional_info += "  - " + func->name + "(";
+						for (auto & param : func->parameters)
+						{
+							additional_info += mathobjtype_to_string(param.second) + ", ";
+						}
+						additional_info.pop_back();
+						additional_info.pop_back();
+						additional_info += ")\n";
+					}
+				}
 
 				register_semantic_error(
-					message,
+					"no function `" + std::string(name) + "` matches these argument types",
+					additional_info,
+					func_call->name.get()
+				);
+				return MathObjType::MO_NONE;
+			}
+
+			// Sort the matching candidates by specificity
+			std::sort(matching_candidates.begin(), matching_candidates.end(), [](auto & a, auto & b) {
+				return a.second > b.second;
+			});
+
+			// Check if there's a unique maximum specificity
+			if (matching_candidates.size() > 1 && matching_candidates[0].second == matching_candidates[1].second)
+			{
+				register_semantic_error(
+					"ambiguous call to function `" + std::string(name) + "`",
 					"",
 					func_call->name.get()
 				);
 				return MathObjType::MO_NONE;
 			}
+
+			// Get the most specific candidate
+			auto & candidate = matching_candidates[0];
+			func_call->function = candidate.first;
+
+			//auto it = scope->find_function(name);
+			//if (it == scope->functions.end())
+			//{
+			//	register_semantic_error(
+			//		"function `" + std::string(name) + "` is not defined in this scope",
+			//		"",
+			//		func_call->name.get()
+			//	);
+			//	return MathObjType::MO_NONE;
+			//}
+
+			// Check if the number of arguments matches the number of parameters
+			//if (it->second->parameters.size() != func_call->arguments.size())
+			//{
+			//	std::string message = "function `" + std::string(name) + "` expects ";
+			//	if (it->second->parameters.size() == 0)
+			//		message += "no arguments";
+			//	else if (it->second->parameters.size() == 1)
+			//		message += "1 argument";
+			//	else
+			//		message += std::to_string(it->second->parameters.size()) + " arguments";
+				
+			//	message += ", but ";
+			//	if (func_call->arguments.size() == 0)
+			//		message += "none were provided";
+			//	else if (func_call->arguments.size() == 1)
+			//		message += "1 was provided";
+			//	else
+			//		message += std::to_string(func_call->arguments.size()) + " were provided";
+
+			//	register_semantic_error(
+			//		message,
+			//		"",
+			//		func_call->name.get()
+			//	);
+			//	return MathObjType::MO_NONE;
+			//}
 
 			// Analyze the function arguments
 			for (const auto & arg : func_call->arguments)
@@ -218,7 +355,7 @@ SemanticAnalyzer::AnalysisResult SemanticAnalyzer::analyze(ASTNode * node)
 				analyze(arg.get());
 			}
 
-			return it->second->return_type;
+			return candidate.first->return_type;
 		}
 		case NodeType::N_PARAMETER:
 		{
@@ -231,7 +368,7 @@ SemanticAnalyzer::AnalysisResult SemanticAnalyzer::analyze(ASTNode * node)
 				if (!can_convert(expr_type, param_type))
 				{
 					register_semantic_error(
-						"cannot implicitly convert `" + type_to_string[expr_type] + "` to `" + type_to_string[param_type] + "`",
+						"cannot implicitly convert `" + mathobjtype_to_string(expr_type) + "` to `" + mathobjtype_to_string(param_type) + "`",
 						"",
 						param->default_value.get()
 					);
@@ -261,7 +398,7 @@ SemanticAnalyzer::AnalysisResult SemanticAnalyzer::analyze(ASTNode * node)
 				if (!can_convert(expr_type, var_type))
 				{
 					register_semantic_error(
-						"cannot implicitly convert `" + type_to_string[expr_type] + "` to `" + type_to_string[var_type] + "`",
+						"cannot implicitly convert `" + mathobjtype_to_string(expr_type) + "` to `" + mathobjtype_to_string(var_type) + "`",
 						"",
 						var_decl->value.get()
 					);
@@ -317,7 +454,7 @@ SemanticAnalyzer::AnalysisResult SemanticAnalyzer::analyze(ASTNode * node)
 					});
 
 					// Check if there's a unique maximum specificity
-					if (matching_candidates[0].second == matching_candidates[1].second)
+					if (matching_candidates.size() > 1 && matching_candidates[0].second == matching_candidates[1].second)
 					{
 						register_semantic_error(
 							"ambiguous call to operator `" + op->op_info->name + "`",
@@ -335,7 +472,7 @@ SemanticAnalyzer::AnalysisResult SemanticAnalyzer::analyze(ASTNode * node)
 					// No matching operator found
 					register_semantic_error(
 						"no binary operator `" + op->op_info->name + "` matches these operand types",
-						type_to_string[left_type] + "`, `" + type_to_string[right_type],
+						'`' + mathobjtype_to_string(left_type) + "`, `" + mathobjtype_to_string(right_type) + '`',
 						op.get()
 					);
 				}
@@ -369,7 +506,7 @@ SemanticAnalyzer::AnalysisResult SemanticAnalyzer::analyze(ASTNode * node)
 
 			register_semantic_error(
 				"no unary operator `" + op->op_info->name + "` matches this operand type",
-				type_to_string[operand_type],
+				mathobjtype_to_string(operand_type),
 				op.get()
 			);
 			break;

@@ -8,6 +8,7 @@
 #include <unordered_map>
 
 #include "operator.h"
+#include "function.h"
 
 struct Operator;
 struct BuiltinOperator;
@@ -97,6 +98,7 @@ struct FunctionDeclarationNode : public ASTNode
 	std::vector<std::unique_ptr<ParameterNode>> parameters;
 	std::unique_ptr<TypeNode> return_type;
 	std::unique_ptr<BlockNode> body;
+	std::shared_ptr<CustomFunction> function;
 
 	FunctionDeclarationNode(void) : ASTNode(NodeType::N_FUNC_DECL) {}
 	virtual void print(int depth) const override;
@@ -107,6 +109,7 @@ struct FunctionCallNode : public ASTNode
 {
 	std::unique_ptr<IdentifierNode> name;
 	std::vector<std::unique_ptr<ASTNode>> arguments;
+	std::shared_ptr<Function> function;
 
 	FunctionCallNode(void) : ASTNode(NodeType::N_FUNC_CALL) {}
 	virtual void print(int depth) const override;

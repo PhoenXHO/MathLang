@@ -266,7 +266,7 @@ std::unique_ptr<VariableDeclarationNode> Parser::variable_declaration_n(void)
 	}
 	consume_tk();
 
-	if (curr_tk->type() == TokenType::T_OPERATOR_SYM && curr_tk->lexeme() == ":=")
+	if (curr_tk->type() == TokenType::T_COLON_EQUAL)
 	{
 		consume_tk(); // consume `:=`
 		var_dec_node->value = expression_n(P_MIN);

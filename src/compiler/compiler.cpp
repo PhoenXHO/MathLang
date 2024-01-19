@@ -1,5 +1,6 @@
 #include "compiler.h"
 #include "error.h"
+#include "mathobj.h"
 
 void Compiler::compile_source(void)
 {
@@ -43,15 +44,22 @@ void Compiler::compile_function_declaration(const FunctionDeclarationNode * func
 	}
 
 	uint8_t arg = functions->size();
-	auto function = scope->find_function(func_decl_n->name->name);
-	functions->push_back(function->second);
-	scope->function_indices[std::string(func_decl_n->name->name)] = arg;
+	auto function = func_decl_n->function;
+	functions->push_back(function);
 
-	function->second->chunk = std::make_shared<Chunk>(func_decl_n->name->name);
-	function->second->chunk->parent = chunk;
-	chunk = function->second->chunk;
+	std::string function_key(func_decl_n->name->name);
+    for (const auto & param : func_decl_n->parameters)
+    {
+        function_key += "_" + mathobjtype_to_string(param->type->type);
+    }
 
-	enter_function(scope, function->second);
+	scope->function_indices[function_key] = arg;
+
+	function->chunk = std::make_shared<Chunk>(func_decl_n->name->name);
+	function->chunk->parent = chunk;
+	chunk = function->chunk;
+
+	enter_function(scope, function);
 	for (auto it = func_decl_n->parameters.rbegin(); it != func_decl_n->parameters.rend(); ++it)
 	{
 		compile_parameter(it->get());
@@ -69,8 +77,13 @@ void Compiler::compile_function_declaration(const FunctionDeclarationNode * func
 
 void Compiler::compile_function_call(const FunctionCallNode * func_call_n)
 {
-	auto function = scope->find_function(func_call_n->name->name);
-	uint8_t arg = scope->find_function_index(std::string(func_call_n->name->name));
+	std::string function_key(func_call_n->name->name);
+    for (const auto & arg : func_call_n->function->parameters)
+    {
+        function_key += "_" + mathobjtype_to_string(arg.second);
+    }
+
+	uint8_t arg = scope->find_function_index(function_key);
 
 	for (auto & arg_n : func_call_n->arguments)
 	{

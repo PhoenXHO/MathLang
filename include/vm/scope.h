@@ -8,6 +8,7 @@
 
 #include "mathobj.h"
 #include "function.h"
+#include "util.h"
 
 struct Scope {
 	Scope() : parent(nullptr) {}
@@ -18,12 +19,12 @@ struct Scope {
 	std::vector<std::shared_ptr<Scope>> children;
 	std::unordered_map<std::string_view, std::shared_ptr<Variable>> variables;
 	std::unordered_map<std::string, uint8_t> variable_indices;
-	std::unordered_map<std::string_view, std::shared_ptr<CustomFunction>> functions;
+	FunctionTable function_table;
 	std::unordered_map<std::string, uint8_t> function_indices;
 
 	std::unordered_map<std::string_view, std::shared_ptr<Variable>>::iterator find_variable(std::string_view name, bool local_only = false);
 	uint8_t find_variable_index(std::string name);
-	std::unordered_map<std::string_view, std::shared_ptr<CustomFunction>>::iterator find_function(std::string_view name);
+	MultiRange<FuncImplementations::const_iterator> get_function_implementations(std::string_view name);
 	uint8_t find_function_index(std::string name);
 };
 

@@ -22,14 +22,16 @@ uint8_t Scope::find_variable_index(std::string name)
 	throw std::runtime_error("variable `" + name + "` not found");
 }
 
-std::unordered_map<std::string_view, std::shared_ptr<CustomFunction>>::iterator Scope::find_function(std::string_view name)
+MultiRange<FuncImplementations::const_iterator> Scope::get_function_implementations(std::string_view name)
 {
-	auto it = functions.find(name);
-	if (it != functions.end())
-		return it;
+	auto it = function_table.get_implementations(name);
+	MultiRange<FuncImplementations::const_iterator> range(it.first, it.second);
 	if (parent)
-		return parent->find_function(name);
-	return functions.end();
+	{
+		auto parent_range = parent->get_function_implementations(name);
+		range.add_range(parent_range);
+	}
+	return range;
 }
 
 uint8_t Scope::find_function_index(std::string name)

@@ -41,7 +41,7 @@ void report_error(std::unique_ptr<Error> & err, std::string_view source)
 		<< error_type_to_string(err->type()) << ": "
 		<< err->message();
 	if (additional_info != "")
-		std::cerr << " : `" << additional_info << '`';
+		std::cerr << " : " << additional_info;
 
 	size_t line_start = find_previous_line_start(source, err->position()) + 1;
 	size_t line_end = find_next_line_end(source, err->position());

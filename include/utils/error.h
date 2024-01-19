@@ -29,7 +29,7 @@ struct Error
 	size_t column(void) { return _column_; }
 	size_t position(void) { return _pos_; }
 
-	virtual std::string_view get_additional_info(void) const = 0;
+	virtual std::string get_additional_info(void) const = 0;
 	virtual size_t length(void) const
 	{ return _len_; }
 
@@ -59,8 +59,8 @@ struct LexicalError : Error
 		lexeme(lexeme)
 	{}
 
-	std::string_view get_additional_info(void) const override
-	{ return lexeme; }
+	std::string get_additional_info(void) const override
+	{ return '`' + std::string(lexeme) + '`'; }
 
 private:
 	std::string_view lexeme;
@@ -72,7 +72,7 @@ struct SyntaxError : Error
 		Error(ErrorType::SYNTAX_ERR, msg, l, c, pos, len)
 	{}
 
-	std::string_view get_additional_info(void) const override
+	std::string get_additional_info(void) const override
 	{ return ""; }
 };
 
@@ -85,7 +85,7 @@ struct SemanticError : Error
 		additional_info(additional_info)
 	{}
 	
-	std::string_view get_additional_info(void) const override
+	std::string get_additional_info(void) const override
 	{ return additional_info; }
 };
 
@@ -98,7 +98,7 @@ struct CompileError : Error
 		additional_info(additional_info)
 	{}
 	
-	std::string_view get_additional_info(void) const override
+	std::string get_additional_info(void) const override
 	{ return additional_info; }
 };
 

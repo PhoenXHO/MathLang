@@ -11,12 +11,18 @@ _This project is still a work in progress. If you are interested in contributing
 
 3. **Arithmetic Expressions**: MathLang supports the basic arithmetic operations, including addition, subtraction, multiplication, division, and exponentiation.
 
-4. **Supported Literals**: MathLang currently only supports the following literals:
+4. **Comments**: MathLang supports single-line comments only for now.
+
+	Syntax:
+
+		// single-line comment
+
+5. **Supported Literals**: MathLang currently only supports the following literals:
 
 	- Integer Literals: Whole numbers without decimal points
 	- Real Literals: Numbers with decimal points
 
-5. **Built-in Operators**: The language comes with built-in operators for arithmetic operations:
+6. **Built-in Operators**: The language comes with built-in operators for arithmetic operations:
 	- Addition: `+` (binary and unary),
 	- Subtraction: `-` (binary and unary),
 	- Multiplication: `*`  (binary),
@@ -26,7 +32,7 @@ _This project is still a work in progress. If you are interested in contributing
 
 	and more. These operators can be overloaded or extended (a planned features).
 
-6. **Variable Declaration**: MathLang allows you to declare variables using the `let` keyword followed by the variable type and identifier. Optionally, you can initialize the variable with an expression using the `:=` operator.
+7. **Variable Declaration**: MathLang allows you to declare variables using the `let` keyword followed by the variable type and identifier. Optionally, you can initialize the variable with an expression using the `:=` operator.
 
 	Syntax:
 
@@ -37,7 +43,7 @@ _This project is still a work in progress. If you are interested in contributing
 
 <!--7. **Variable Assignment**: MathLang allows you to assign values to variables using the `=` operator.-->
 
-7. **Functions**: MathLang allows you to define functions using the `define` keyword followed by the function name, parameter list, and return type. Optionally, you can specify the return type using the `->` operator (the type will be `none` if not specified).
+8. **Functions**: MathLang allows you to define functions using the `define` keyword followed by the function name, parameter list, and return type. Optionally, you can specify the return type using the `->` operator (the type will be `none` if not specified).
 
 	Syntax:
 
@@ -52,19 +58,16 @@ _This project is still a work in progress. If you are interested in contributing
 
 		:-> <return-value>;
 
-_Note: Function overloading is not supported yet. This feature is planned for future versions of MathLang. The same applies to default parameters._
+_Note: Default parameters are not supported yet. This feature is planned for future versions of MathLang._
 
-8. **Function Calls**: MathLang allows you to call functions using the function name and followed by a parameter list encapsulated in parentheses.
+9. **Function Calls**: MathLang allows you to call functions using the function name and followed by a parameter list encapsulated in parentheses.
 
 	Syntax:
 
 		<name>(<param-list>);
 
-8. **Comments**: MathLang supports single-line comments only for now.
+10. **Function Overloading**: MathLang allows you to overload functions with the same name but different parameter lists. The compiler will select the appropriate function based on the number and types of the arguments passed to the function.
 
-	Syntax:
-
-		// single-line comment
 	
 # Future Features
 ## REPL

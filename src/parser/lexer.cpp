@@ -46,10 +46,18 @@ std::unique_ptr<Token> Lexer::scan_tk(void)
 			token = make_tk(TokenType::T_COLON_ARROW, ":->", column, pos);
 			advance(3);
 		}
-		else if (curr == ':' && !is_operator_sym(next))
+		else if (curr == ':')
 		{
-			token = make_tk(TokenType::T_COLON, ":", column, pos);
-			advance();
+			if (next == '=' && !is_operator_sym(peek(2)))
+			{
+				token = make_tk(TokenType::T_COLON_EQUAL, ":=", column, pos);
+				advance(2);
+			}
+			else if (!is_operator_sym(next))
+			{
+				token = make_tk(TokenType::T_COLON, ":", column, pos);
+				advance();
+			}
 		}
 		else if (curr == '-' && next == '>' && !is_operator_sym(peek(2)))
 		{

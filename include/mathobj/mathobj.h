@@ -3,6 +3,7 @@
 
 #include <string>
 #include <memory>
+#include <unordered_map>
 
 struct  MathObj
 {
@@ -30,19 +31,24 @@ typedef MathObj::MathObjType MathObjType;
 inline bool can_convert(MathObjType from, MathObjType to)
 { return from == to || 2 * from == to; }
 
+inline int calculate_specificity(MathObjType type, MathObjType argt)
+{
+	int specificity = 0;
+	
+	if (type == argt)
+		specificity += 2;
+	else if (can_convert(type, argt))
+		specificity += 1;
+
+	return specificity;
+}
+
 inline int calculate_specificity(MathObjType left, MathObjType right, MathObjType argt_l, MathObjType argt_r)
 {
 	int specificity = 0;
 	
-	if (left == argt_l)
-		specificity += 2;
-	else if (can_convert(left, argt_l))
-		specificity += 1;
-
-	if (right == argt_r)
-		specificity += 2;
-	else if (can_convert(right, argt_r))
-		specificity += 1;
+	specificity += calculate_specificity(left, argt_l);
+	specificity += calculate_specificity(right, argt_r);
 
 	return specificity;
 }
@@ -127,5 +133,9 @@ struct Variable : public MathObj
 	MathObjType value_type(void) const
 	{ return _value_type_; }
 };
+
+extern std::unordered_map<MathObjType, std::string> mathobjtype_string;
+
+std::string mathobjtype_to_string(MathObjType type);
 
 #endif // MATHOBJ_H
