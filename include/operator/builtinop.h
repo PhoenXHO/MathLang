@@ -10,7 +10,7 @@ extern BuiltinOpFunc ml__subtract__real_real;
 extern BuiltinOpFunc ml__multiply__real_real;
 extern BuiltinOpFunc ml__divide__real_real;
 extern BuiltinOpFunc ml__exponentiate__real_real;
-extern BuiltinOpFunc ml__assign__;
+extern BuiltinOpFunc ml__assign__real_real;
 
 // Unary operators
 extern BuiltinOpFunc ml__negate__real;

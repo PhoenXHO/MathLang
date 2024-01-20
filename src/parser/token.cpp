@@ -15,6 +15,7 @@ std::unordered_map<std::string_view, TokenType> keywords = {
 
 	// * a - z
 	{"class", TokenType::T_CLASS},
+	{"const", TokenType::T_CONST},
 	{"contains", TokenType::T_OPERATOR_SYM},
 	{"define", TokenType::T_DEFINE},
 	{"in", TokenType::T_IN},

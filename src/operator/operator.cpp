@@ -1,5 +1,5 @@
 #include "operator.h"
-#include "builtin.h"
+#include "builtinop.h"
 #include <iostream>
 
 std::pair<OpImplementations::const_iterator, OpImplementations::const_iterator> OperatorTable::get_implementations(std::string_view op_name, bool unary) const
@@ -19,28 +19,40 @@ std::shared_ptr<const Operator> OperatorTable::find(std::string_view op_name) co
 	return nullptr;
 }
 
-void OperatorTable::register_operator(std::string name, std::shared_ptr<Operator> op)
+void OperatorTable::register_operator(std::string name, Fixity fixity, Precedence precedence)
 {
-	operators.insert({ name, std::move(op) });
+	operators.emplace(name, std::make_shared<Operator>(name, fixity, precedence));
 }
-void OperatorTable::register_unary_implementation(std::string name, std::shared_ptr<OperatorFunction> op_func)
+void OperatorTable::register_unary_implementation(std::string name, BuiltinOpFunc & implementation, MathObjType arg_type, MathObjType ret_type)
 {
-	unary_implemetations.insert({ name, std::move(op_func) });
+	unary_implemetations.emplace(
+		name,
+		std::make_shared<OperatorFunction>(
+			OperatorType::O_BUILTIN,
+			implementation,
+			std::make_pair(arg_type, MathObjType::MO_NONE),
+			ret_type
+		)
+	);
 }
-void OperatorTable::register_binary_implementation(std::string name, std::shared_ptr<OperatorFunction> op_func)
+void OperatorTable::register_binary_implementation(std::string name, BuiltinOpFunc & implementation, std::pair<MathObjType, MathObjType> arg_types, MathObjType ret_type)
 {
-	binary_implemetations.insert({ name, std::move(op_func) });
+	binary_implemetations.emplace(
+		name,
+		std::make_shared<OperatorFunction>(
+			OperatorType::O_BUILTIN,
+			implementation,
+			arg_types, ret_type
+		)
+	);
 }
 
 void OperatorTable::register_builtin_operators(void)
 {
-	#define REG_OP(name, fixity, precedence) \
-		register_operator(name, std::make_shared<Operator>(name, fixity, precedence))
+	#define REG_OP register_operator
 
-	#define REG_UN_IMP(name, implementation, type1, typ2, ret_type) \
-		register_unary_implementation(name, std::make_shared<OperatorFunction>(OperatorType::O_BUILTIN, implementation, std::make_pair<MathObjType, MathObjType>(type1, typ2), ret_type))
-	#define REG_BIN_IMP(name, implementation, type1, typ2, ret_type) \
-		register_binary_implementation(name, std::make_shared<OperatorFunction>(OperatorType::O_BUILTIN, implementation, std::make_pair<MathObjType, MathObjType>(type1, typ2), ret_type))
+	#define REG_UN_IMP register_unary_implementation
+	#define REG_BIN_IMP register_binary_implementation
 
 	// Initial register
 	REG_OP("+", Fixity::F_LEFT, Precedence::P_ADDITION);
@@ -48,32 +60,32 @@ void OperatorTable::register_builtin_operators(void)
 	REG_OP("*", Fixity::F_LEFT, Precedence::P_MULTIPLICATION);
 	REG_OP("/", Fixity::F_LEFT, Precedence::P_MULTIPLICATION);
 	REG_OP("^", Fixity::F_LEFT, Precedence::P_EXPONENTIATION);
-	REG_OP(":=", Fixity::F_RIGHT, Precedence::P_ASSIGNMENT);
+	REG_OP("=", Fixity::F_RIGHT, Precedence::P_ASSIGNMENT);
 	REG_OP("print", Fixity::F_LEFT, Precedence::P_UNARY);
 
 	// Binary operators
-	REG_BIN_IMP("+", ml__add__real_real, MathObjType::MO_REAL, MathObjType::MO_REAL, MathObjType::MO_REAL);
-	REG_BIN_IMP("+", ml__add__real_real, MathObjType::MO_INTEGER, MathObjType::MO_INTEGER, MathObjType::MO_INTEGER);
+	REG_BIN_IMP("+", ml__add__real_real, {MOT::MO_REAL, MOT::MO_REAL}, MOT::MO_REAL);
+	REG_BIN_IMP("+", ml__add__real_real, {MOT::MO_INTEGER, MOT::MO_INTEGER}, MOT::MO_INTEGER);
 	
-	REG_BIN_IMP("-", ml__subtract__real_real, MathObjType::MO_REAL, MathObjType::MO_REAL, MathObjType::MO_REAL);
-	REG_BIN_IMP("-", ml__subtract__real_real, MathObjType::MO_INTEGER, MathObjType::MO_INTEGER, MathObjType::MO_INTEGER);
+	REG_BIN_IMP("-", ml__subtract__real_real, {MOT::MO_REAL, MOT::MO_REAL}, MOT::MO_REAL);
+	REG_BIN_IMP("-", ml__subtract__real_real, {MOT::MO_INTEGER, MOT::MO_INTEGER}, MOT::MO_INTEGER);
 
-	REG_BIN_IMP("*", ml__multiply__real_real, MathObjType::MO_REAL, MathObjType::MO_REAL, MathObjType::MO_REAL);
-	REG_BIN_IMP("*", ml__multiply__real_real, MathObjType::MO_INTEGER, MathObjType::MO_INTEGER, MathObjType::MO_INTEGER);
+	REG_BIN_IMP("*", ml__multiply__real_real, {MOT::MO_REAL, MOT::MO_REAL}, MOT::MO_REAL);
+	REG_BIN_IMP("*", ml__multiply__real_real, {MOT::MO_INTEGER, MOT::MO_INTEGER}, MOT::MO_INTEGER);
 
-	REG_BIN_IMP("/", ml__divide__real_real, MathObjType::MO_REAL, MathObjType::MO_REAL, MathObjType::MO_REAL);
-	REG_BIN_IMP("/", ml__divide__real_real, MathObjType::MO_INTEGER, MathObjType::MO_INTEGER, MathObjType::MO_INTEGER);
+	REG_BIN_IMP("/", ml__divide__real_real, {MOT::MO_REAL, MOT::MO_REAL}, MOT::MO_REAL);
+	REG_BIN_IMP("/", ml__divide__real_real, {MOT::MO_INTEGER, MOT::MO_INTEGER}, MOT::MO_INTEGER);
 
-	REG_BIN_IMP("^", ml__exponentiate__real_real, MathObjType::MO_REAL, MathObjType::MO_REAL, MathObjType::MO_REAL);
-	REG_BIN_IMP("^", ml__exponentiate__real_real, MathObjType::MO_INTEGER, MathObjType::MO_INTEGER, MathObjType::MO_INTEGER);
+	REG_BIN_IMP("^", ml__exponentiate__real_real, {MOT::MO_REAL, MOT::MO_REAL}, MOT::MO_REAL);
+	REG_BIN_IMP("^", ml__exponentiate__real_real, {MOT::MO_INTEGER, MOT::MO_INTEGER}, MOT::MO_INTEGER);
 
-	REG_BIN_IMP(":=", ml__assign__, MathObjType::MO_REAL, MathObjType::MO_REAL, MathObjType::MO_REAL);
+	REG_BIN_IMP("=", ml__assign__real_real, {{MOT::MO_REAL, false}, MOT::MO_REAL}, MOT::MO_REAL);
+	REG_BIN_IMP("=", ml__assign__real_real, {{MOT::MO_INTEGER, false}, MOT::MO_INTEGER}, MOT::MO_INTEGER);
 
 	// Unary operators
-	REG_UN_IMP("-", ml__negate__real, MathObjType::MO_REAL, MathObjType::MO_NONE, MathObjType::MO_REAL);
-	REG_UN_IMP("-", ml__negate__real, MathObjType::MO_INTEGER, MathObjType::MO_NONE, MathObjType::MO_INTEGER);
+	REG_UN_IMP("-", ml__negate__real, MOT::MO_REAL, MOT::MO_REAL);
+	REG_UN_IMP("-", ml__negate__real, MOT::MO_INTEGER, MOT::MO_INTEGER);
 
-	REG_UN_IMP("print", ml__print__real, MathObjType::MO_REAL, MathObjType::MO_NONE, MathObjType::MO_NONE);
-	REG_UN_IMP("print", ml__print__real, MathObjType::MO_INTEGER, MathObjType::MO_NONE, MathObjType::MO_NONE);
-	REG_UN_IMP("print", ml__print__none, MathObjType::MO_NONE, MathObjType::MO_NONE, MathObjType::MO_NONE);
+	REG_UN_IMP("print", ml__print__real, MOT::MO_REAL, MOT::MO_NONE);
+	REG_UN_IMP("print", ml__print__none, MOT::MO_NONE, MOT::MO_NONE);
 }

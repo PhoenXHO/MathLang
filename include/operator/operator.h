@@ -12,7 +12,7 @@
 
 struct Operator;
 struct OperatorFunction;
-using BuiltinOpFunc = std::function<std::shared_ptr<MathObj> (const MathObj &, const MathObj &)>;
+using BuiltinOpFunc = std::function<std::shared_ptr<MathObj> (std::shared_ptr<MathObj> &, std::shared_ptr<MathObj> &)>;
 using OpImplementations = std::unordered_multimap<std::string, std::shared_ptr<OperatorFunction>>;
 using Operators = std::unordered_multimap<std::string, std::shared_ptr<Operator>>;
 
@@ -55,6 +55,10 @@ struct Operator
 	std::string name;
 	Fixity fixity;
 	Precedence precedence;
+
+	// for debugging
+	std::string_view get_name(void) const
+	{ return name; }
 };
 typedef Operator::OperatorType OperatorType;
 
@@ -65,7 +69,10 @@ struct OperatorFunction
 		OperatorType type,
 		BuiltinOpFunc implementation,
 		std::pair<MathObjType, MathObjType> arg_types,
-		MathObjType return_type
+		MathObjType return_type,
+		// Reverse order of arguments because unary operators only have one argument (the right one)
+		bool rhs_is_const = true,
+		bool lhs_is_const = true
 	) :
 		type(type),
 		implementation(implementation),
@@ -82,7 +89,8 @@ struct OperatorFunction
 // Table of operators
 class OperatorTable
 {
-	Operators operators;
+	// TODO: Remove Operators from here (the compiler doesn't need it)
+	Operators operators; // Operator information without implementations (fixity and precedence)
 	OpImplementations binary_implemetations; // Binary operator implementations
 	OpImplementations unary_implemetations; // Unary operator implementations
 
@@ -90,9 +98,9 @@ public:
 	friend class Compiler; // Compiler needs access to the operator table
 	
 	void register_builtin_operators(void);
-	void register_operator(std::string name, std::shared_ptr<Operator> op);
-	void register_unary_implementation(std::string name, std::shared_ptr<OperatorFunction> op_func);
-	void register_binary_implementation(std::string name, std::shared_ptr<OperatorFunction> op_func);
+	void register_operator(std::string name, Fixity fixity, Precedence precedence);
+	void register_unary_implementation(std::string name, BuiltinOpFunc & implementation, MathObjType arg_type, MathObjType ret_type);
+	void register_binary_implementation(std::string name, BuiltinOpFunc & implementation, std::pair<MathObjType, MathObjType> arg_types, MathObjType ret_type);
 
 	// Find an operator by name
 	std::shared_ptr<const Operator> find(std::string_view op_name) const;

@@ -9,7 +9,7 @@ struct Token
 		// Keywords
 		T_LET, T_DEFINE, T_CLASS,
 		T_IN,
-		T_NONE,
+		T_NONE, T_CONST,
 		T_IF, T_ELSE,
 		T_ITERATE,
 		T_SUM, T_PROD,

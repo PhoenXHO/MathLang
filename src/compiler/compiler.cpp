@@ -50,7 +50,7 @@ void Compiler::compile_function_declaration(const FunctionDeclarationNode * func
 	std::string function_key(func_decl_n->name->name);
     for (const auto & param : func_decl_n->parameters)
     {
-        function_key += "_" + mathobjtype_to_string(param->type->type);
+        function_key += "_" + mathobjtype_to_string(param->type->type.type);
     }
 
 	scope->function_indices[function_key] = arg;
@@ -80,7 +80,7 @@ void Compiler::compile_function_call(const FunctionCallNode * func_call_n)
 	std::string function_key(func_call_n->name->name);
     for (const auto & arg : func_call_n->function->parameters)
     {
-        function_key += "_" + mathobjtype_to_string(arg.second);
+        function_key += "_" + mathobjtype_to_string(arg.second.type);
     }
 
 	uint8_t arg = scope->find_function_index(function_key);
@@ -324,7 +324,7 @@ void Compiler::compile_identifier(const IdentifierNode * identifier_n)
 
 void Compiler::compile_literal(const LiteralNode * literal_n)
 {
-	switch (literal_n->type)
+	switch (literal_n->type.type)
 	{
 		case MathObjType::MO_INTEGER: case MathObjType::MO_REAL:
 			compile_constant(literal_n);
@@ -339,7 +339,7 @@ void Compiler::compile_constant(const LiteralNode * literal_n)
 		throw std::runtime_error("too many constants");
 	}
 
-	switch (literal_n->type)
+	switch (literal_n->type.type)
 	{
 		case MathObjType::MO_INTEGER:
 		{

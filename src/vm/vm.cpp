@@ -86,7 +86,7 @@ void VM::run(void)
 		case OpCode::OP_LOAD_CONST:
 		{
 			// Load a constant value from the compiler's constants table
-			auto constant = READ_CONSTANT();
+			auto & constant = READ_CONSTANT();
 			stack.push(constant);
 			break;
 		}
@@ -103,7 +103,7 @@ void VM::run(void)
 		case OpCode::OP_CALL_FUNCTION:
 		{
 			// Call a function
-			auto function = READ_FUNCTION();
+			auto & function = READ_FUNCTION();
 			if (function->type == FunctionType::F_BUILTIN)
 			{
 				throw std::runtime_error("builtin functions not implemented");
@@ -140,23 +140,24 @@ void VM::run(void)
 		case OpCode::OP_SET_VAR:
 		{
 			// Set the value of a variable
-			auto variable = READ_VARIABLE();
-			variable->value = stack.top();
+			auto & variable = READ_VARIABLE();
+			auto value = stack.top();
 			stack.pop();
+			variable->value = get_value(value);
 			break;
 		}
 		case OpCode::OP_LOAD_VAR:
 		{
 			// Load the value of a variable
-			auto variable = READ_VARIABLE();
-			stack.push(variable->value);
+			auto & variable = READ_VARIABLE();
+			stack.push(variable);
 			break;
 		}
 
 		case OpCode::OP_UNARY_OP:
 		{
 			// Read the operator from the compiler's operators table
-			auto op = READ_OPERATOR();
+			auto & op = READ_OPERATOR();
 			if (op->type == OperatorType::O_CUSTOM)
 			{
 				throw std::runtime_error("custom operators not implemented");
@@ -166,7 +167,8 @@ void VM::run(void)
 				auto operand = stack.top();
 				stack.pop();
 
-				auto result = op->implementation(*operand, None());
+				auto _ = std::shared_ptr<MathObj>(new None());
+				auto result = op->implementation(_, operand);
 				stack.push(result);
 				break;
 			}
@@ -177,7 +179,7 @@ void VM::run(void)
 		case OpCode::OP_BINARY_OP:
 		{
 			// Read the operator from the compiler's operators table
-			auto op = READ_OPERATOR();
+			auto & op = READ_OPERATOR();
 			if (op->type == OperatorType::O_CUSTOM)
 			{
 				throw std::runtime_error("custom operators not implemented");
@@ -193,7 +195,7 @@ void VM::run(void)
 				{
 					case OperatorType::O_BUILTIN:
 					{
-						auto result = op->implementation(*lhs, *rhs);
+						auto result = op->implementation(lhs, rhs);
 						stack.push(result);
 						break;
 					}
@@ -231,4 +233,14 @@ void VM::run(void)
 			break;
 	}
 	}
+}
+
+std::shared_ptr<MathObj> get_value(std::shared_ptr<MathObj> & obj)
+{
+	if (obj->type().type == MOT::MO_VARIABLE)
+	{
+		auto variable = std::static_pointer_cast<Variable>(obj);
+		return variable->value;
+	}
+	return obj;
 }

@@ -120,12 +120,12 @@ void Compiler::disassemble(std::shared_ptr<Chunk> & chunk)
 
 void Compiler::print_constant(std::shared_ptr<MathObj> & constant)
 {
-	if (constant->type() == MathObjType::MO_REAL || constant->type() == MathObjType::MO_INTEGER)
+	if (constant->type().type == MOT::MO_REAL || constant->type().type == MOT::MO_INTEGER)
 	{
 		auto real = dynamic_cast<Real *>(constant.get());
 		std::cout << real->value();
 	}
-	else if (constant->type() == MathObjType::MO_VARIABLE)
+	else if (constant->type().type == MOT::MO_VARIABLE)
 	{
 		auto * variable = constant->as<Variable>();
 		std::cout << variable->name;
@@ -236,7 +236,8 @@ void VariableDeclarationNode::print(int depth) const
 	std::cout << "Variable Declaration :\n";
 	type->print(depth + 1);
 	name->print(depth + 1);
-	value->print(depth + 1);
+	if (value)
+		value->print(depth + 1);
 }
 
 void ExpressionStatementNode::print(int depth) const
@@ -298,7 +299,7 @@ void TypeNode::print(int depth) const
 	std::cout << "Type : ";
 	//std::visit([&](auto & type) {
 	//	using T = std::decay_t<decltype(type)>;
-	//	if constexpr (std::is_same_v<T, MathObjType>)
+	//	if constexpr (std::is_same_v<T, MOT>)
 	//		std::cout << type_to_string[type] <<'\n';
 	//	else if constexpr (std::is_same_v<T, std::unique_ptr<IdentifierNode>>)
 	//		std::cout << type->name << '\n';

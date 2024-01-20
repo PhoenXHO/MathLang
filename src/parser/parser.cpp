@@ -130,7 +130,6 @@ std::unique_ptr<FunctionDeclarationNode> Parser::function_declaration_n(void)
 		func_dec_node
 			->parameters
 			.push_back(parameter_n());
-		panic_mode = false;
 
 		if (curr_tk->type() != TokenType::T_COMMA)
 			break;
@@ -154,7 +153,7 @@ std::unique_ptr<FunctionDeclarationNode> Parser::function_declaration_n(void)
 	{
 		func_dec_node->end_position = curr_tk->position() + 1;
 		consume_tk(); // consume `)`
-		func_dec_node->return_type = std::make_unique<TypeNode>(MathObjType::MO_NONE);
+		func_dec_node->return_type = std::make_unique<TypeNode>(MathObjType(MOT::MO_NONE));
 	}
 
 	expect_tk(TokenType::T_LEFT_BRACE, "`{` expected after function declaration");
@@ -251,7 +250,7 @@ std::unique_ptr<VariableDeclarationNode> Parser::variable_declaration_n(void)
 	var_dec_node->start_position = curr_tk->position();
 
 	var_dec_node->type = type_n();
-	if (!var_dec_node->type || var_dec_node->type->type == MathObjType::MO_NONE)
+	if (!var_dec_node->type || var_dec_node->type->type.type == MOT::MO_NONE)
 	{
 		register_syntax_error("type expected after `let`");
 		return nullptr;
@@ -422,10 +421,6 @@ std::unique_ptr<ASTNode> Parser::primary_n(void)
 	{
 		return operand_n();
 	}
-	//else
-	//{
-	//	register_syntax_error("expression expected");
-	//}
 
 	return nullptr;
 }
@@ -437,10 +432,10 @@ std::unique_ptr<LiteralNode> Parser::literal_n(void)
 	switch (curr_tk->type())
 	{
 		case TokenType::T_INTEGER_LITERAL:
-			lit_node->type = MathObjType::MO_INTEGER;
+			lit_node->type = MathObjType(MOT::MO_INTEGER);
 			break;
 		case TokenType::T_REAL_LITERAL:
-			lit_node->type = MathObjType::MO_REAL;
+			lit_node->type = MathObjType(MOT::MO_REAL);
 			break;
 		
 		default: return nullptr;
@@ -503,16 +498,26 @@ std::unique_ptr<TypeNode> Parser::type_n(void)
 {
 	std::unique_ptr<TypeNode> type_node { new TypeNode };
 
+	if (curr_tk->type() == TokenType::T_CONST)
+	{
+		type_node->type.is_const = true;
+		consume_tk();
+	}
+	else
+	{
+		type_node->type.is_const = false;
+	}
+
 	switch (curr_tk->type())
 	{
 		case TokenType::T_INTEGER:
-			type_node->type = MathObjType::MO_INTEGER;
+			type_node->type.type = MOT::MO_INTEGER;
 			break;
 		case TokenType::T_REAL:
-			type_node->type = MathObjType::MO_REAL;
+			type_node->type.type = MOT::MO_REAL;
 			break;
 		case TokenType::T_NONE:
-			type_node->type = MathObjType::MO_NONE;
+			type_node->type.type = MOT::MO_NONE;
 			break;
 
 		default:
@@ -553,7 +558,9 @@ void Parser::synchronize(void)
 {
 	while (curr_tk->type() != TokenType::T_EOF &&
 		   curr_tk->type() != TokenType::T_SEMICOLON &&
-		   curr_tk->type() != TokenType::T_LET)
+		   curr_tk->type() != TokenType::T_LET &&
+		   curr_tk->type() != TokenType::T_DEFINE &&
+		   next_tk->type() != TokenType::T_ARROW)
 	{
 		consume_tk();
 	}

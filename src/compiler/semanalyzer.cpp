@@ -1,14 +1,14 @@
 #include "semanalyzer.h"
 #include "error.h"
 
-std::unordered_map<MathObjType, std::string> mathobjtype_string =
+std::unordered_map<MOT, std::string> mathobjtype_string =
 {
-	{ MathObjType::MO_NONE,		"None"		},
-	{ MathObjType::MO_INTEGER,	"Integer"	},
-	{ MathObjType::MO_REAL,		"Real"		}
+	{ MOT::MO_NONE,		"None"		},
+	{ MOT::MO_INTEGER,	"Integer"	},
+	{ MOT::MO_REAL,		"Real"		}
 };
 
-std::string mathobjtype_to_string(MathObjType type)
+std::string mathobjtype_to_string(MOT type)
 { return mathobjtype_string[type]; }
 
 void SemanticAnalyzer::analyze_source(void)
@@ -24,7 +24,7 @@ void SemanticAnalyzer::analyze_source(void)
 SemanticAnalyzer::AnalysisResult SemanticAnalyzer::analyze(ASTNode * node)
 {
 	if (panic_mode)
-		return MathObjType::MO_NONE;
+		return MathObjType(MOT::MO_NONE);
 
 	switch (node->n_type)
 	{
@@ -59,7 +59,7 @@ SemanticAnalyzer::AnalysisResult SemanticAnalyzer::analyze(ASTNode * node)
 				{
 					func_decl = static_cast<const FunctionDeclarationNode *>(context_stack.top().second);
 
-					if (statement->n_type == NodeType::N_RETURN_STMT && func_decl->return_type->type == MathObjType::MO_NONE)
+					if (statement->n_type == NodeType::N_RETURN_STMT && func_decl->return_type->type.type == MathObjType::MO_NONE)
 					{
 						register_semantic_error(
 							"non-returning function should not return a value",
@@ -67,7 +67,7 @@ SemanticAnalyzer::AnalysisResult SemanticAnalyzer::analyze(ASTNode * node)
 							statement.get()
 						);
 					}
-					else if (statement->n_type == NodeType::N_RETURN && func_decl->return_type->type != MathObjType::MO_NONE)
+					else if (statement->n_type == NodeType::N_RETURN && func_decl->return_type->type.type != MathObjType::MO_NONE)
 					{
 						register_semantic_error(
 							"returning function should return a value",
@@ -83,20 +83,17 @@ SemanticAnalyzer::AnalysisResult SemanticAnalyzer::analyze(ASTNode * node)
 						if (!can_convert(expr_type, func_decl->return_type->type))
 						{
 							register_semantic_error(
-								"cannot implicitly convert `" + mathobjtype_to_string(expr_type) + "` to `"+ mathobjtype_to_string(func_decl->return_type->type) + "`",
+								"cannot implicitly convert `" + mathobjtype_to_string(expr_type.type) + "` to `"+ mathobjtype_to_string(func_decl->return_type->type.type) + "`",
 								"",
 								return_stmt->value.get()
 							);
 						}
 					}
-					else
-					{
-						analyze(statement.get());
-					}
 				}
+				analyze(statement.get());
 			}
 
-			if (in_function() && func_decl->return_type->type != MathObjType::MO_NONE && !found_return)
+			if (in_function() && func_decl->return_type->type.type != MathObjType::MO_NONE && !found_return)
 			{
 				register_semantic_error(
 					"returning function should return a value",
@@ -120,7 +117,7 @@ SemanticAnalyzer::AnalysisResult SemanticAnalyzer::analyze(ASTNode * node)
 			auto & name = func_decl->name->name;
 
 			context_stack.push(std::make_pair(
-				func_decl->return_type->type == MathObjType::MO_NONE ?
+				func_decl->return_type->type.type == MathObjType::MO_NONE ?
 					ContextType::C_NONRETURNING_FUNCTION : ContextType::C_RETURNING_FUNCTION,
 				func_decl));
 
@@ -143,7 +140,7 @@ SemanticAnalyzer::AnalysisResult SemanticAnalyzer::analyze(ASTNode * node)
 					// parameters can have different names
 					for (size_t i = 0; i < func_decl->parameters.size(); ++i)
 					{
-						if (func_decl->parameters[i]->type->type != params[i].second)
+						if (func_decl->parameters[i]->type->type.type != params[i].second.type)
 						{
 							match = false;
 							break;
@@ -164,7 +161,7 @@ SemanticAnalyzer::AnalysisResult SemanticAnalyzer::analyze(ASTNode * node)
 						"",
 						func_decl->name.get()
 					);
-					return MathObjType::MO_NONE;
+					return MathObjType(MOT::MO_NONE);
 				}
 			}
 
@@ -180,7 +177,7 @@ SemanticAnalyzer::AnalysisResult SemanticAnalyzer::analyze(ASTNode * node)
 					"",
 					node
 				);
-				return MathObjType::MO_NONE;
+				return MathObjType(MOT::MO_NONE);
 			}
 
 			// Create a new scope for the function body
@@ -218,7 +215,7 @@ SemanticAnalyzer::AnalysisResult SemanticAnalyzer::analyze(ASTNode * node)
 					"",
 					func_call->name.get()
 				);
-				return MathObjType::MO_NONE;
+				return MathObjType(MOT::MO_NONE);
 			}
 
 			std::vector<std::pair<std::shared_ptr<Function>, int>> matching_candidates;
@@ -260,7 +257,7 @@ SemanticAnalyzer::AnalysisResult SemanticAnalyzer::analyze(ASTNode * node)
 				std::string additional_info = "`";
 				for (const auto & arg : func_call->arguments)
 				{
-					additional_info += mathobjtype_to_string(analyze(arg.get()).type) + "`, `";
+					additional_info += mathobjtype_to_string(analyze(arg.get()).type.type) + "`, `";
 				}
 				additional_info.pop_back();
 				additional_info.pop_back();
@@ -275,7 +272,7 @@ SemanticAnalyzer::AnalysisResult SemanticAnalyzer::analyze(ASTNode * node)
 						additional_info += "  - " + func->name + "(";
 						for (auto & param : func->parameters)
 						{
-							additional_info += mathobjtype_to_string(param.second) + ", ";
+							additional_info += mathobjtype_to_string(param.second.type) + ", ";
 						}
 						additional_info.pop_back();
 						additional_info.pop_back();
@@ -288,7 +285,7 @@ SemanticAnalyzer::AnalysisResult SemanticAnalyzer::analyze(ASTNode * node)
 					additional_info,
 					func_call->name.get()
 				);
-				return MathObjType::MO_NONE;
+				return MathObjType(MOT::MO_NONE);
 			}
 
 			// Sort the matching candidates by specificity
@@ -304,7 +301,7 @@ SemanticAnalyzer::AnalysisResult SemanticAnalyzer::analyze(ASTNode * node)
 					"",
 					func_call->name.get()
 				);
-				return MathObjType::MO_NONE;
+				return MathObjType(MOT::MO_NONE);
 			}
 
 			// Get the most specific candidate
@@ -360,15 +357,15 @@ SemanticAnalyzer::AnalysisResult SemanticAnalyzer::analyze(ASTNode * node)
 		case NodeType::N_PARAMETER:
 		{
 			auto * param = static_cast<ParameterNode *>(node);
-			MathObjType param_type = param->type->type;
+			auto & param_type = param->type;
 
 			if (param->default_value)
 			{
 				MathObjType expr_type = analyze(param->default_value.get()).type;
-				if (!can_convert(expr_type, param_type))
+				if (!can_convert(expr_type, param_type->type))
 				{
 					register_semantic_error(
-						"cannot implicitly convert `" + mathobjtype_to_string(expr_type) + "` to `" + mathobjtype_to_string(param_type) + "`",
+						"cannot implicitly convert `" + mathobjtype_to_string(expr_type.type) + "` to `" + mathobjtype_to_string(param_type->type.type) + "`",
 						"",
 						param->default_value.get()
 					);
@@ -376,9 +373,9 @@ SemanticAnalyzer::AnalysisResult SemanticAnalyzer::analyze(ASTNode * node)
 			}
 			
 			// Add the parameter to the list of variables
-			scope->variables[param->name->name] = std::make_shared<Variable>(param->name->name, param_type);
+			scope->variables[param->name->name] = std::make_shared<Variable>(param->name->name, param_type->type);
 
-			return param_type;
+			return param_type->type;
 		}
 		case NodeType::N_EXPR_STMT:
 		{
@@ -398,7 +395,7 @@ SemanticAnalyzer::AnalysisResult SemanticAnalyzer::analyze(ASTNode * node)
 				if (!can_convert(expr_type, var_type))
 				{
 					register_semantic_error(
-						"cannot implicitly convert `" + mathobjtype_to_string(expr_type) + "` to `" + mathobjtype_to_string(var_type) + "`",
+						"cannot implicitly convert `" + mathobjtype_to_string(expr_type.type) + "` to `" + mathobjtype_to_string(var_type.type) + "`",
 						"",
 						var_decl->value.get()
 					);
@@ -425,10 +422,21 @@ SemanticAnalyzer::AnalysisResult SemanticAnalyzer::analyze(ASTNode * node)
 		case NodeType::N_EXPR:
 		{
 			auto * expr = static_cast<ExpressionNode *>(node);
-			MathObjType left_type = analyze(expr->left.get()).type;
-			MathObjType right_type = analyze(expr->right.get()).type;
 
 			auto & op = expr->op;
+			// Check if the lhs is not a variable
+			if (op->op_info->name == "=" && expr->left->n_type != NodeType::N_IDENTIFIER)
+			{
+				register_semantic_error(
+					"left-hand side of assignment must be a modifiable lvalue",
+					"",
+					expr->left.get()
+				);
+				break;
+			}
+			
+			AnalysisResult left_info = analyze(expr->left.get());
+			AnalysisResult right_info = analyze(expr->right.get());
 
 			// Get the list of implementations for the operator
 			auto candidates = operator_table->get_implementations(op->op_info->name);
@@ -440,7 +448,7 @@ SemanticAnalyzer::AnalysisResult SemanticAnalyzer::analyze(ASTNode * node)
 				for (auto & it = candidates.first; it != candidates.second; ++it)
 				{
 					auto arg_types = it->second->arg_types;
-					int specificity = calculate_specificity(left_type, right_type, arg_types.first, arg_types.second);
+					int specificity = calculate_specificity(left_info.type, right_info.type, arg_types.first, arg_types.second);
 
 					if (specificity > 0)
 						matching_candidates.push_back({ it->second, specificity });
@@ -457,36 +465,67 @@ SemanticAnalyzer::AnalysisResult SemanticAnalyzer::analyze(ASTNode * node)
 					if (matching_candidates.size() > 1 && matching_candidates[0].second == matching_candidates[1].second)
 					{
 						register_semantic_error(
-							"ambiguous call to operator `" + op->op_info->name + "`",
+							"ambiguous call to operator `" + op->op_info->name + '`',
 							"",
 							op.get()
 						);
-						return MathObjType::MO_NONE;
+						return MathObjType(MOT::MO_NONE);
 					}
 
 					// Get the most specific candidate
 					auto & candidate = matching_candidates[0];
 					op->op_func = candidate.first;
-					return candidate.first->return_type;
 
-					// No matching operator found
-					register_semantic_error(
-						"no binary operator `" + op->op_info->name + "` matches these operand types",
-						'`' + mathobjtype_to_string(left_type) + "`, `" + mathobjtype_to_string(right_type) + '`',
-						op.get()
-					);
+					// Check if the operator doesn't accept a constant argument
+					if (!candidate.first->arg_types.second.is_const && right_info.type.is_const)
+					{
+						register_semantic_error(
+							"operator `" + op->op_info->name + "` expects a non-constant argument",
+							"",
+							expr->right.get()
+						);
+						break;
+					}
+					else if (!candidate.first->arg_types.first.is_const && left_info.type.is_const)
+					{
+						register_semantic_error(
+							"operator `" + op->op_info->name + "` expects a non-constant argument",
+							"",
+							expr->left.get()
+						);
+						break;
+					}
+
+					if (op->op_info->name == "=" && !can_convert(right_info.type, left_info.type))
+					{
+						register_semantic_error(
+							"cannot implicitly convert `" + mathobjtype_to_string(right_info.type.type) + "` to `" + mathobjtype_to_string(left_info.type.type) + "`",
+							"",
+							expr->right.get()
+						);
+						break;
+					}
+
+					return candidate.first->return_type;
 				}
+
+				// No matching operator found
+				register_semantic_error(
+					"no binary operator `" + op->op_info->name + "` matches these operand types",
+					'`' + mathobjtype_to_string(left_info.type.type) + "`, `" + mathobjtype_to_string(right_info.type.type) + '`',
+					op.get()
+				);
 			}
 			break;
 		}
 		case NodeType::N_OPERAND:
 		{
 			auto * operand = static_cast<OperandNode *>(node);
-			MathObjType operand_type = analyze(operand->primary.get()).type;
+			AnalysisResult operand_info = analyze(operand->primary.get());
 
 			auto & op = operand->op;
 			if (!op)
-				return operand_type;
+				return operand_info.type;
 			
 			auto candidates = operator_table->get_implementations(op->op_info->name, true);
 			if (candidates.first != candidates.second)
@@ -494,11 +533,23 @@ SemanticAnalyzer::AnalysisResult SemanticAnalyzer::analyze(ASTNode * node)
 				// Iterate over the candidate operators and check if any of them match the operand type
 				for (auto & it = candidates.first; it != candidates.second; ++it)
 				{
-					auto arg_type = it->second->arg_types.first;
-					if (can_convert(operand_type, arg_type))
+					auto & op_func = it->second;
+					auto arg_type = op_func->arg_types.first;
+					if (can_convert(operand_info.type, arg_type))
 					{
-						op->op_func = it->second;
-						return it->second->return_type;
+						// Check if the operator doesn't accept a constant argument
+						if (!op_func->arg_types.first.is_const && operand_info.type.is_const)
+						{
+							register_semantic_error(
+								"operator `" + op->op_info->name + "` expects a non-constant argument",
+								"",
+								operand->primary.get()
+							);
+							break;
+						}
+
+						op->op_func = op_func;
+						return op_func->return_type;
 					}
 				}
 				// No matching operator found
@@ -506,7 +557,7 @@ SemanticAnalyzer::AnalysisResult SemanticAnalyzer::analyze(ASTNode * node)
 
 			register_semantic_error(
 				"no unary operator `" + op->op_info->name + "` matches this operand type",
-				mathobjtype_to_string(operand_type),
+				'`' + mathobjtype_to_string(operand_info.type.type) + '`',
 				op.get()
 			);
 			break;
@@ -529,10 +580,10 @@ SemanticAnalyzer::AnalysisResult SemanticAnalyzer::analyze(ASTNode * node)
 				);
 				break;
 			}
-			return it->second->value_type();
+			return { MathObjType(it->second->value_type().type, it->second->is_const()) };
 		}
 	}
-	return MathObjType::MO_NONE;
+	return MathObjType(MOT::MO_NONE);
 }
 
 bool SemanticAnalyzer::in_function(void) const
