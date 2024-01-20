@@ -20,7 +20,6 @@ struct Chunk
 	std::string name;
 	std::vector<uint8_t> bytes;
 	std::vector<uint8_t>::const_iterator ip;
-	std::vector<std::shared_ptr<MathObj>> constants;
 
 	const std::vector<uint8_t> & bytecode(void) { return bytes; }
 };

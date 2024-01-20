@@ -86,7 +86,7 @@ void Compiler::disassemble(std::shared_ptr<Chunk> & chunk)
 		{
 			case OpCode::OP_LOAD_CONST:
 				std::cout << (int)bytes[++i] << "\t\'";
-				print_constant(chunk->constants[bytes[i]]);
+				print_constant((*constants)[bytes[i]]);
 				std::cout << "\'\n";
 				break;
 

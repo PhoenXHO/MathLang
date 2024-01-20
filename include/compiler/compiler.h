@@ -16,6 +16,8 @@ class Compiler
 	const AST & ast;
 	std::unique_ptr<OperatorTable> operator_table;
 
+	std::unordered_map<std::string, uint8_t> constant_indices;
+	std::shared_ptr<std::vector<std::shared_ptr<MathObj>>> constants;
 	std::shared_ptr<std::vector<std::shared_ptr<Variable>>> variables;
 	std::shared_ptr<std::vector<std::shared_ptr<Function>>> functions;
 	std::shared_ptr<std::vector<std::pair<std::shared_ptr<const OperatorFunction>, std::string>>> operators;
@@ -67,6 +69,7 @@ public:
 		const AST & ast,
 		std::unique_ptr<OperatorTable> & operator_table,
 		std::shared_ptr<Scope> & scope,
+		std::shared_ptr<std::vector<std::shared_ptr<MathObj>>> constants,
 		std::shared_ptr<std::vector<std::shared_ptr<Variable>>> variables,
 		std::shared_ptr<std::vector<std::shared_ptr<Function>>> functions,
 		std::shared_ptr<std::vector<std::pair<std::shared_ptr<const OperatorFunction>, std::string>>> operators
@@ -75,6 +78,7 @@ public:
 		operator_table(std::move(operator_table)),
 		scope(scope),
 		chunk(new Chunk("<main>")),
+		constants(std::move(constants)),
 		variables(std::move(variables)),
 		functions(std::move(functions)),
 		operators(std::move(operators))

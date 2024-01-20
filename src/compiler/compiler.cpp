@@ -334,9 +334,18 @@ void Compiler::compile_literal(const LiteralNode * literal_n)
 
 void Compiler::compile_constant(const LiteralNode * literal_n)
 {
-	if (chunk->constants.size() >= UINT8_MAX)
+	if (constants->size() >= UINT8_MAX)
 	{
-		throw std::runtime_error("too many constants");
+		register_compile_error("too many constants", "", literal_n);
+		return;
+	}
+
+	// Check if the constant already exists in the unordered map
+	auto it = constant_indices.find(std::string(literal_n->value));
+	if (it != constant_indices.end())
+	{
+		emit(OP_LOAD_CONST, it->second);
+		return;
 	}
 
 	switch (literal_n->type.type)
@@ -344,15 +353,17 @@ void Compiler::compile_constant(const LiteralNode * literal_n)
 		case MathObjType::MO_INTEGER:
 		{
 			auto constant = std::make_shared<Integer>(std::stoi(literal_n->value.data()));
-			chunk->constants.push_back(constant);
-			emit(OP_LOAD_CONST, chunk->constants.size() - 1);
+			constants->push_back(constant);
+			emit(OP_LOAD_CONST, constants->size() - 1);
+			constant_indices[std::string(literal_n->value)] = constants->size() - 1;
 			break;
 		}
 		case MathObjType::MO_REAL:
 		{
 			auto constant = std::make_shared<Real>(std::stod(literal_n->value.data()));
-			chunk->constants.push_back(constant);
-			emit(OP_LOAD_CONST, chunk->constants.size() - 1);
+			constants->push_back(constant);
+			emit(OP_LOAD_CONST, constants->size() - 1);
+			constant_indices[std::string(literal_n->value)] = constants->size() - 1;
 			break;
 		}
 	}

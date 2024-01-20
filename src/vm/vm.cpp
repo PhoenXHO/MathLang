@@ -48,7 +48,7 @@ void VM::interpret_source(std::string_view source)
 		parser.get_ast(),
 		parser.operators,
 		current_scope,
-		variables, functions, operators
+		constants, variables, functions, operators
 	);
 	compiler.compile_source();
 	chunk = compiler.chunk;
@@ -73,7 +73,7 @@ void VM::run(void)
 {
 	// Define helper macros for reading bytecode
 	#define READ_BYTE()				(*(chunk->ip++))
-	#define READ_CONSTANT()			(chunk->constants[READ_BYTE()])
+	#define READ_CONSTANT()			((*constants)[READ_BYTE()])
 	#define READ_VARIABLE()			((*variables)[READ_BYTE()])
 	#define READ_FUNCTION()			((*functions)[READ_BYTE()])
 	#define READ_OPERATOR()			((*operators)[READ_BYTE()].first)
