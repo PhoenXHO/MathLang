@@ -41,9 +41,24 @@ _This project is still a work in progress. If you are interested in contributing
 
 		let <type> <identifier> := <expression>;
 
-<!--7. **Variable Assignment**: MathLang allows you to assign values to variables using the `=` operator.-->
+8. **Variable Assignment**: MathLang allows you to assign values to variables using the `=` operator.
 
-8. **Functions**: MathLang allows you to define functions using the `define` keyword followed by the function name, parameter list, and return type. Optionally, you can specify the return type using the `->` operator (the type will be `none` if not specified).
+	Syntax:
+
+		<identifier> = <expression>;
+
+9. **`const` Keyword**: MathLang allows you to declare constants using the `const` keyword followed by the constant type and identifier. Optionally, you can initialize the constant with an expression using the `:=` operator. It can also be used with function parameters to indicate that the parameter is a constant.
+
+	Syntax:
+
+		let const <type> <identifier>;
+	or,
+
+		let const <type> <identifier> := <expression>;
+
+	_Note: Constants cannot be reassigned. The compiler will throw an error if you try to reassign a constant._
+
+10. **Functions**: MathLang allows you to define functions using the `define` keyword followed by the function name, parameter list, and return type. Optionally, you can specify the return type using the `->` operator (the type will be `none` if not specified).
 
 	Syntax:
 
@@ -60,13 +75,13 @@ _This project is still a work in progress. If you are interested in contributing
 
 	_Note: Default parameters are not supported yet. This feature is planned for future versions of MathLang._
 
-9. **Function Calls**: MathLang allows you to call functions using the function name and followed by a parameter list encapsulated in parentheses.
+11. **Function Calls**: MathLang allows you to call functions using the function name and followed by a parameter list encapsulated in parentheses.
 
 	Syntax:
 
 		<name>(<param-list>);
 
-10. **Function Overloading**: MathLang allows you to overload functions with the same name but different parameter lists. The compiler will select the appropriate function based on the number and types of the arguments passed to the function.
+12. **Function Overloading**: MathLang allows you to overload functions with the same name but different parameter lists. The compiler will select the appropriate function based on the number and types of the arguments passed to the function.
 
 	
 # Future Features
