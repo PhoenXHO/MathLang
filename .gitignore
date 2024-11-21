@@ -1,0 +1,56 @@
+# build directories
+/build/
+/cmake-build-debug/
+/cmake-build-release/
+/out/
+
+# CMake files
+CMakeFiles/
+/CMakeCache.txt
+/cmake_install.cmake
+/Makefile
+
+# Compiled files
+*.so
+*.dll
+*.dylib
+*.exe
+*.out
+*.app
+*.bin
+*.o
+*.a
+*.lib
+*.obj
+
+# Configuration files
+mathlangconfig.hpp
+
+# Temporary files
+*.tmp
+*.log
+*.bak
+*.swp
+*.swo
+*.orig
+
+# IDE files
+*.vscode/
+
+# User files
+_i_*
+*.mthl
+
+# Boost, GMP, MPFR, and Google Test
+/boost/
+/gmp/
+/mpfr/
+/googletest/
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Compiled binary files
+MathLang
+MathLangTest

@@ -1,0 +1,7 @@
+#define MathLang_VERSION_MAJOR @MathLang_VERSION_MAJOR@
+#define MathLang_VERSION_MINOR @MathLang_VERSION_MINOR@
+#define MathLang_VERSION_PATCH @MathLang_VERSION_PATCH@
+
+#define MathLang_PRE_RELEASE @MathLang_PRE_RELEASE@
+#define MathLang_VERSION_STATUS "@MathLang_VERSION_STATUS@"
+#define MathLang_VERSION_STATUS_VERSION @MathLang_VERSION_STATUS_VERSION@
