@@ -8,9 +8,20 @@
 
 class Lexer
 {
+public:
+	// The context of the lexer, which will allow the user to use certain keywords as identifiers outside of certain contexts
+	// (e.g. 'init')
+	enum class Context
+	{
+		DEFAULT,
+		CLASS,
+	};
+
+private:
 	std::string_view source;
 	size_t pos = 0;
 	size_t line = 1, column = 1;
+	Context context = Context::DEFAULT;
 
 	void skip_whitespaces();
 	void skip_comment();
@@ -50,6 +61,8 @@ public:
 
 	void set_source(std::string_view source)
 	{ this->source = source; }
+	void set_context(Context context)
+	{ this->context = context; }
 
 	// A function to scan a single token from the source code
 	std::unique_ptr<Token> scan_tk(void);

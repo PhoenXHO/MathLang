@@ -6,7 +6,7 @@
 #include <string_view>
 #include <boost/program_options.hpp> // for command line options
 
-#include "mathlangconfig.hpp"
+#include "mathium_config.hpp"
 
 #include "vm/vm.hpp"
 #include "global/config.hpp"
@@ -58,7 +58,7 @@ void repl(void)
 	VM vm;
 	while (true)
 	{
-		std::cout << "MathLang> ";
+		std::cout << "Mathium> ";
 		std::string source;
 		std::getline(std::cin, source);
 
@@ -189,7 +189,7 @@ void parse_options(int argc, const char ** argv, po::options_description & desc)
 
 void print_usage(void)
 {
-	std::cout << "Usage: mathlang [<options>]\n";
+	std::cout << "Usage: Mathium [<options>]\n";
 }
 
 void print_version(void)
@@ -198,11 +198,11 @@ void print_version(void)
 		return;
 
 	version_printed = true;
-	std::cout << "MathLang Interpreter v";
-	std::cout << MathLang_VERSION_MAJOR << '.' << MathLang_VERSION_MINOR << '.' << MathLang_VERSION_PATCH;
-	if (MathLang_PRE_RELEASE)
+	std::cout << "Mathium Interpreter v";
+	std::cout << Mathium_VERSION_MAJOR << '.' << Mathium_VERSION_MINOR << '.' << Mathium_VERSION_PATCH;
+	if (Mathium_PRE_RELEASE)
 	{
-		std::cout << "-" << MathLang_VERSION_STATUS << "." << MathLang_VERSION_STATUS_VERSION;
+		std::cout << "-" << Mathium_VERSION_STATUS << "." << Mathium_VERSION_STATUS_VERSION;
 	}
 	std::cout << "\nBuilt on " << __DATE__ << " at " << __TIME__ << "\n";
 }

@@ -10,17 +10,17 @@ message(STATUS "CMake version: ${CMAKE_VERSION}")
 
 # Set the project name and version number
 # Version format: <major>.<minor>.<patch>-<status>.<status-version>
-project(MathLang LANGUAGES CXX)
-set(MathLang_VERSION_MAJOR 0)
-set(MathLang_VERSION_MINOR 2)
-set(MathLang_VERSION_PATCH 0)
+project(Mathium LANGUAGES CXX)
+set(Mathium_VERSION_MAJOR 0)
+set(Mathium_VERSION_MINOR 2)
+set(Mathium_VERSION_PATCH 0)
 
-set(MathLang_PRE_RELEASE true)
-set(MathLang_VERSION_STATUS "alpha")
-set(MathLang_VERSION_STATUS_VERSION 1)
+set(Mathium_PRE_RELEASE true)
+set(Mathium_VERSION_STATUS "alpha")
+set(Mathium_VERSION_STATUS_VERSION 1)
 
 # Create a header file containing the version number
-configure_file(mathlangconfig.hpp.in mathlangconfig.hpp)
+configure_file(mathium_config.hpp.in mathium_config.hpp)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
@@ -88,33 +88,33 @@ enable_testing()
 
 # Add the test executable target
 file(GLOB_RECURSE TEST_SOURCES "test/*.cpp")
-add_executable(MathLangTest ${TEST_SOURCES})
+add_executable(MathiumTest ${TEST_SOURCES})
 
 # Link the GoogleTest libraries
-target_link_libraries(MathLangTest gtest gtest_main)
+target_link_libraries(MathiumTest gtest gtest_main)
 
 # Discover and run the tests
 include(GoogleTest)
-gtest_discover_tests(MathLangTest)
+gtest_discover_tests(MathiumTest)
 
 
 
 # Add the executable target
 file(GLOB_RECURSE SOURCES "src/*.cpp")
-add_executable(MathLang ${SOURCES})
+add_executable(Mathium ${SOURCES})
 message(STATUS "Sources: ${SOURCES}")
 
 # Link the Boost libraries
 foreach(BOOST_COMPONENT ${BOOST_COMPONENTS})
-	target_link_libraries(MathLang Boost::${BOOST_COMPONENT})	
+	target_link_libraries(Mathium Boost::${BOOST_COMPONENT})	
 endforeach()
 
 # Link the GMP and MPFR libraries
-target_link_libraries(MathLang ${GMP_LIBRARIES} ${MPFR_LIBRARIES})
+target_link_libraries(Mathium ${GMP_LIBRARIES} ${MPFR_LIBRARIES})
 
 
 
-target_include_directories(MathLang PRIVATE
+target_include_directories(Mathium PRIVATE
 	"${PROJECT_BINARY_DIR}"
 	"${CMAKE_CURRENT_SOURCE_DIR}/src"
 	#${HEADER_PATHS}

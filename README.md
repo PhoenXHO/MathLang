@@ -1,26 +1,31 @@
-# MathLang Interpreter
+# Mathium Interpreter (0.2.0-alpha.1)
 
-MathLang is a custom programming language designed for mathematical computations and symbolic expressions. This repository contains the source code for the MathLang interpreter, which is currently in the alpha stage of development.
+Mathium is a custom programming language designed for mathematical computations and symbolic expressions. This repository contains the source code for the Mathium interpreter, which is currently in the alpha stage of development.
 
-_Note: This project is a complete rewrite of the MathLang interpreter, with cleaner code and more organized structure. The interpreter will be able to run code in a REPL, and will have a better error handling system._
+_Note: This project is a complete rewrite of the Mathium interpreter, with cleaner code and more organized structure. The interpreter will be able to run code in a REPL, and will have a better error handling system._
 
 ## Features
 
-### Current Features (0.2.0-alpha.1)
+### Current Features
 - Basic expressions with numbers, parentheses, and built-in operators
-- Precise operations with integers and floating-point numbers using GMP and MPFR libraries
-- Type checking
-- Variables and constants
-- Function definitions and calls
-- Built-in functions
+	- Currently, only the addition operator (`+`) is supported (more operators will be added for this version)
 - REPL (Read-Eval-Print Loop) for interactive programming
 
-### Planned Features
+### Planned Features for 0.2.0-alpha.1
+- Read from a file with `.mthx` extension
+- More built-in operators
+- Precise operations with integers and floating-point numbers using GMP and MPFR libraries
+- Variables and constants (with different scopes)
+- Function definitions and calls
+- Built-in functions
+
+### Future Features
 - Class definitions and object creation
 - Built-in classes
+- Type checking and type casting (implicit and explicit)
 - Control flow statements
 - More built-in functions and classes
-- Operator overloading and type conversions
+- Operator overloading and type cast overloading
 - Symbolic expressions and mappings
 
 ## Getting Started
@@ -35,7 +40,7 @@ _Note: This project is a complete rewrite of the MathLang interpreter, with clea
 1. Clone the repository:
 	```sh
 	git clone https://github.com/PhoenXHO/MathLang.git
-	cd MathLang
+	cd Mathium
 	```
 
 2. Create a build directory and navigate to it:
@@ -57,13 +62,13 @@ _Note: This project is a complete rewrite of the MathLang interpreter, with clea
 ### Running the Interpreter
 To start the REPL:
 ```sh
-./MathLang
+./Mathium
 ```
 
 <!-- Not yet implemented -->
-<!--To run a MathLang script:
+<!--To run a Mathium script:
 ```sh
-./MathLang -f <script.mthl>
+./Mathium -f <script.mthl>
 ```-->
 
 ## Usage
@@ -75,7 +80,7 @@ To start the REPL:
 ### Command Line Options
 - `-h, --help`: Display help message
 - `-v, --version`: Display interpreter version
-- `-f, --file <file>`: Read from a file with `.mthl` extension
+- `-f, --file <file>`: Read from a file with `.mthx` extension
 <!--- `-D, --dev`: Enable debug mode-->
 - `-V, --verbose`: Enable verbose output
 

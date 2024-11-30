@@ -1,0 +1,7 @@
+#define Mathium_VERSION_MAJOR @Mathium_VERSION_MAJOR@
+#define Mathium_VERSION_MINOR @Mathium_VERSION_MINOR@
+#define Mathium_VERSION_PATCH @Mathium_VERSION_PATCH@
+
+#define Mathium_PRE_RELEASE @Mathium_PRE_RELEASE@
+#define Mathium_VERSION_STATUS "@Mathium_VERSION_STATUS@"
+#define Mathium_VERSION_STATUS_VERSION @Mathium_VERSION_STATUS_VERSION@

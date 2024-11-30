@@ -293,7 +293,7 @@ bool is_operator_sym(char c)
 	{
 	case '+': case '-': case '*': case '/': case '%': case '^': case '!':
 	case '=': case '<': case '>': case '&': case '|': case '~': case '?':
-	case ':': case '@': case '#': case '$':
+	case ':': case '@': case '$':
 		return true;
 	default:
 		return false;

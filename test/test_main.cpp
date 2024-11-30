@@ -5,7 +5,7 @@
 
 // Sample test case
 // TEST(TestSuiteName, TestName): TestSuiteName is the name of the test suite and TestName is the name of the test case.
-TEST(MathLangTest, BasicAssertions) {
+TEST(MathiumTest, BasicAssertions) {
     EXPECT_EQ(1 + 1, 2);
     EXPECT_TRUE(true);
 }

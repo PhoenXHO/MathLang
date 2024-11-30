@@ -39,7 +39,7 @@ mathlangconfig.hpp
 
 # User files
 _i_*
-*.mthl
+*.mthx
 
 # Boost, GMP, MPFR, and Google Test
 /boost/
