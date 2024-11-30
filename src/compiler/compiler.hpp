@@ -14,7 +14,7 @@ class Compiler
 {
 	std::unique_ptr<Parser> parser;
 	std::unique_ptr<SemanticAnalyzer> semantic_analyzer;
-	Chunk chunk;
+	Chunk & chunk; // Reference to the chunk in the VM
 	std::vector<std::shared_ptr<OperatorImplentation>> operator_stack;
 
 	void compile_statement      (const ASTNode *)      				          ;
@@ -26,23 +26,21 @@ class Compiler
 	void compile_literal        (const LiteralNode *)  					      ;
 
 public:
-	Compiler(): chunk("<main>") {}
+	Compiler(Chunk & chunk) :
+		chunk(chunk),
+		parser(std::make_unique<Parser>()),
+		semantic_analyzer(std::make_unique<SemanticAnalyzer>())
+	{}
 	~Compiler() = default;
 
 	void reset(void)
 	{
-		parser.reset();
-		chunk = Chunk("<main>");
-		// We don't want to clear the constant pool since it will be used for the entire program
-		// The garbage collector will take care of removing unused constants
+		parser->reset();
+		chunk.clear_code();
 	}
 
 	void compile_source(std::string_view source);
 
-	void init_main_ip(void)
-	{ chunk.init_ip(); }
-	Chunk & get_chunk(void)
-	{ return chunk; }
 	const std::shared_ptr<OperatorImplentation> & get_operator(size_t index) const
 	{ return operator_stack.at(index); }
 };

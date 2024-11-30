@@ -7,16 +7,10 @@
 InterpretResult VM::interpret_source(std::string_view source)
 {
 	this->source = source;
-
-	if (!compiler)
-	{
-		compiler = std::make_unique<Compiler>();
-	}
-
+	
 	try
 	{
 		compiler->compile_source(source);
-		compiler->init_main_ip();
 		run();
 	}
 	catch (const ErrorArray & errors)
@@ -40,7 +34,7 @@ InterpretResult VM::interpret_source(std::string_view source)
 
 void VM::run(void)
 {
-	auto & chunk = compiler->get_chunk();
+	chunk.init_ip();
 	while (true)
 	{
 	uint8_t instruction = chunk.read_byte();

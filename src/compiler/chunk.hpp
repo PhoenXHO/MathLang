@@ -58,6 +58,13 @@ struct Chunk
 		return constant_pool[index];
 	}
 
+	void clear_code(void)
+	{
+		code.clear();
+		// We don't want to clear the constant pool since it will be used for the entire program
+		// The garbage collector will take care of removing unused constants
+	}
+
 	//* Debugging
 	void disassemble(void) const;
 

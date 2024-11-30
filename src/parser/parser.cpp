@@ -5,10 +5,6 @@
 
 void Parser::parse_source(std::string_view source)
 {
-	if (!lexer)
-	{
-		lexer = std::make_unique<Lexer>();
-	}
 	lexer->set_source(source);
 
 	// Keep scanning new tokens until we reach the end of the file

@@ -40,7 +40,7 @@ class Parser
 public:
 	OperatorTable operator_table;
 
-	Parser()
+	Parser() : lexer(std::make_unique<Lexer>())
 	{
 		operator_table.register_builtin_operators();
 	}

@@ -14,11 +14,15 @@ class VM
 	// since it is guaranteed to be valid for the lifetime of the VM instance
 	std::string_view source;
 	std::unique_ptr<Compiler> compiler;
+	Chunk chunk;
 
 	std::stack<MathObjPtr> stack;
 
 public:
-	VM() = default;
+	VM() :
+		chunk("<main>"),
+		compiler(std::make_unique<Compiler>(chunk))
+	{}
 	~VM() = default;
 
 	// This function will return false if there was an error

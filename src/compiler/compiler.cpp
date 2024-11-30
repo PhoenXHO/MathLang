@@ -3,16 +3,7 @@
 
 void Compiler::compile_source(std::string_view source)
 {
-	if (!parser)
-	{
-		parser = std::make_unique<Parser>();
-	}
 	parser->parse_source(source);
-
-	if (!semantic_analyzer)
-	{
-		semantic_analyzer = std::make_unique<SemanticAnalyzer>();
-	}
 	semantic_analyzer->analyze(parser->get_ast());
 
 	auto & ast = parser->get_ast();
