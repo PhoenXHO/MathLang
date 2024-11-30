@@ -1,4 +1,6 @@
-# MathLang Compiler
+# MathLang Interpreter
+
+_This project has been rewritten from scratch and renamed from MathLang to Mathium._
 
 MathLang is a programming language designed for mathematical expressions and computations. This repository contains the source code for the MathLang compiler, which translates MathLang code into bytecode for execution on a virtual machine.
 
