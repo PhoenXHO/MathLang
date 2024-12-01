@@ -5,8 +5,14 @@
 #include <memory>
 #include <functional>
 #include <utility> // for `std::pair`
+#include <sstream> // for `std::ostringstream`
+#include <boost/multiprecision/gmp.hpp> // for `mpz_int`
+#include <boost/multiprecision/mpfr.hpp> // for `mpfr_float`
 
 #include "global/globals.hpp"
+
+using mpz = boost::multiprecision::mpz_int; // Arbitrary precision integer
+using mpfr = boost::multiprecision::mpfr_float; // Arbitrary precision floating point
 
 //TODO: Make all objects instances of a base class (e.g. IntegerObj from Integer, RealObj from Real, etc.)
 //TODO: Make all classes inherit from MathObj
@@ -35,32 +41,37 @@ public:
 
 class IntegerObj : public MathObj
 {
-	int value;
+	mpz value;
 
 public:
-	IntegerObj(int value) : value(value) {}
+	IntegerObj(const mpz & value) : value(value) {}
 	~IntegerObj() = default;
 
-	int get_value(void) const { return value; }
+	mpz get_value(void) const { return value; }
 
 	Type type(void) const override { return Type::MO_INTEGER; }
-	std::string to_string(void) const override { return std::to_string(value); }
+	std::string to_string(void) const override { return value.str(); }
 
 	MathObjPtr add(const MathObjPtr & rhs) const override;
 };
 
 class RealObj : public MathObj
 {
-	double value;
+	mpfr value;
 
 public:
-	RealObj(double value) : value(value) {}
+	RealObj(const mpfr & value) : value(value) {}
 	~RealObj() = default;
 
-	double get_value(void) const { return value; }
+	mpfr get_value(void) const { return value; }
 
 	Type type(void) const override { return Type::MO_REAL; }
-	std::string to_string(void) const override { return std::to_string(value); }
+	std::string to_string(void) const override
+	{
+		std::ostringstream oss;
+		oss << std::setprecision(value.precision()) << value;
+		return oss.str();
+	}
 
 	MathObjPtr add(const MathObjPtr & rhs) const override;
 };

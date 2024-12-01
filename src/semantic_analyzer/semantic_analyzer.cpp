@@ -13,6 +13,8 @@ SemanticAnalyzer::AnalysisResult SemanticAnalyzer::analyze(ASTNode * node)
 {
 	switch (node->type)
 	{
+	case ASTNode::Type::N_EXPRESSION_STATEMENT:
+		return analyze(static_cast<ExpressionStatementNode *>(node)->expression.get());
 	case ASTNode::Type::N_EXPRESSION:
 		return analyze_expression(static_cast<ExpressionNode *>(node));
 	case ASTNode::Type::N_OPERAND:

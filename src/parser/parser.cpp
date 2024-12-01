@@ -10,10 +10,15 @@ void Parser::parse_source(std::string_view source)
 	// Keep scanning new tokens until we reach the end of the file
 	while (consume_tk())
 	{
+		auto statement = statement_n();
+		if (!statement)
+		{
+			continue;
+		}
 		// Parse a statement and add it to the AST
 		ast
 			.statements
-			.push_back(statement_n());
+			.push_back(std::move(statement));
 		// We have reached the end of the statement, so we can turn off panic mode
 		panic_mode = false;
 	}
@@ -29,7 +34,7 @@ std::unique_ptr<ASTNode> Parser::statement_n(void)
 {
 	switch (curr_tk->type())
 	{
-	case Token::Type::T_EOF:
+	case Token::Type::T_EOF: case Token::Type::T_EOL: case Token::Type::T_SEMICOLON:
 		return nullptr;
 	
 	default:
@@ -38,7 +43,7 @@ std::unique_ptr<ASTNode> Parser::statement_n(void)
 	}
 }
 
-std::unique_ptr<ASTNode> Parser::expression_statement_n(void)
+std::unique_ptr<ExpressionStatementNode> Parser::expression_statement_n(void)
 {
 	auto expression = expression_n(Precedence::P_MIN);
 	if (!expression)
@@ -49,15 +54,21 @@ std::unique_ptr<ASTNode> Parser::expression_statement_n(void)
 		// and, if the code is incomplete, set the `incomplete_code` flag to `true`
 		expect_tk(Token::Type::T_NONE, "Expected an expression"); // We don't need to check for a specific token type, so we can use `T_NONE`
 	}
+
+	auto statement = std::make_unique<ExpressionStatementNode>(std::move(expression));
+
 	// The semicolon is optional, but if it is present, we need to consume it
 	//expect_tk(Token::Type::T_SEMICOLON, "Expected a semicolon at the end of the statement");
 
-	if (curr_tk->type() == Token::Type::T_SEMICOLON)
+	// If there is no semicolon, we print the expression
+	bool semicolon = check_semicolon();
+	if (!semicolon)
 	{
-		consume_tk(); // Consume the semicolon token
+		// If there is no semicolon, there must be a newline
+		expect_tk({Token::Type::T_EOL, Token::Type::T_EOF}, "Expected a newline at the end of the statement");
 	}
-
-	return expression;
+	statement->print_expression = !semicolon;
+	return statement;
 }
 
 std::unique_ptr<ASTNode> Parser::expression_n(Precedence min_p)
@@ -250,6 +261,30 @@ void Parser::expect_tk(Token::Type type, std::string_view message)
 			true
 		);
 	}
+}
+
+void Parser::expect_tk(const std::initializer_list<Token::Type> & types, std::string_view message)
+{
+	for (auto type : types)
+	{
+		if (curr_tk->type() == type)
+		{
+			return;
+		}
+	}
+
+	if (next_tk->type() == Token::Type::T_EOF)
+	{
+		globals::error_handler.incomplete_code = true;
+	}
+
+	globals::error_handler.log_syntax_error(
+		message.empty() ? "Expected one of the following tokens: " : message,
+		curr_tk->line(),
+		curr_tk->column(),
+		curr_tk->position(),
+		true
+	);
 }
 
 bool Parser::consume_tk(void)

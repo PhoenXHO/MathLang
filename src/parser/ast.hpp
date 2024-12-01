@@ -11,6 +11,8 @@
 
 struct AST;
 struct ASTNode;
+struct VariableDeclarationNode;
+struct ExpressionStatementNode;
 struct ExpressionNode;
 struct OperandNode;
 struct OperatorNode;
@@ -34,6 +36,7 @@ struct ASTNode
 	enum class Type
 	{
 		N_STATEMENT,
+		N_EXPRESSION_STATEMENT,
 		N_EXPRESSION,
 		N_OPERAND,
 		N_OPERATOR,
@@ -49,7 +52,39 @@ struct ASTNode
 	virtual void print(int depth = 0) const = 0;
 };
 
-// <expression-statement> ::= ( <expression> | <operand> ) ;
+// <variable-declaration> ::= "let" <identifier> [ ":=" <expression> ] [ ";" ]
+struct VariableDeclarationNode : public ASTNode
+{
+	std::string_view identifier;
+	std::unique_ptr<ASTNode> expression;
+	bool print_expression = false;
+
+	VariableDeclarationNode() : ASTNode(Type::N_STATEMENT) {}
+	VariableDeclarationNode(std::string_view identifier, std::unique_ptr<ASTNode> expression)
+		: ASTNode(Type::N_STATEMENT), identifier(identifier), expression(std::move(expression))
+	{}
+	~VariableDeclarationNode() = default;
+
+	//* Debugging
+	void print(int depth = 0) const override;
+};
+
+// <expression-statement> ::= ( <expression> | <operand> ) [ ";" ]
+struct ExpressionStatementNode : public ASTNode
+{
+	std::unique_ptr<ASTNode> expression;
+	bool print_expression = false;
+
+	ExpressionStatementNode() : ASTNode(Type::N_EXPRESSION_STATEMENT) {}
+	ExpressionStatementNode(std::unique_ptr<ASTNode> expression)
+		: ASTNode(Type::N_EXPRESSION_STATEMENT), expression(std::move(expression))
+	{}
+	~ExpressionStatementNode() = default;
+
+	//* Debugging
+	void print(int depth = 0) const override;
+};
+
 // <expression> ::= ( <operand> | <expression> ) <operator> ( <operand> | <expression> )
 struct ExpressionNode : public ASTNode
 {

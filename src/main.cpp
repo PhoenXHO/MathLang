@@ -17,6 +17,7 @@
 
 namespace po = boost::program_options;
 
+
 void define_options(po::options_description & desc);
 void parse_options(int argc, const char ** argv, po::options_description & desc);
 
@@ -25,6 +26,7 @@ void print_version(void);
 
 void repl(void);
 void get_continuation(std::string & source);
+
 
 bool version_printed = false;
 
@@ -131,6 +133,7 @@ void define_options(po::options_description & desc)
 		("file,f", po::value<std::string>()->value_name("<file>"), "Read from a file. <file> must have the `.mthl` extension")
 		("dev,D", "Enable debug mode")
 		("verbose,V", "Enable verbose output")
+		("print-all,P", "Print all expressions that do not have a semicolon at the end (if this option is not enabled, only the last expression will be printed)");
 		;
 }
 
@@ -182,6 +185,13 @@ void parse_options(int argc, const char ** argv, po::options_description & desc)
 		// enable verbose output
 		std::cout << "\033[1;33m* Verbose mode enabled\033[0m\n";
 		config::verbose = true;
+	}
+
+	else if (vmap.count("print-all"))
+	{
+		// print all expressions that do not have a semicolon at the end
+		std::cout << "\033[1;32m* Print-all enabled\033[0m\n";
+		config::print_all = true;
 	}
 
 	config::repl_mode = repl_mode;

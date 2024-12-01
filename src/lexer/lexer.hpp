@@ -23,7 +23,9 @@ private:
 	size_t line = 1, column = 1;
 	Context context = Context::DEFAULT;
 
-	void skip_whitespaces();
+	/// @brief Skip whitespaces and tabs
+	/// @return true if a newline character is found, false otherwise
+	bool skip_whitespaces();
 	void skip_comment();
 
 	char peek() const
@@ -35,6 +37,10 @@ private:
 	char advance()
 	{ return advance(1); }
 	char advance(size_t offset);
+	void retreat()
+	{ retreat(1); }
+	void retreat(size_t offset)
+	{ pos -= offset; }
 
 	bool at_eol() const
 	{ return source[pos] == '\n'; }

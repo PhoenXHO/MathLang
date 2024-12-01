@@ -41,6 +41,13 @@ std::vector<uint8_t>::const_iterator disassemble_instruction(std::vector<uint8_t
 		std::cout << "CALL_BINARY      " << static_cast<int>(*(ip + 1)) << '\n';
 		return ip + 2;
 
+	case OP_PRINT:
+		std::cout << "PRINT\n";
+		return ip + 1;
+
+	case OP_POP:
+		std::cout << "POP\n";
+		return ip + 1;
 	case OP_RETURN:
 		std::cout << "RETURN\n";
 		return ip + 1;
@@ -54,6 +61,10 @@ std::vector<uint8_t>::const_iterator disassemble_instruction(std::vector<uint8_t
 // A map to convert token types to strings
 static std::unordered_map<Token::Type, std::string_view> token_type_to_string
 {
+	{ Token::Type::T_ERROR,           "ERROR" },
+	{ Token::Type::T_EOL,             "EOL" },
+	{ Token::Type::T_EOF,             "EOF" },
+
 	{ Token::Type::T_LET,             "LET" },
 	{ Token::Type::T_DEFINE,          "DEFINE" },
 	{ Token::Type::T_CLASS,           "CLASS" },
@@ -66,7 +77,9 @@ static std::unordered_map<Token::Type, std::string_view> token_type_to_string
 	{ Token::Type::T_USE,             "USE" },
 	{ Token::Type::T_OPERATOR,        "OPERATOR" },
 	{ Token::Type::T_NONE,            "NONE" },
+
 	{ Token::Type::T_OPERATOR_SYMBOL,    "OPERATOR_SYM" },
+
 	{ Token::Type::T_MATHOBJ,         "MATHOBJ" },
 	{ Token::Type::T_NATURAL,         "NATURAL" },
 	{ Token::Type::T_INTEGER,         "INTEGER" },
@@ -79,7 +92,9 @@ static std::unordered_map<Token::Type, std::string_view> token_type_to_string
 	{ Token::Type::T_VECTOR,          "VECTOR" },
 	{ Token::Type::T_STRING,          "STRING" },
 	{ Token::Type::T_CHAR,            "CHAR" },
+
 	{ Token::Type::T_IDENTIFIER,      "IDENTIFIER" },
+
 	{ Token::Type::T_INTEGER_LITERAL, "INTEGER_LITERAL" },
 	{ Token::Type::T_REAL_LITERAL,    "REAL_LITERAL" },
 	{ Token::Type::T_I,               "I" },
@@ -90,8 +105,10 @@ static std::unordered_map<Token::Type, std::string_view> token_type_to_string
 	{ Token::Type::T_VECTOR_LITERAL,  "VECTOR_LITERAL" },
 	{ Token::Type::T_TRUE,            "TRUE" },
 	{ Token::Type::T_FALSE,           "FALSE" },
+
 	{ Token::Type::T_COMMA,           "COMMA" },
 	{ Token::Type::T_SEMICOLON,       "SEMICOLON" },
+	{ Token::Type::T_DOT,             "DOT" },
 	{ Token::Type::T_LEFT_PAREN,      "LEFT_PAREN" },
 	{ Token::Type::T_RIGHT_PAREN,     "RIGHT_PAREN" },
 	{ Token::Type::T_LEFT_BRACKET,    "LEFT_BRACKET" },
@@ -102,9 +119,7 @@ static std::unordered_map<Token::Type, std::string_view> token_type_to_string
 	{ Token::Type::T_COLON,           "COLON" },
 	{ Token::Type::T_COLON_ARROW,     "COLON_ARROW" },
 	{ Token::Type::T_COLON_EQUAL,     "COLON_EQUAL" },
-	{ Token::Type::T_RETURN,          "RETURN" },
-	{ Token::Type::T_ERROR,           "ERROR" },
-	{ Token::Type::T_EOF,             "EOF" }
+	{ Token::Type::T_RETURN,          "RETURN" }
 };
 
 std::ostream & operator<<(std::ostream & os, const Token & tk)
@@ -114,8 +129,21 @@ std::ostream & operator<<(std::ostream & os, const Token & tk)
 		return os;
 	}
 
-	// Format: <line>:<column> <type> '\t\t\t' <lexeme>
-	os << tk.line() << ':' << tk.column() << ' ' << Token::type_to_string(tk.type()) << "\t\t\t" << tk.lexeme() << '\n';
+	// Disable 0-fill
+	os << std::setfill(' ');
+
+	// Format: <line>:<column> <type> <lexeme>
+	os << std::right << std::setw(4) << tk.line() // <line> (4 characters, right-aligned)
+	   << ':'
+	   << std::left << std::setw(4) << tk.column() // <column> (4 characters, left-aligned)
+	   << ' ' << std::setw(16) << Token::type_to_string(tk.type()); // <type> (16 characters, left-aligned)
+
+	if (tk.type() != Token::Type::T_EOL && tk.type() != Token::Type::T_EOF)
+	{
+		os << std::right << std::setw(16) << tk.lexeme(); // <lexeme> (16 characters, right-aligned)
+	}
+
+	os << '\n';
 	return os;
 }
 
@@ -145,6 +173,41 @@ std::ostream & operator<<(std::ostream & os, const AST & ast)
 	os << '\n';
 
 	return os;
+}
+
+void VariableDeclarationNode::print(int depth) const
+{
+	indent(depth);
+	std::cout << "Variable Declaration:\n";
+
+	indent(depth + 1);
+	std::cout << "Identifier: " << identifier << '\n';
+
+	if (expression)
+	{
+		expression->print(depth + 1);
+	}
+	else
+	{
+		indent(depth + 1);
+		std::cout << "ERROR\n";
+	}
+}
+
+void ExpressionStatementNode::print(int depth) const
+{
+	indent(depth);
+	std::cout << "Expression Statement:\n";
+
+	if (expression)
+	{
+		expression->print(depth + 1);
+	}
+	else
+	{
+		indent(depth + 1);
+		std::cout << "ERROR\n";
+	}
 }
 
 void ExpressionNode::print(int depth) const

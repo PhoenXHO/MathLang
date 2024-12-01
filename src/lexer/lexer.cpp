@@ -10,12 +10,19 @@ std::unique_ptr<Token> Lexer::scan_tk(void)
 {
 	std::unique_ptr<Token> token = nullptr;
 
-	skip_whitespaces(); // Skip whitespaces and comments
+	bool new_line = skip_whitespaces(); // Skip whitespaces and comments
+
+	// If a newline character is found, return a newline token
+	if (new_line)
+	{
+		return make_tk(Token::Type::T_EOL, "\n");
+	}
+
 	char curr { peek() }, next { peek_next() };
 
 	//* NUMBERS
 	/* Numbers follow the format (in BNF):
-		d [d*] [. [d*]]     # e.g 1, 1.23, 12.
+		d [d*] [. d*]     # e.g 1, 1.23, 12
 		or
 		[d d*] . d [d*]     # e.g. .5, .54, 1.2
 
@@ -71,6 +78,9 @@ std::unique_ptr<Token> Lexer::scan_tk(void)
 		break;
 	case ';':
 		token = make_tk(Token::Type::T_SEMICOLON, ";");
+		break;
+	case '.':
+		token = make_tk(Token::Type::T_DOT, ".");
 		break;
 	case '(':
 		token = make_tk(Token::Type::T_LEFT_PAREN, "(");
@@ -161,6 +171,15 @@ std::unique_ptr<Token> Lexer::make_number_tk(void)
 			start_position
 		);
 	}
+
+	// Remove the trailing dot if it exists
+	if (has_dot && lexeme.back() == '.')
+	{
+		lexeme.remove_suffix(1);
+		// Move the position back by 1 so that the dot is a separate token
+		retreat();
+		has_dot = false;
+	}
 	
 	return make_tk(
 		has_dot ? Token::Type::T_REAL_LITERAL : Token::Type::T_INTEGER_LITERAL,
@@ -208,23 +227,28 @@ std::unique_ptr<Token> Lexer::make_tk(Token::Type type, std::string_view lexeme,
 	return tk;
 }
 
-void Lexer::skip_whitespaces()
+bool Lexer::skip_whitespaces()
 {
 	while (!at_eof())
 	{
 		switch(peek())
 		{
-			case ' ': case '\t': case '\r': case '\v': case '\f': case '\n':
+			case ' ': case '\t': case '\r': case '\v': case '\f':
 				advance();
 				break;
+			case '\n':
+				advance();
+				return true;
 			case '#':
 				advance(); // Skip the '#'
 				skip_comment();
 				break;
 
-			default: return;
+			default: return false;
 		}
 	}
+
+	return false;
 }
 void Lexer::skip_comment()
 {

@@ -5,6 +5,7 @@ namespace config
 	bool repl_mode = false;
 	bool verbose   = false;
 	bool dev       = false;
+	bool print_all = false;
 
 	// Colors for verbose output
 	const char * const SUCCESS_COLOR = "\033[1;32m";

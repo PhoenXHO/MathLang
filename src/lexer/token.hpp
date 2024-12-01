@@ -10,6 +10,9 @@ struct Token
 {
 	enum class Type
 	{
+		// Others
+		T_ERROR, T_EOL, T_EOF,
+
 		// Keywords
 		T_LET, T_DEFINE, T_CLASS,
 		T_IN, T_IF, T_ELSE,
@@ -42,16 +45,13 @@ struct Token
 		T_TRUE, T_FALSE,
 		
 		// Special symbols
-		T_COMMA, T_SEMICOLON,
+		T_COMMA, T_SEMICOLON, T_DOT,
 		T_LEFT_PAREN, T_RIGHT_PAREN,
 		T_LEFT_BRACKET, T_RIGHT_BRACKET,
 		T_LEFT_BRACE, T_RIGHT_BRACE,
 		T_ARROW, T_COLON, T_COLON_ARROW,
 		T_COLON_EQUAL,
-		T_RETURN,
-
-		// Others
-		T_ERROR, T_EOF
+		T_RETURN
 	};
 
 	Token(Type type, std::string_view lexeme, size_t line, size_t column, size_t position)

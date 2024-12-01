@@ -6,6 +6,7 @@ namespace config
 	extern bool repl_mode;
 	extern bool verbose;
 	extern bool dev;
+	extern bool print_all;
 
 	// Colors for verbose output
 	extern const char * const SUCCESS_COLOR;

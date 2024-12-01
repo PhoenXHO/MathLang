@@ -16,6 +16,7 @@ class Compiler
 	std::unique_ptr<SemanticAnalyzer> semantic_analyzer;
 	Chunk & chunk; // Reference to the chunk in the VM
 	std::vector<std::shared_ptr<OperatorImplentation>> operator_stack;
+	size_t last_print = 0;
 
 	void compile_statement      (const ASTNode *)      				          ;
 	void compile_expression     (const ASTNode *)                             ;

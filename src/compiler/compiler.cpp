@@ -1,5 +1,7 @@
 #include "compiler/compiler.hpp"
+#include "object/object.hpp"
 #include "global/globals.hpp"
+#include "global/config.hpp"
 
 void Compiler::compile_source(std::string_view source)
 {
@@ -11,6 +13,12 @@ void Compiler::compile_source(std::string_view source)
 	{
 		compile_statement(statement.get());
 	}
+
+	if (!config::print_all && last_print != 0)
+	{
+		chunk.emit_at(last_print, OP_PRINT);
+	}
+
 	chunk.emit(OP_RETURN);
 
 	//* Debugging
@@ -21,10 +29,27 @@ void Compiler::compile_statement(const ASTNode * statement_n)
 {
 	switch (statement_n->type)
 	{
-	case ASTNode::Type::N_EXPRESSION:
+	case ASTNode::Type::N_EXPRESSION_STATEMENT:
 		{
-			auto expression_statement = static_cast<const ExpressionNode *>(statement_n);
-			compile_expression(expression_statement);
+			auto expression_statement = static_cast<const ExpressionStatementNode *>(statement_n);
+			compile_expression(expression_statement->expression.get());
+			if (expression_statement->print_expression)
+			{
+				if (config::print_all)
+				{
+					chunk.emit(OP_PRINT);
+				}
+				else
+				{
+					// Print only the last expression if the print_all flag is not set
+					last_print = chunk.code.size();
+					chunk.emit(OP_POP);
+				}
+			}
+			else
+			{
+				chunk.emit(OP_POP);
+			}
 		}
 		break;
 
@@ -144,23 +169,37 @@ void Compiler::compile_literal(const LiteralNode * literal_n)
 		return;
 	}
 
-	switch (literal_n->type)
+	try
 	{
-	case MathObj::Type::MO_INTEGER:
+		switch (literal_n->type)
 		{
-			int value = std::stoi(literal_n->value.data());
-			chunk.constant_pool.add_constant(std::make_shared<IntegerObj>(value));
-			chunk.emit_constant(chunk.constant_pool.size() - 1);
-		}
-		break;
-	case MathObj::Type::MO_REAL:
-		{
-			double value = std::stod(literal_n->value.data());
-			chunk.constant_pool.add_constant(std::make_shared<RealObj>(value));
-			chunk.emit_constant(chunk.constant_pool.size() - 1);
-		}
+		case MathObj::Type::MO_INTEGER:
+			{
+				std::string value_str(literal_n->value);
+				mpz value(value_str);
+				chunk.constant_pool.add_constant(std::make_shared<IntegerObj>(value));
+				chunk.emit_constant(chunk.constant_pool.size() - 1);
+			}
+			break;
+		case MathObj::Type::MO_REAL:
+			{
+				std::string value_str(literal_n->value);
+				size_t precision_bits = value_str.size() * 8; // Rough estimate of the precision: 8 bits per digit
+				mpfr value(value_str, precision_bits);
+				chunk.constant_pool.add_constant(std::make_shared<RealObj>(value));
+				chunk.emit_constant(chunk.constant_pool.size() - 1);
+			}
 
-	default:
-		break;
+		default:
+			break;
+		}
+	}
+	catch (const std::exception & e)
+	{
+		globals::error_handler.log_compiletime_error(
+			"Exception occurred while compiling literal: " + std::string(e.what()),
+			0, 0, 0, //TODO add line, column, position to AST nodes
+			true
+		);
 	}
 }

@@ -20,6 +20,13 @@ enum OpCode : uint8_t
 	// - operand: `index` (1 byte); the index of the operator in the operator stack (`Compiler.operator_stack`)
 	OP_CALL_BINARY,
 
+	// Instruction to print the top of the stack (the top of the stack is popped)
+	// - no operand
+	OP_PRINT,
+
+	// Instruction to pop the top of the stack
+	// - no operand
+	OP_POP,
 	// Instruction to signal the end of a chunk
 	// - no operand
 	OP_RETURN
@@ -41,6 +48,17 @@ struct Chunk
 	{
 		code.push_back(static_cast<uint8_t>(op));
 		code.push_back(operand);
+	}
+	void emit_at(uint8_t index, OpCode op)
+	{
+		if (index >= code.size())
+		{
+			code.push_back(static_cast<uint8_t>(op));
+		}
+		else
+		{
+			code[index] = static_cast<uint8_t>(op);
+		}
 	}
 	void emit_constant(uint8_t index)
 	{

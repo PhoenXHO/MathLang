@@ -3,11 +3,14 @@
 #include "vm/vm.hpp"
 #include "global/config.hpp" // for `config::verbose`
 #include "global/globals.hpp" // for `globals::error_handler`
+#include "memory/memory.hpp" // for `set_dynamic_precision`
 
 InterpretResult VM::interpret_source(std::string_view source)
 {
 	this->source = source;
-	
+
+	set_dynamic_precision();
+
 	try
 	{
 		compiler->compile_source(source);
@@ -74,14 +77,18 @@ void VM::run(void)
 		}
 		break;
 
-	case OP_RETURN:
-		// The result is at the top of the stack
+	case OP_PRINT:
 		{
 			auto result = stack.top();
 			stack.pop();
 			std::cout << result->to_string() << '\n';
-			return;
 		}
+		break;
+
+	case OP_POP:
+		stack.pop();
+		break;
+	case OP_RETURN:
 		return;
 	}
 	}
