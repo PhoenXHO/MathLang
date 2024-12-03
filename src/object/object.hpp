@@ -11,8 +11,9 @@
 
 #include "global/globals.hpp"
 
-using mpz = boost::multiprecision::mpz_int; // Arbitrary precision integer
-using mpfr = boost::multiprecision::mpfr_float; // Arbitrary precision floating point
+//using mpz = boost::multiprecision::mpz_int; // Arbitrary precision integer
+//using mpfr = boost::multiprecision::mpfr_float; // Arbitrary precision floating point
+using namespace boost::multiprecision;
 
 //TODO: Make all objects instances of a base class (e.g. IntegerObj from Integer, RealObj from Real, etc.)
 //TODO: Make all classes inherit from MathObj
@@ -27,7 +28,9 @@ public:
 	{
 		MO_NONE,
 		MO_INTEGER,
-		MO_REAL
+		MO_REAL,
+		
+		MO_REFERENCE
 	};
 
 	MathObj() = default;
@@ -37,17 +40,25 @@ public:
 	virtual std::string to_string(void) const = 0;
 
 	virtual MathObjPtr add(const MathObjPtr & rhs) const = 0;
+
+	std::ostream & operator<<(std::ostream & os) const
+	{
+		os << to_string();
+		return os;
+	}
 };
 
 class IntegerObj : public MathObj
 {
-	mpz value;
+	mpz_int value;
+	size_t size;
 
 public:
-	IntegerObj(const mpz & value) : value(value) {}
+	IntegerObj(const mpz_int & value) : value(value), size(value.str().size()) {}
 	~IntegerObj() = default;
 
-	mpz get_value(void) const { return value; }
+	mpz_int get_value(void) const { return value; }
+	size_t get_size(void) const { return size; }
 
 	Type type(void) const override { return Type::MO_INTEGER; }
 	std::string to_string(void) const override { return value.str(); }
@@ -57,20 +68,38 @@ public:
 
 class RealObj : public MathObj
 {
-	mpfr value;
+	mpfr_float value;
+	size_t integer_part;
+	size_t decimal_part;
 
 public:
-	RealObj(const mpfr & value) : value(value) {}
+	RealObj(std::string_view value) : value(value)
+	{
+		size_t dot_pos = value.find('.');
+		integer_part = dot_pos;
+		decimal_part = value.size() - dot_pos - 1;
+	}
+	RealObj(const mpfr_float & value, size_t integer_part, size_t decimal_part)
+		: value(value), integer_part(integer_part), decimal_part(decimal_part)
+	{}
 	~RealObj() = default;
 
-	mpfr get_value(void) const { return value; }
+	mpfr_float get_value(void) const { return value; }
+	size_t get_integer_part(void) const { return integer_part; }
+	size_t get_decimal_part(void) const { return decimal_part; }
 
 	Type type(void) const override { return Type::MO_REAL; }
 	std::string to_string(void) const override
 	{
 		std::ostringstream oss;
-		oss << std::setprecision(value.precision()) << value;
+		oss << std::setprecision(integer_part + decimal_part) << value;
 		return oss.str();
+
+		//char * str = new char[integer_part + decimal_part + 2];
+		//mpfr_sprintf(str, "%.*Rf", integer_part + decimal_part, value.backend().data());
+		//std::string result(str);
+		//delete[] str;
+		//return result;
 	}
 
 	MathObjPtr add(const MathObjPtr & rhs) const override;
@@ -91,5 +120,7 @@ namespace std
 		}
 	};
 };
+
+mpfr_float add_reals(const mpfr_float & lhs, const mpfr_float & rhs);
 
 #endif // OBJECT_HPP

@@ -34,6 +34,18 @@ std::unique_ptr<Token> Lexer::scan_tk(void)
 		return token;
 	}
 
+	//* IDENTIFIERS AND KEYWORDS
+	/* Identifiers and keywords follow the format (in BNF):
+		[a-zA-Z_] [a-zA-Z0-9_]*
+
+		Keywords are defined in the `keyword_array` array in `lexer.cpp`
+	*/
+	if (isalpha(curr) || curr == '_')
+	{
+		token = make_word_tk();
+		return token;
+	}
+
 	//* OPERATORS
 	/* Operators are defined as any combination of the following characters (max 3 characters):
 		+ - * / % ^ ! = < > & | ~ ? : @ # $
@@ -189,6 +201,30 @@ std::unique_ptr<Token> Lexer::make_number_tk(void)
 	);
 }
 
+std::unique_ptr<Token> Lexer::make_word_tk(void)
+{
+	size_t lexeme_length = 1; // 1 because we already have the first character
+	size_t start_column = column, start_position = pos;
+
+	advance(); // Move to the next character
+	char curr = peek();
+	while (!at_eof() && (isalnum(curr) || curr == '_'))
+	{
+		lexeme_length++;
+		advance();
+		curr = peek();
+	}
+
+	std::string_view lexeme = source.substr(start_position, lexeme_length);
+	auto type = get_work_tk_type(lexeme);
+	return make_tk(
+		is_in_context(type.second) ? type.first : Token::Type::T_IDENTIFIER,
+		lexeme,
+		start_column,
+		start_position
+	);
+}
+
 std::unique_ptr<Token> Lexer::make_operator_tk(void)
 {
 	size_t lexeme_length = 1; // 1 because we already have the first character
@@ -223,7 +259,10 @@ std::unique_ptr<Token> Lexer::make_tk(Token::Type type, std::string_view lexeme,
 		start_position
 	);
 
-	std::cout << *tk;
+	if (tk->type() != Token::Type::T_EOF)
+	{
+		std::cout << *tk;
+	}
 	return tk;
 }
 
@@ -289,26 +328,6 @@ char Lexer::advance(size_t offset)
 	}
 
 	return source[pos - 1];
-}
-
-//! Temporary function to lex the entire source code
-void Lexer::lex_source(std::string_view source)
-{
-	// This is a temporary function to lex the entire source code
-	this->source = source;
-	while (!at_eof())
-	{
-		std::unique_ptr<Token> token = scan_tk();
-		if (token != nullptr)
-		{
-			std::cout << *token << '\n';
-		}
-	}
-
-	reset();
-
-	// Report errors if there are any
-	globals::error_handler.check_errors();
 }
 
 bool is_operator_sym(char c)

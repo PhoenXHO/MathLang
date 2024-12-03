@@ -47,11 +47,13 @@ class Parser
 	}
 
 	std::unique_ptr<ASTNode>                 statement_n(void)                 ;
+	std::unique_ptr<VariableDeclarationNode> variable_declaration_n(void)      ;
 	std::unique_ptr<ExpressionStatementNode> expression_statement_n(void)      ;
 	std::unique_ptr<ASTNode>                 expression_n(Precedence min_p)    ;
 	std::unique_ptr<ASTNode>                 operand_n(void)                   ;
 	std::unique_ptr<OperatorNode>            operator_n(bool is_unary = false) ;
 	std::unique_ptr<ASTNode>                 primary_n(void)                   ;
+	std::unique_ptr<ASTNode>                 identifier_n(void)                ;
 	std::unique_ptr<LiteralNode>             literal_n(void)                   ;
 
 public:

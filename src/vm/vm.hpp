@@ -10,18 +10,22 @@
 
 class VM
 {
+	std::stack<MathObjPtr> stack;
+	ConstantPool constant_pool; //TODO: Optimize storage of constants to storing duplicates
+	std::shared_ptr<Scope> global_scope;
+	std::shared_ptr<Scope> current_scope = global_scope;
+
 	// Using a string_view to avoid copying the source code,
 	// since it is guaranteed to be valid for the lifetime of the VM instance
 	std::string_view source;
 	std::unique_ptr<Compiler> compiler;
 	Chunk chunk;
 
-	std::stack<MathObjPtr> stack;
-
 public:
 	VM() :
-		chunk("<main>"),
-		compiler(std::make_unique<Compiler>(chunk))
+		chunk("<main>", constant_pool, global_scope),
+		global_scope(std::make_shared<Scope>()),
+		compiler(std::make_unique<Compiler>(chunk, constant_pool, global_scope))
 	{}
 	~VM() = default;
 

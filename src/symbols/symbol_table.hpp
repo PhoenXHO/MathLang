@@ -6,54 +6,69 @@
 #include <memory>
 
 #include "object/object.hpp"
+#include "symbols/symbol.hpp"
+#include "symbols/variable.hpp"
 
-struct Symbol
+namespace std
 {
-	enum class Type
+	template<>
+	struct hash<std::pair<std::string, Symbol::Type>>
 	{
-		S_NONE,
-		S_VARIABLE
-		// For now, we only have variables
+		size_t operator()(const std::pair<std::string, Symbol::Type> & key) const
+		{
+			auto hash1 = std::hash<std::string>{}(key.first);
+			auto hash2 = std::hash<int>{}(static_cast<int>(key.second));
+			return hash1 ^ (hash2 << 1); // Combine the two hashes
+		}
 	};
-
-	Symbol(std::string name, Type type, std::shared_ptr<void> value)
-		: name(name), type(type), value(value) {}
-
-	std::string_view get_name(void) const
-	{ return name; }
-	Type get_type(void) const
-	{ return type; }
-	const std::shared_ptr<void> & get_value(void) const
-	{ return value; }
-
-private:
-	std::string name;
-	Type type;
-	std::shared_ptr<void> value; // The value can be a MathObjPtr, FunctionPtr, or ClassPtr, depending on the type
-};
+}
 
 class SymbolTable
 {
-	std::unordered_map<std::string_view, Symbol> symbols; // The key is the name of the symbol, which is why we use a string_view, since the string is already stored in the symbol
+	std::unordered_map<std::string, size_t> symbol_indices; // Map from the name of the symbol to its index in the symbol pool
+	std::vector<std::shared_ptr<Symbol>> symbols; // The key is the name of the symbol and its type to avoid conflicts
 
 public:
 	SymbolTable() = default;
 	~SymbolTable() = default;
 
-	void define_variable(std::string_view name, MathObjPtr value)
+	void define_variable(std::string_view name, MathObjPtr value = nullptr)
 	{
-		symbols.emplace(name, Symbol(std::string(name), Symbol::Type::S_VARIABLE, value));
+		std::string name_str(name);
+		auto symbol = Variable(name, value);
+		symbols.push_back(std::make_shared<Symbol>(symbol));
+		symbol_indices[name_str] = symbols.size() - 1;
 	}
 
-	const Symbol & get_symbol(std::string_view name) const
+	const std::shared_ptr<Symbol> & find(std::string_view name, Symbol::Type type) const
 	{
-		auto it = symbols.find(name);
-		// If the symbol is not found, return an empty symbol (we don't want to throw an error here, but we want to handle it in the calling function)
-		if (it == symbols.end())
+		size_t index = get_index(name, type);
+		if (index != -1)
 		{
-			return Symbol("", Symbol::Type::S_NONE, nullptr);
+			return symbols[index];
 		}
-		return it->second;
+		return Symbol::empty_symbol;
+	}
+
+	size_t get_index(std::string_view name, Symbol::Type type) const
+	{
+		// Get all symbols with the same name
+		auto range = symbol_indices.equal_range(std::string(name));
+		for (auto it = range.first; it != range.second; ++it)
+		{
+			if (symbols[it->second]->get_type() == type)
+			{
+				// Return the first symbol with the correct type
+				// (there should only be one symbol with this name and type)
+				return it->second;
+			}
+		}
+		return -1;
+	}
+
+	const std::shared_ptr<Symbol> & operator[](size_t index) const
+	{
+		return symbols.at(index);
 	}
 };
 

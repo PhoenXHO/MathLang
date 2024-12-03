@@ -34,6 +34,9 @@ std::unique_ptr<ASTNode> Parser::statement_n(void)
 {
 	switch (curr_tk->type())
 	{
+	case Token::Type::T_LET:
+		return variable_declaration_n();
+
 	case Token::Type::T_EOF: case Token::Type::T_EOL: case Token::Type::T_SEMICOLON:
 		return nullptr;
 	
@@ -43,13 +46,38 @@ std::unique_ptr<ASTNode> Parser::statement_n(void)
 	}
 }
 
+std::unique_ptr<VariableDeclarationNode> Parser::variable_declaration_n(void)
+{
+	auto variable_declaration = std::make_unique<VariableDeclarationNode>();
+
+	consume_tk(); // Consume the `let` token
+
+	if (curr_tk->type() != Token::Type::T_IDENTIFIER)
+	{
+		expect_tk(Token::Type::T_IDENTIFIER, "Expected an identifier");
+	}
+
+	variable_declaration->identifier = curr_tk->lexeme();
+	consume_tk(); // Consume the identifier token
+
+	if (curr_tk->type() == Token::Type::T_COLON_EQUAL)
+	{
+		consume_tk(); // Consume the ':=' token
+
+		// We can use `expression_statement_n` to parse the expression so as to avoid code duplication
+		auto expression_statement = expression_statement_n();
+		variable_declaration->expression = std::move(expression_statement->expression);
+		variable_declaration->print_expression = expression_statement->print_expression;
+	}
+	
+	return variable_declaration;
+}
+
 std::unique_ptr<ExpressionStatementNode> Parser::expression_statement_n(void)
 {
 	auto expression = expression_n(Precedence::P_MIN);
 	if (!expression)
 	{
-		//globals::error_handler.log_syntax_error("Expected an expression", curr_tk->line(), curr_tk->column(), curr_tk->position(), true);
-
 		// Instead of logging an error directly, we can make use of the `expect_tk` function which will log the error for us
 		// and, if the code is incomplete, set the `incomplete_code` flag to `true`
 		expect_tk(Token::Type::T_NONE, "Expected an expression"); // We don't need to check for a specific token type, so we can use `T_NONE`
@@ -202,6 +230,10 @@ std::unique_ptr<ASTNode> Parser::primary_n(void)
 	{
 		return literal_n();
 	}
+	else if (curr_tk->type() == Token::Type::T_IDENTIFIER)
+	{
+		return identifier_n();
+	}
 	else if (curr_tk->type() == Token::Type::T_LEFT_PAREN)
 	{
 		consume_tk(); // Consume the left parenthesis
@@ -219,6 +251,13 @@ std::unique_ptr<ASTNode> Parser::primary_n(void)
 	}
 
 	return nullptr;
+}
+
+std::unique_ptr<ASTNode> Parser::identifier_n(void)
+{
+	auto identifier = std::make_unique<IdentifierNode>();
+	identifier->name = curr_tk->lexeme();
+	return identifier;
 }
 
 std::unique_ptr<LiteralNode> Parser::literal_n(void)

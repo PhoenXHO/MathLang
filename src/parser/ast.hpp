@@ -16,6 +16,7 @@ struct ExpressionStatementNode;
 struct ExpressionNode;
 struct OperandNode;
 struct OperatorNode;
+struct IdentifierNode;
 struct LiteralNode;
 
 // <program> ::= <statement>*
@@ -23,6 +24,9 @@ struct LiteralNode;
 struct AST
 {
 	std::vector<std::unique_ptr<ASTNode>> statements;
+
+	size_t position = 0;
+	size_t line = 1, column = 1;
 
 	AST() = default;
 	~AST() = default;
@@ -36,10 +40,12 @@ struct ASTNode
 	enum class Type
 	{
 		N_STATEMENT,
+		N_VARIABLE_DECLARATION,
 		N_EXPRESSION_STATEMENT,
 		N_EXPRESSION,
 		N_OPERAND,
 		N_OPERATOR,
+		N_IDENTIFIER,
 		N_LITERAL
 	};
 
@@ -59,9 +65,9 @@ struct VariableDeclarationNode : public ASTNode
 	std::unique_ptr<ASTNode> expression;
 	bool print_expression = false;
 
-	VariableDeclarationNode() : ASTNode(Type::N_STATEMENT) {}
+	VariableDeclarationNode() : ASTNode(Type::N_VARIABLE_DECLARATION) {}
 	VariableDeclarationNode(std::string_view identifier, std::unique_ptr<ASTNode> expression)
-		: ASTNode(Type::N_STATEMENT), identifier(identifier), expression(std::move(expression))
+		: ASTNode(Type::N_VARIABLE_DECLARATION), identifier(identifier), expression(std::move(expression))
 	{}
 	~VariableDeclarationNode() = default;
 
@@ -144,6 +150,19 @@ struct OperatorNode : public ASTNode
 	{
 		return op->get_implementations();
 	}
+
+	//* Debugging
+	void print(int depth = 0) const override;
+};
+
+// <identifier> ::= <identifier>
+struct IdentifierNode : public ASTNode
+{
+	std::string_view name;
+
+	IdentifierNode() : ASTNode(Type::N_IDENTIFIER) {}
+	IdentifierNode(std::string_view name) : ASTNode(Type::N_IDENTIFIER), name(name) {}
+	~IdentifierNode() = default;
 
 	//* Debugging
 	void print(int depth = 0) const override;

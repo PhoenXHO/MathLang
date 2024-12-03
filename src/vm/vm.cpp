@@ -37,22 +37,49 @@ InterpretResult VM::interpret_source(std::string_view source)
 
 void VM::run(void)
 {
+	#define READ_BYTE() chunk.read_byte()
+	#define READ_CONSTANT() constant_pool[READ_BYTE()]
+
 	chunk.init_ip();
 	while (true)
 	{
-	uint8_t instruction = chunk.read_byte();
+	uint8_t instruction = READ_BYTE();
 	switch (static_cast<OpCode>(instruction))
 	{
 	case OP_LOAD_CONSTANT:
 		{
-			auto constant = chunk.read_constant();
+			auto constant = READ_CONSTANT();
 			stack.push(constant);
+		}
+		break;
+
+	case OP_SET_VARIABLE:
+		{
+			auto index = READ_BYTE();
+			auto value = stack.top();
+			// Set the variable in the current scope to the value on the stack
+			current_scope->set_variable(index, value);
+		}
+		break;
+	case OP_SET_VARIABLE_POP:
+		{
+			auto index = READ_BYTE();
+			auto value = stack.top();
+			stack.pop();
+			// Set the variable in the current scope to the value on the stack
+			current_scope->set_variable(index, value);
+		}
+	case OP_GET_VARIABLE:
+		{
+			auto index = READ_BYTE();
+			auto value = current_scope->get_variable(index)->get_value();
+			stack.push(value);
 		}
 		break;
 
 	case OP_CALL_UNARY:
 		{
-			auto index = chunk.read_byte();
+			auto index = READ_BYTE();
 			auto & implementation = compiler->get_operator(index);
 			auto operand = stack.top();
 			stack.pop();
@@ -64,7 +91,7 @@ void VM::run(void)
 		break;
 	case OP_CALL_BINARY:
 		{
-			auto index = chunk.read_byte();
+			auto index = READ_BYTE();
 			auto & implementation = compiler->get_operator(index);
 			auto right = stack.top();
 			stack.pop();

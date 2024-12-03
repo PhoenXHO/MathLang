@@ -14,7 +14,7 @@ struct Token
 		T_ERROR, T_EOL, T_EOF,
 
 		// Keywords
-		T_LET, T_DEFINE, T_CLASS,
+		T_LET, T_DEFINE, T_CLASS, T_INIT,
 		T_IN, T_IF, T_ELSE,
 		T_ITERATE, T_SUM, T_PROD,
 		T_USE, T_OPERATOR,

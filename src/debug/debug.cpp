@@ -8,7 +8,6 @@
 
 // Function to indent the output
 void indent(int indent);
-std::vector<uint8_t>::const_iterator disassemble_instruction(std::vector<uint8_t>::const_iterator ip);
 
 void Chunk::disassemble(void) const
 {
@@ -22,38 +21,78 @@ void Chunk::disassemble(void) const
 	for (auto ip = code.cbegin(); ip != code.cend();)
 	{
 		ip = disassemble_instruction(ip);
+		std::cout << std::setw(0) << std::setfill(' ') << '\n';
 	}
 }
 
-std::vector<uint8_t>::const_iterator disassemble_instruction(std::vector<uint8_t>::const_iterator ip)
+std::vector<uint8_t>::const_iterator Chunk::disassemble_instruction(std::vector<uint8_t>::const_iterator ip) const
 {
-	std::cout << "0x" << std::hex << std::uppercase << std::setw(2) << std::setfill('0') << static_cast<int>(*ip) << ' ';
+	//std::cout << "0x" << std::hex << std::uppercase << std::setw(2) << std::setfill('0') << static_cast<int>(*ip) << ' '
+	//		  << std::dec << std::setw(20) << std::setfill(' ') << std::left;
+	std::cout << "0x" << std::hex << std::uppercase << std::setw(2) << std::setfill('0')
+			  << static_cast<int>(*ip) << ' '
+			  << std::dec << std::setw(20) << std::setfill(' ') << std::left;
 	switch (static_cast<OpCode>(*ip))
 	{
 	case OP_LOAD_CONSTANT:
-		std::cout << "LOAD_CONSTANT    " << static_cast<int>(*(ip + 1)) << '\n';
+		std::cout << "LOAD_CONSTANT"
+				  << std::setw(6) << std::setfill(' ') << std::right
+				  << static_cast<int>(*(ip + 1)) << std::left
+				  << "  (" << constant_pool[static_cast<int>(*(ip + 1))]->to_string() << ')';
 		return ip + 2;
 
+	case OP_SET_VARIABLE:
+	{
+		auto variable = current_scope->get_variable(static_cast<int>(*(ip + 1)));
+		std::cout << "SET_VARIABLE" 
+				  << std::setw(6) << std::setfill(' ') << std::right
+				  << static_cast<int>(*(ip + 1)) << std::left
+				  << "  (`" << variable->get_name() << "` " << variable.get() << ')';
+		return ip + 2;
+	}
+	case OP_SET_VARIABLE_POP:
+	{
+		auto variable = current_scope->get_variable(static_cast<int>(*(ip + 1)));
+		std::cout << "SET_VARIABLE_POP" 
+				  << std::setw(6) << std::setfill(' ') << std::right
+				  << static_cast<int>(*(ip + 1)) << std::left
+				  << "  (`" << variable->get_name() << "` " << variable.get() << ')';
+		return ip + 2;
+	}
+	case OP_GET_VARIABLE:
+	{
+		auto variable = current_scope->get_variable(static_cast<int>(*(ip + 1)));
+		std::cout << "GET_VARIABLE" 
+				  << std::setw(6) << std::setfill(' ') << std::right
+				  << static_cast<int>(*(ip + 1)) << std::left
+				  << "  (`" << variable->get_name() << "` " << variable.get() << ')';
+		return ip + 2;
+	}
+
 	case OP_CALL_UNARY:
-		std::cout << "CALL_UNARY       " << static_cast<int>(*(ip + 1)) << '\n';
+		std::cout << "CALL_UNARY"
+				  << std::setw(6) << std::setfill(' ') << std::right
+				  << static_cast<int>(*(ip + 1)) << std::left;
 		return ip + 2;
 	case OP_CALL_BINARY:
-		std::cout << "CALL_BINARY      " << static_cast<int>(*(ip + 1)) << '\n';
+		std::cout << "CALL_BINARY"
+				  << std::setw(6) << std::setfill(' ') << std::right
+				  << static_cast<int>(*(ip + 1)) << std::left;
 		return ip + 2;
 
 	case OP_PRINT:
-		std::cout << "PRINT\n";
+		std::cout << "PRINT";
 		return ip + 1;
 
 	case OP_POP:
-		std::cout << "POP\n";
+		std::cout << "POP";
 		return ip + 1;
 	case OP_RETURN:
-		std::cout << "RETURN\n";
+		std::cout << "RETURN";
 		return ip + 1;
 
 	default:
-		std::cout << "__UNKNOWN__\n";
+		std::cout << "__UNKNOWN__";
 		return ip + 1;
 	}
 }
@@ -187,11 +226,6 @@ void VariableDeclarationNode::print(int depth) const
 	{
 		expression->print(depth + 1);
 	}
-	else
-	{
-		indent(depth + 1);
-		std::cout << "ERROR\n";
-	}
 }
 
 void ExpressionStatementNode::print(int depth) const
@@ -245,6 +279,12 @@ void OperatorNode::print(int depth) const
 {
 	indent(depth);
 	std::cout << "Operator: " << op->get_symbol() << '\n';
+}
+
+void IdentifierNode::print(int depth) const
+{
+	indent(depth);
+	std::cout << "Identifier: " << name << '\n';
 }
 
 void LiteralNode::print(int depth) const
