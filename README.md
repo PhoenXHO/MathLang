@@ -10,6 +10,9 @@ _Note: This project is a complete rewrite of the Mathium interpreter, with clean
 - Basic expressions with numbers, parentheses, and built-in operators
 	- Currently, only the addition operator (`+`) is supported (more operators will be added for this version)
 - REPL (Read-Eval-Print Loop) for interactive programming
+- Variable declarations and retrievals
+	- `let <variable>` to declare a variable
+	- `let <variable> := <expression>` to initialize a variable
 
 ### Planned Features for 0.2.0-alpha.1
 - Read from a file with `.mthx` extension
