@@ -1,6 +1,6 @@
 #include "semantic_analyzer/semantic_analyzer.hpp"
-#include "global/globals.hpp"
-#include "symbols/symbol.hpp"
+#include "util/globals.hpp"
+#include "symbol/symbol.hpp"
 
 const std::shared_ptr<Symbol> Symbol::empty_symbol(new Symbol("", Symbol::Type::S_NONE, nullptr));
 
@@ -30,7 +30,11 @@ SemanticAnalyzer::AnalysisResult SemanticAnalyzer::analyze(ASTNode * node)
 		return analyze_literal(static_cast<LiteralNode *>(node));
 	default:
 		// This should never happen
-		globals::error_handler.log_semantic_error("Unknown AST node type", 1, 1, 1, true);
+		globals::error_handler.log_semantic_error(
+			"Unknown AST node type",
+			{0, 0, 0},
+			true
+		);
 	}
 
 	return {MathObj::Type::MO_NONE};
@@ -39,17 +43,18 @@ SemanticAnalyzer::AnalysisResult SemanticAnalyzer::analyze(ASTNode * node)
 SemanticAnalyzer::AnalysisResult SemanticAnalyzer::analyze_variable_declaration(VariableDeclarationNode * variable_declaration)
 {
 	// Check if the variable is already defined in the current scope
-	if (current_scope->is_variable_defined(variable_declaration->identifier))
+	if (current_scope->is_variable_defined(variable_declaration->identifier->name))
 	{
 		globals::error_handler.log_semantic_error(
-			"Variable '" + std::string(variable_declaration->identifier) + "' is already defined",
-			1, 1, 1,
+			"Variable '" + std::string(variable_declaration->identifier->name) + "' is already defined",
+			variable_declaration->identifier->location,
+			variable_declaration->identifier->length,
 			true
 		);
 	}
 
 	// Add the variable to the current scope
-	current_scope->define_variable(variable_declaration->identifier);
+	current_scope->define_variable(variable_declaration->identifier->name);
 
 	// Analyze the expression if it exists
 	if (variable_declaration->expression)
@@ -79,7 +84,12 @@ SemanticAnalyzer::AnalysisResult SemanticAnalyzer::analyze_expression(Expression
 	}
 	else
 	{
-		globals::error_handler.log_semantic_error("No operator implementation found for the given operands", 1, 1, 1, true);
+		globals::error_handler.log_semantic_error(
+			"No operator implementation found for the given operands",
+			expression->op->location,
+			expression->op->length,
+			true
+		);
 	}
 
 	return {MathObj::Type::MO_NONE};
@@ -108,7 +118,12 @@ SemanticAnalyzer::AnalysisResult SemanticAnalyzer::analyze_operand(OperandNode *
 	}
 	else
 	{
-		globals::error_handler.log_semantic_error("No operator implementation found for the given operand", 1, 1, 1, true);
+		globals::error_handler.log_semantic_error(
+			"No operator implementation found for the given operand",
+			operand->op->location,
+			operand->op->length,
+			true
+		);
 	}
 
 	return {MathObj::Type::MO_NONE};
@@ -118,11 +133,13 @@ SemanticAnalyzer::AnalysisResult SemanticAnalyzer::analyze_identifier(Identifier
 {
 	// Check if the variable is defined in the current scope
 	auto & variable = current_scope->get_variable(identifier->name);
-	if (variable->get_type() == Symbol::Type::S_NONE)
+	if (!variable || variable->get_type() == Symbol::Type::S_NONE)
 	{
 		globals::error_handler.log_semantic_error(
 			"Variable '" + std::string(identifier->name) + "' is not defined",
-			1, 1, 1
+			identifier->location,
+			identifier->length,
+			true
 		);
 	}
 
@@ -132,7 +149,8 @@ SemanticAnalyzer::AnalysisResult SemanticAnalyzer::analyze_identifier(Identifier
 		// The variable is not initialized
 		globals::error_handler.log_semantic_error(
 			"Variable '" + std::string(identifier->name) + "' is not initialized",
-			1, 1, 1,
+			identifier->location,
+			identifier->length,
 			true
 		);
 	}

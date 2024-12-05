@@ -1,11 +1,11 @@
 #include <iostream>
 
 #include "parser/parser.hpp"
-#include "global/globals.hpp"
+#include "util/globals.hpp"
 
-void Parser::parse_source(std::string_view source)
+void Parser::parse_source(void)
 {
-	lexer->set_source(source);
+	lexer->update_source();
 
 	// Keep scanning new tokens until we reach the end of the file
 	while (consume_tk())
@@ -37,7 +37,7 @@ std::unique_ptr<ASTNode> Parser::statement_n(void)
 	case Token::Type::T_LET:
 		return variable_declaration_n();
 
-	case Token::Type::T_EOF: case Token::Type::T_EOL: case Token::Type::T_SEMICOLON:
+	case Token::Type::T_EOF: case Token::Type::T_SEMICOLON:
 		return nullptr;
 	
 	default:
@@ -49,6 +49,7 @@ std::unique_ptr<ASTNode> Parser::statement_n(void)
 std::unique_ptr<VariableDeclarationNode> Parser::variable_declaration_n(void)
 {
 	auto variable_declaration = std::make_unique<VariableDeclarationNode>();
+	variable_declaration->location = curr_tk->location();
 
 	consume_tk(); // Consume the `let` token
 
@@ -57,7 +58,7 @@ std::unique_ptr<VariableDeclarationNode> Parser::variable_declaration_n(void)
 		expect_tk(Token::Type::T_IDENTIFIER, "Expected an identifier");
 	}
 
-	variable_declaration->identifier = curr_tk->lexeme();
+	variable_declaration->identifier = identifier_n();
 	consume_tk(); // Consume the identifier token
 
 	if (curr_tk->type() == Token::Type::T_COLON_EQUAL)
@@ -70,6 +71,7 @@ std::unique_ptr<VariableDeclarationNode> Parser::variable_declaration_n(void)
 		variable_declaration->print_expression = expression_statement->print_expression;
 	}
 	
+	variable_declaration->length = curr_tk->location().position - variable_declaration->location.position + 1;
 	return variable_declaration;
 }
 
@@ -92,8 +94,24 @@ std::unique_ptr<ExpressionStatementNode> Parser::expression_statement_n(void)
 	bool semicolon = check_semicolon();
 	if (!semicolon)
 	{
-		// If there is no semicolon, there must be a newline
-		expect_tk({Token::Type::T_EOL, Token::Type::T_EOF}, "Expected a newline at the end of the statement");
+		if (!at_newline)
+		{
+			// Location of the newline character
+			SourceLocation location {
+				prev_tk->location().line,
+				prev_tk->location().column + prev_tk->lexeme().size(),
+				prev_tk->location().position + prev_tk->lexeme().size()
+			};
+			globals::error_handler.log_warning(
+				"Statments separated by whitespace only",
+				location,
+				1,
+				"Consider using ';' or newlines to separate statements"
+			);
+		}
+
+		// If there is no semicolon, retreat the token so that the next statement can parse it
+		retreat_tk();
 	}
 	statement->print_expression = !semicolon;
 	return statement;
@@ -123,8 +141,6 @@ std::unique_ptr<ASTNode> Parser::expression_n(Precedence min_p)
 			auto right = expression_n(static_cast<Precedence>(op->get_precedence() + 1));
 			if (!right)
 			{
-				//globals::error_handler.log_syntax_error("Expected an expression", curr_tk->line(), curr_tk->column(), curr_tk->position(), true);
-
 				expect_tk(Token::Type::T_NONE, "Expected an expression");
 			}
 
@@ -135,8 +151,6 @@ std::unique_ptr<ASTNode> Parser::expression_n(Precedence min_p)
 			auto right = expression_n(op->get_precedence());
 			if (!right)
 			{
-				//globals::error_handler.log_syntax_error("Expected an expression", curr_tk->line(), curr_tk->column(), curr_tk->position(), true);
-
 				expect_tk(Token::Type::T_NONE, "Expected an expression");
 			}
 
@@ -144,8 +158,16 @@ std::unique_ptr<ASTNode> Parser::expression_n(Precedence min_p)
 		}
 		else // Non-associative
 		{
-			globals::error_handler.log_syntax_error("Non-associative operators are not supported", curr_tk->line(), curr_tk->column(), curr_tk->position(), true);
+			globals::error_handler.log_syntax_error(
+				"Non-associative operators are not supported",
+				curr_tk->location(),
+				1,
+				true
+			);
 		}
+
+		left->location = left->location;
+		left->length = curr_tk->location().position - left->location.position + 1;
 	}
 
 	return left;
@@ -154,6 +176,7 @@ std::unique_ptr<ASTNode> Parser::expression_n(Precedence min_p)
 std::unique_ptr<ASTNode> Parser::operand_n(void)
 {
 	auto operand = std::make_unique<OperandNode>();
+	operand->location = curr_tk->location();
 
 	operand->op = operator_n(true); // Unary operator
 	if (operand->op)
@@ -180,6 +203,7 @@ std::unique_ptr<ASTNode> Parser::operand_n(void)
 		}
 	}
 
+	operand->length = curr_tk->location().position - operand->location.position + 1;
 	return operand;
 }
 
@@ -200,27 +224,29 @@ std::unique_ptr<OperatorNode> Parser::operator_n(bool is_unary)
 	{
 		if (is_unary)
 		{
-			globals::error_handler.log_syntax_error(
-				"Invalid unary operator '" + std::string(curr_tk->lexeme()) + "'",
-				curr_tk->line(),
-				curr_tk->column(),
-				curr_tk->position(),
-				true
-			);
+			//globals::error_handler.log_syntax_error(
+			//	"Invalid unary operator '" + std::string(curr_tk->lexeme()) + "'",
+			//	curr_tk->location(),
+			//	curr_tk->lexeme().size(),
+			//	true
+			//);
+			expect_tk(Token::Type::T_NONE, "Invalid unary operator '" + std::string(curr_tk->lexeme()) + "'");
 		}
 		else
 		{
-			globals::error_handler.log_syntax_error(
-				"Invalid binary operator '" + std::string(curr_tk->lexeme()) + "'",
-				curr_tk->line(),
-				curr_tk->column(),
-				curr_tk->position(),
-				true
-			);
+			//globals::error_handler.log_syntax_error(
+			//	"Invalid binary operator '" + std::string(curr_tk->lexeme()) + "'",
+			//	curr_tk->location(),
+			//	curr_tk->lexeme().size(),
+			//	true
+			//);
+			expect_tk(Token::Type::T_NONE, "Invalid binary operator '" + std::string(curr_tk->lexeme()) + "'");
 		}
 	}
 
 	auto operator_node = std::make_unique<OperatorNode>(op);
+	operator_node->location = curr_tk->location();
+	operator_node->length = curr_tk->lexeme().size();
 	return operator_node;
 }
 
@@ -236,33 +262,36 @@ std::unique_ptr<ASTNode> Parser::primary_n(void)
 	}
 	else if (curr_tk->type() == Token::Type::T_LEFT_PAREN)
 	{
+		SourceLocation location = curr_tk->location();
+
 		consume_tk(); // Consume the left parenthesis
 		auto expression = expression_n(Precedence::P_MIN);
 		if (!expression)
 		{
-			//globals::error_handler.log_syntax_error("Expected an expression", curr_tk->line(), curr_tk->column(), curr_tk->position(), true);
-
 			expect_tk(Token::Type::T_NONE, "Expected an expression");
 		}
 		expect_tk(Token::Type::T_RIGHT_PAREN, "Expected a right parenthesis");
 		// We don't need to consume the right parenthesis token because it will be consumed in the `expression_n` function
 
+		expression->location = location;
+		expression->length = curr_tk->location().position - location.position + 1;
 		return expression;
 	}
 
 	return nullptr;
 }
 
-std::unique_ptr<ASTNode> Parser::identifier_n(void)
+std::unique_ptr<IdentifierNode> Parser::identifier_n(void)
 {
-	auto identifier = std::make_unique<IdentifierNode>();
-	identifier->name = curr_tk->lexeme();
+	auto identifier = std::make_unique<IdentifierNode>(curr_tk->lexeme());
+	identifier->location = curr_tk->location();
+	identifier->length = curr_tk->lexeme().size();
 	return identifier;
 }
 
 std::unique_ptr<LiteralNode> Parser::literal_n(void)
 {
-	auto literal = std::make_unique<LiteralNode>();
+	auto literal = std::make_unique<LiteralNode>(curr_tk->lexeme());
 
 	// For now, we can only parse numbers
 	switch (curr_tk->type())
@@ -279,7 +308,8 @@ std::unique_ptr<LiteralNode> Parser::literal_n(void)
 		return nullptr;
 	}
 
-	literal->value = curr_tk->lexeme();
+	literal->location = curr_tk->location();
+	literal->length = curr_tk->lexeme().size();	
 	return literal;
 }
 
@@ -293,10 +323,9 @@ void Parser::expect_tk(Token::Type type, std::string_view message)
 		}
 
 		globals::error_handler.log_syntax_error(
-			message.empty() ? "Expected token of type " + Token::type_to_string(type) : message,
-			curr_tk->line(),
-			curr_tk->column(),
-			curr_tk->position(),
+			message,
+			curr_tk->location(),
+			curr_tk->lexeme().size(),
 			true
 		);
 	}
@@ -318,26 +347,35 @@ void Parser::expect_tk(const std::initializer_list<Token::Type> & types, std::st
 	}
 
 	globals::error_handler.log_syntax_error(
-		message.empty() ? "Expected one of the following tokens: " : message,
-		curr_tk->line(),
-		curr_tk->column(),
-		curr_tk->position(),
+		message,
+		curr_tk->location(),
 		true
 	);
 }
 
 bool Parser::consume_tk(void)
 {
-	if (curr_tk && next_tk)
+	at_newline = false;
+	prev_tk = curr_tk;
+	do
 	{
-		curr_tk = std::move(next_tk);
-		next_tk = lexer->scan_tk();
+		if (curr_tk && next_tk)
+		{
+			curr_tk = next_tk;
+			next_tk = lexer->scan_tk();
+		}
+		else
+		{
+			curr_tk = lexer->scan_tk();
+			next_tk = lexer->scan_tk();
+		}
+
+		if (curr_tk->type() == Token::Type::T_EOL || curr_tk->type() == Token::Type::T_EOF)
+		{
+			at_newline = true;
+		}
 	}
-	else
-	{
-		curr_tk = lexer->scan_tk();
-		next_tk = lexer->scan_tk();
-	}
+	while (curr_tk->type() == Token::Type::T_EOL);
 
 	// If the current token is an error token, enter panic mode
 	if (curr_tk->type() == Token::Type::T_ERROR)
@@ -348,4 +386,20 @@ bool Parser::consume_tk(void)
 	}
 
 	return curr_tk->type() != Token::Type::T_EOF;
+}
+
+void Parser::retreat_tk(void)
+{
+	if (prev_tk)
+	{
+		lexer->retreat_tk(next_tk);
+		next_tk = curr_tk;
+		curr_tk = prev_tk;
+		prev_tk = nullptr;
+	}
+	else
+	{
+		//! This should never happen
+		throw std::runtime_error("Cannot retreat to a token that does not exist");
+	}
 }

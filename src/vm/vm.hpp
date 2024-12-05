@@ -15,9 +15,6 @@ class VM
 	std::shared_ptr<Scope> global_scope;
 	std::shared_ptr<Scope> current_scope = global_scope;
 
-	// Using a string_view to avoid copying the source code,
-	// since it is guaranteed to be valid for the lifetime of the VM instance
-	std::string_view source;
 	std::unique_ptr<Compiler> compiler;
 	Chunk chunk;
 
@@ -31,7 +28,7 @@ public:
 
 	// This function will return false if there was an error
 	// This will most likely be used to check for code incompleteness
-	InterpretResult interpret_source(std::string_view source);
+	InterpretResult interpret_source(bool interrupted = false);
 	void run(void);
 };
 

@@ -10,7 +10,7 @@
 #include "compiler/chunk.hpp"
 #include "parser/ast.hpp"
 #include "scope/scope.hpp"
-#include "symbols/symbol.hpp"
+#include "symbol/symbol.hpp"
 
 class Compiler
 {
@@ -52,7 +52,7 @@ public:
 		last_print = 0;
 	}
 
-	void compile_source(std::string_view source);
+	void compile_source(void);
 
 	const std::shared_ptr<OperatorImplentation> & get_operator(size_t index) const
 	{ return operator_stack.at(index); }

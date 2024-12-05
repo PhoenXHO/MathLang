@@ -4,7 +4,7 @@
 #include "lexer/token.hpp"
 #include "parser/ast.hpp"
 #include "compiler/chunk.hpp"
-#include "global/config.hpp"
+#include "util/config.hpp"
 
 // Function to indent the output
 void indent(int indent);
@@ -45,15 +45,6 @@ std::vector<uint8_t>::const_iterator Chunk::disassemble_instruction(std::vector<
 	{
 		auto variable = current_scope->get_variable(static_cast<int>(*(ip + 1)));
 		std::cout << "SET_VARIABLE" 
-				  << std::setw(6) << std::setfill(' ') << std::right
-				  << static_cast<int>(*(ip + 1)) << std::left
-				  << "  (`" << variable->get_name() << "` " << variable.get() << ')';
-		return ip + 2;
-	}
-	case OP_SET_VARIABLE_POP:
-	{
-		auto variable = current_scope->get_variable(static_cast<int>(*(ip + 1)));
-		std::cout << "SET_VARIABLE_POP" 
 				  << std::setw(6) << std::setfill(' ') << std::right
 				  << static_cast<int>(*(ip + 1)) << std::left
 				  << "  (`" << variable->get_name() << "` " << variable.get() << ')';
@@ -172,9 +163,9 @@ std::ostream & operator<<(std::ostream & os, const Token & tk)
 	os << std::setfill(' ');
 
 	// Format: <line>:<column> <type> <lexeme>
-	os << std::right << std::setw(4) << tk.line() // <line> (4 characters, right-aligned)
+	os << std::right << std::setw(4) << tk.location().line // <line> (4 characters, right-aligned)
 	   << ':'
-	   << std::left << std::setw(4) << tk.column() // <column> (4 characters, left-aligned)
+	   << std::left << std::setw(4) << tk.location().column // <column> (4 characters, left-aligned)
 	   << ' ' << std::setw(16) << Token::type_to_string(tk.type()); // <type> (16 characters, left-aligned)
 
 	if (tk.type() != Token::Type::T_EOL && tk.type() != Token::Type::T_EOF)

@@ -9,7 +9,7 @@
 #include <boost/multiprecision/gmp.hpp> // for `mpz_int`
 #include <boost/multiprecision/mpfr.hpp> // for `mpfr_float`
 
-#include "global/globals.hpp"
+#include "util/globals.hpp"
 
 //using mpz = boost::multiprecision::mpz_int; // Arbitrary precision integer
 //using mpfr = boost::multiprecision::mpfr_float; // Arbitrary precision floating point
@@ -50,49 +50,49 @@ public:
 
 class IntegerObj : public MathObj
 {
-	mpz_int value;
-	size_t size;
+	mpz_int m_value;
+	size_t m_size;
 
 public:
-	IntegerObj(const mpz_int & value) : value(value), size(value.str().size()) {}
+	IntegerObj(const mpz_int & value) : m_value(value), m_size(value.str().size()) {}
 	~IntegerObj() = default;
 
-	mpz_int get_value(void) const { return value; }
-	size_t get_size(void) const { return size; }
+	mpz_int value(void) const { return m_value; }
+	size_t size(void) const { return m_size; }
 
 	Type type(void) const override { return Type::MO_INTEGER; }
-	std::string to_string(void) const override { return value.str(); }
+	std::string to_string(void) const override { return m_value.str(); }
 
 	MathObjPtr add(const MathObjPtr & rhs) const override;
 };
 
 class RealObj : public MathObj
 {
-	mpfr_float value;
-	size_t integer_part;
-	size_t decimal_part;
+	mpfr_float m_value;
+	size_t m_integer_part;
+	size_t m_decimal_part;
 
 public:
-	RealObj(std::string_view value) : value(value)
+	RealObj(std::string_view value) : m_value(value)
 	{
 		size_t dot_pos = value.find('.');
-		integer_part = dot_pos;
-		decimal_part = value.size() - dot_pos - 1;
+		m_integer_part = dot_pos;
+		m_decimal_part = value.size() - dot_pos - 1;
 	}
 	RealObj(const mpfr_float & value, size_t integer_part, size_t decimal_part)
-		: value(value), integer_part(integer_part), decimal_part(decimal_part)
+		: m_value(value), m_integer_part(integer_part), m_decimal_part(decimal_part)
 	{}
 	~RealObj() = default;
 
-	mpfr_float get_value(void) const { return value; }
-	size_t get_integer_part(void) const { return integer_part; }
-	size_t get_decimal_part(void) const { return decimal_part; }
+	mpfr_float value(void) const { return m_value; }
+	size_t integer_part(void) const { return m_integer_part; }
+	size_t decimal_part(void) const { return m_decimal_part; }
 
 	Type type(void) const override { return Type::MO_REAL; }
 	std::string to_string(void) const override
 	{
 		std::ostringstream oss;
-		oss << std::setprecision(integer_part + decimal_part) << value;
+		oss << std::setprecision(m_integer_part + m_decimal_part) << m_value;
 		return oss.str();
 
 		//char * str = new char[integer_part + decimal_part + 2];
@@ -104,7 +104,6 @@ public:
 
 	MathObjPtr add(const MathObjPtr & rhs) const override;
 };
-
 
 // Hash specialization for std::pair<MathObj::Type, MathObj::Type>
 namespace std

@@ -1,14 +1,14 @@
 #include <iostream>
 
 #include "lexer/lexer.hpp" // for `Lexer`
-#include "global/config.hpp" // for `config::verbose`
-#include "global/globals.hpp" // for `globals::error_handler`
+#include "util/config.hpp" // for `config::verbose`
+#include "util/globals.hpp" // for `globals::error_handler`
 
 bool is_operator_sym(char c);
 
-std::unique_ptr<Token> Lexer::scan_tk(void)
+std::shared_ptr<Token> Lexer::scan_tk(void)
 {
-	std::unique_ptr<Token> token = nullptr;
+	std::shared_ptr<Token> token = nullptr;
 
 	bool new_line = skip_whitespaces(); // Skip whitespaces and comments
 
@@ -122,9 +122,7 @@ std::unique_ptr<Token> Lexer::scan_tk(void)
 		// Log an error for invalid characters
 		globals::error_handler.log_lexical_error(
 			"Invalid character '" + std::string(1, curr) + "'",
-			line,
-			column,
-			pos,
+			location,
 			true
 		);
 		break;
@@ -134,10 +132,10 @@ std::unique_ptr<Token> Lexer::scan_tk(void)
 	return token;
 }
 
-std::unique_ptr<Token> Lexer::make_number_tk(void)
+std::shared_ptr<Token> Lexer::make_number_tk(void)
 {
 	size_t lexeme_length = 1; // 1 because we already have the first digit (or dot)
-	size_t start_column = column, start_position = pos;
+	size_t start_column = location.column, start_position = location.position;
 
 	/* We need to check if the character is a dot
 	   or just a regular digit (guarranteed to be a digit or a dot)
@@ -170,17 +168,15 @@ std::unique_ptr<Token> Lexer::make_number_tk(void)
 	{
 		globals::error_handler.log_lexical_error(
 			"Invalid number format '" + lexeme_str + "'",
-			line,
-			start_column,
-			start_position,
+			SourceLocation(location.line, start_column, start_position),
+			lexeme_length,
 			true
 		);
 
 		return make_tk(
 			Token::Type::T_ERROR,
 			lexeme,
-			start_column,
-			start_position
+			SourceLocation(location.line, start_column, start_position)
 		);
 	}
 
@@ -196,15 +192,14 @@ std::unique_ptr<Token> Lexer::make_number_tk(void)
 	return make_tk(
 		has_dot ? Token::Type::T_REAL_LITERAL : Token::Type::T_INTEGER_LITERAL,
 		lexeme,
-		start_column,
-		start_position
+		SourceLocation(location.line, start_column, start_position)
 	);
 }
 
-std::unique_ptr<Token> Lexer::make_word_tk(void)
+std::shared_ptr<Token> Lexer::make_word_tk(void)
 {
 	size_t lexeme_length = 1; // 1 because we already have the first character
-	size_t start_column = column, start_position = pos;
+	size_t start_column = location.column, start_position = location.position;
 
 	advance(); // Move to the next character
 	char curr = peek();
@@ -220,15 +215,14 @@ std::unique_ptr<Token> Lexer::make_word_tk(void)
 	return make_tk(
 		is_in_context(type.second) ? type.first : Token::Type::T_IDENTIFIER,
 		lexeme,
-		start_column,
-		start_position
+		SourceLocation(location.line, start_column, start_position)
 	);
 }
 
-std::unique_ptr<Token> Lexer::make_operator_tk(void)
+std::shared_ptr<Token> Lexer::make_operator_tk(void)
 {
 	size_t lexeme_length = 1; // 1 because we already have the first character
-	size_t start_column = column, start_position = pos;
+	size_t start_column = location.column, start_position = location.position;
 	
 	advance(); // Move to the next character
 	char curr = peek();
@@ -244,19 +238,16 @@ std::unique_ptr<Token> Lexer::make_operator_tk(void)
 	return make_tk(
 		Token::Type::T_OPERATOR_SYMBOL,
 		lexeme,
-		start_column,
-		start_position
+		SourceLocation(location.line, start_column, start_position)
 	);
 }
 
-std::unique_ptr<Token> Lexer::make_tk(Token::Type type, std::string_view lexeme, size_t start_column, size_t start_position)
+std::shared_ptr<Token> Lexer::make_tk(Token::Type type, std::string_view lexeme, SourceLocation location)
 {
 	auto tk = std::make_unique<Token>(
 		type,
 		lexeme,
-		line,
-		start_column,
-		start_position
+		location
 	);
 
 	if (tk->type() != Token::Type::T_EOF)
@@ -266,7 +257,7 @@ std::unique_ptr<Token> Lexer::make_tk(Token::Type type, std::string_view lexeme,
 	return tk;
 }
 
-bool Lexer::skip_whitespaces()
+bool Lexer::skip_whitespaces(void)
 {
 	while (!at_eof())
 	{
@@ -289,7 +280,7 @@ bool Lexer::skip_whitespaces()
 
 	return false;
 }
-void Lexer::skip_comment()
+void Lexer::skip_comment(void)
 {
 	while (!at_eof() && !at_eol())
 	{
@@ -315,19 +306,19 @@ char Lexer::advance(size_t offset)
 			return '\0';
 		}
 
-		if (source[pos] == '\n')
+		if (source[location.position] == '\n')
 		{
-			line++;
-			column = 1;
+			location.line++;
+			location.column = 1;
 		}
 		else
 		{
-			column++;
+			location.column++;
 		}
-		pos++;
+		location.position++;
 	}
 
-	return source[pos - 1];
+	return source[location.position - 1];
 }
 
 bool is_operator_sym(char c)
@@ -340,5 +331,13 @@ bool is_operator_sym(char c)
 		return true;
 	default:
 		return false;
+	}
+}
+
+void Lexer::retreat_tk(std::shared_ptr<Token> & prev_tk)
+{
+	if (prev_tk)
+	{
+		location = prev_tk->location();
 	}
 }

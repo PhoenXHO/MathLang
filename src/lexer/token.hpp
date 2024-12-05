@@ -6,6 +6,8 @@
 #include <unordered_map>
 #include <iostream>
 
+#include "util/util.hpp"
+
 struct Token
 {
 	enum class Type
@@ -54,14 +56,13 @@ struct Token
 		T_RETURN
 	};
 
-	Token(Type type, std::string_view lexeme, size_t line, size_t column, size_t position)
-		: m_type(type), m_lexeme(lexeme), m_line(line), m_column(column), m_position(position) {}
+	Token(Type type, std::string_view lexeme, SourceLocation location) :
+		m_type(type), m_lexeme(lexeme), m_location(location)
+	{}
 
 	Type type(void) const { return m_type; }
 	std::string_view lexeme(void) const { return m_lexeme; }
-	size_t line(void) const { return m_line; }
-	size_t column(void) const { return m_column; }
-	size_t position(void) const { return m_position; }
+	SourceLocation location(void) const { return m_location; }
 
 	bool is_literal(void) const
 	{
@@ -76,17 +77,11 @@ struct Token
 			   m_type == Type::T_FALSE;
 	}
 	bool is_identifier(void) const
-	{
-		return m_type == Type::T_IDENTIFIER;
-	}
+	{ return m_type == Type::T_IDENTIFIER; }
 	bool is_operator(void) const
-	{
-		return m_type == Type::T_OPERATOR_SYMBOL;
-	}
+	{ return m_type == Type::T_OPERATOR_SYMBOL; }
 	bool is_eof(void) const
-	{
-		return m_type == Type::T_EOF;
-	}
+	{ return m_type == Type::T_EOF; }
 
 	//* Debugging
 	static std::string type_to_string(Type type);
@@ -95,8 +90,7 @@ struct Token
 private:
 	Type m_type; // type of the token
 	std::string_view m_lexeme; // the actual token
-	size_t m_line, m_column; // line and column of the token in the source code
-	size_t m_position; // position of the token in the source code
+	SourceLocation m_location; // location of the token
 };
 
 #endif // TOKEN_H

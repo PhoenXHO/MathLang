@@ -25,6 +25,9 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+# Add profiling flags
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pg -g -fno-omit-frame-pointer -O0")
+
 # Find the Boost libraries
 set(BOOST_COMPONENTS
 	program_options
@@ -45,6 +48,9 @@ endif()
 
 # Add the cmake directory to the module path
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake")
+# Ensure dynamic linking for the GMP and MPFR libraries
+set(GMP_USE_STATIC_LIBS OFF)
+set(MPFR_USE_STATIC_LIBS OFF)
 # Find GMP and MPFR
 find_package(GMP REQUIRED)
 find_package(MPFR REQUIRED)

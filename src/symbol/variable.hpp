@@ -1,7 +1,7 @@
 #ifndef VARIABLE_HPP
 #define VARIABLE_HPP
 
-#include "symbols/symbol.hpp"
+#include "symbol/symbol.hpp"
 #include "object/object.hpp"
 
 struct Variable : public Symbol

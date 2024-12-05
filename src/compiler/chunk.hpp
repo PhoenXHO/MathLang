@@ -14,12 +14,9 @@ enum OpCode : uint8_t
 	// - operand: `index` (1 byte); the index of the constant in the constant pool (`Compiler.constant_pool`)
 	OP_LOAD_CONSTANT,
 
-	// Instruction to set a variable in the current scope without popping the top of the stack
+	// Instruction to set a variable in the current scope to the value on the top of the stack (the top of the stack is not popped)
 	// - operand: `index` (1 byte); the index of the variable in the current scope
 	OP_SET_VARIABLE,
-	// Instruction to set a variable in the current scope
-	// - operand: `index` (1 byte); the index of the variable in the current scope
-	OP_SET_VARIABLE_POP,
 	// Instruction to get a variable from the current scope
 	// - operand: `index` (1 byte); the index of the variable in the current scope
 	OP_GET_VARIABLE,

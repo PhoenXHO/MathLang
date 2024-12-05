@@ -8,6 +8,7 @@
 
 #include "operator/operator.hpp"
 #include "object/object.hpp"
+#include "util/util.hpp"
 
 struct AST;
 struct ASTNode;
@@ -24,9 +25,6 @@ struct LiteralNode;
 struct AST
 {
 	std::vector<std::unique_ptr<ASTNode>> statements;
-
-	size_t position = 0;
-	size_t line = 1, column = 1;
 
 	AST() = default;
 	~AST() = default;
@@ -50,6 +48,8 @@ struct ASTNode
 	};
 
 	const Type type;
+	SourceLocation location;
+	size_t length;
 
 	ASTNode(Type type) : type(type) {}
 	virtual ~ASTNode() = default;
@@ -61,14 +61,12 @@ struct ASTNode
 // <variable-declaration> ::= "let" <identifier> [ ":=" <expression> ] [ ";" ]
 struct VariableDeclarationNode : public ASTNode
 {
-	std::string_view identifier;
+	//std::string_view identifier;
+	std::unique_ptr<IdentifierNode> identifier;
 	std::unique_ptr<ASTNode> expression;
 	bool print_expression = false;
 
 	VariableDeclarationNode() : ASTNode(Type::N_VARIABLE_DECLARATION) {}
-	VariableDeclarationNode(std::string_view identifier, std::unique_ptr<ASTNode> expression)
-		: ASTNode(Type::N_VARIABLE_DECLARATION), identifier(identifier), expression(std::move(expression))
-	{}
 	~VariableDeclarationNode() = default;
 
 	//* Debugging
@@ -175,6 +173,7 @@ struct LiteralNode : public ASTNode
 	std::string_view value;
 
 	LiteralNode() : ASTNode(Type::N_LITERAL) {}
+	LiteralNode(std::string_view value) : ASTNode(Type::N_LITERAL), value(value) {}
 	~LiteralNode() = default;
 
 	//* Debugging

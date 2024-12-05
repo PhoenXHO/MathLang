@@ -9,7 +9,7 @@
 #include <functional>
 #include <utility> // for `std::pair`
 
-#include "object/object.hpp"
+#include "object/object.hpp" // for hash specialization of std::pair<MathObj::Type, MathObj::Type>
 
 // Fixity of an operator
 enum class Fixity

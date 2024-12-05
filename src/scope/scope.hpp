@@ -5,7 +5,7 @@
 #include <memory>
 #include <string>
 
-#include "symbols/symbol_table.hpp"
+#include "symbol/symbol_table.hpp"
 
 struct Scope
 {
@@ -20,8 +20,14 @@ struct Scope
 
 	size_t get_variable_index(std::string_view name) const;
 
+	/// @brief Get the variable from the symbol table at the given index
+	/// @param index The index of the variable
+	/// @return The variable at the given index or `nullptr` if the index is out of bounds
 	const std::shared_ptr<Variable> get_variable(size_t index) const
-	{ return std::static_pointer_cast<Variable>(symbols[index]); }
+	{ return index < symbols.size() ? std::static_pointer_cast<Variable>(symbols[index]) : nullptr; }
+	/// @brief Get the variable from the symbol table with the given name
+	/// @param name The name of the variable
+	/// @return The variable with the given name or `nullptr` if the variable is not defined
 	const std::shared_ptr<Variable> get_variable(std::string_view name) const;
 
 	void set_variable(size_t index, MathObjPtr value)

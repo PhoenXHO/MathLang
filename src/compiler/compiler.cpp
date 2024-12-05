@@ -1,11 +1,11 @@
 #include "compiler/compiler.hpp"
 #include "object/object.hpp"
-#include "global/globals.hpp"
-#include "global/config.hpp"
+#include "util/globals.hpp"
+#include "util/config.hpp"
 
-void Compiler::compile_source(std::string_view source)
+void Compiler::compile_source(void)
 {
-	parser->parse_source(source);
+	parser->parse_source();
 	semantic_analyzer->analyze(parser->get_ast());
 
 	auto & ast = parser->get_ast();
@@ -73,13 +73,14 @@ void Compiler::compile_statement(const ASTNode * statement_n)
 void Compiler::compile_variable_declaration(const VariableDeclarationNode * variable_declaration)
 {
 	// The semantic analyzer should have already added the variable to the current scope
-	size_t index = current_scope->get_variable_index(variable_declaration->identifier);
+	size_t index = current_scope->get_variable_index(variable_declaration->identifier->name);
 	if (index >= UINT8_MAX)
 	{
 		// We have reached the maximum number of variables
 		globals::error_handler.log_compiletime_error(
 			"Maximum number of variables reached",
-			0, 0, 0, //TODO add line, column, position to AST nodes
+			variable_declaration->identifier->location,
+			variable_declaration->identifier->length,
 			true
 		);
 		return;
@@ -89,14 +90,7 @@ void Compiler::compile_variable_declaration(const VariableDeclarationNode * vari
 	if (variable_declaration->expression)
 	{
 		compile_expression(variable_declaration->expression.get());
-		if (variable_declaration->print_expression)
-		{
-			chunk.emit(OP_SET_VARIABLE, index); // Set the variable in the current scope to the value on the stack and print it
-		}
-		else
-		{
-			chunk.emit(OP_SET_VARIABLE_POP, index); // Set the variable in the current scope to the value on the stack
-		}
+		chunk.emit(OP_SET_VARIABLE, index); // Set the variable in the current scope to the value on the stack and print it
 		compile_print(variable_declaration->print_expression);
 	}
 }
@@ -175,7 +169,8 @@ void Compiler::compile_operator(const OperatorNode * op, bool is_unary)
 		// We have reached the maximum number of operators
 		globals::error_handler.log_compiletime_error(
 			"Maximum number of operators reached",
-			0, 0, 0, //TODO add line, column, position to AST nodes
+			op->location,
+			op->length,
 			true
 		);
 		return;
@@ -199,7 +194,8 @@ void Compiler::compile_identifier(const IdentifierNode * identifier_n)
 		// We have reached the maximum number of variables
 		globals::error_handler.log_compiletime_error(
 			"Maximum number of variables reached",
-			0, 0, 0, //TODO add line, column, position to AST nodes
+			identifier_n->location,
+			identifier_n->length,
 			true
 		);
 		return;
@@ -215,7 +211,8 @@ void Compiler::compile_literal(const LiteralNode * literal_n)
 		// We have reached the maximum number of constants
 		globals::error_handler.log_compiletime_error(
 			"Maximum number of constants reached",
-			0, 0, 0, //TODO add line, column, position to AST nodes
+			literal_n->location,
+			literal_n->length,
 			true
 		);
 		return;
@@ -258,7 +255,8 @@ void Compiler::compile_literal(const LiteralNode * literal_n)
 	{
 		globals::error_handler.log_compiletime_error(
 			"Exception occurred while compiling literal: " + std::string(e.what()),
-			0, 0, 0, //TODO add line, column, position to AST nodes
+			literal_n->location,
+			literal_n->length,
 			true
 		);
 	}
@@ -276,7 +274,7 @@ void Compiler::compile_print(bool print)
 		{
 			// Print only the last expression if the print_all flag is not set
 			last_print = chunk.code.size();
-			chunk.emit(OP_PRINT);
+			chunk.emit(OP_POP);
 		}
 	}
 	else

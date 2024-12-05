@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "error/error.hpp" // for `Error`
+#include "util/util.hpp" // for `SourceLocation`
 
 enum class InterpretResult
 {
@@ -24,7 +25,6 @@ enum class InterpretResult
 
 class ErrorHandler
 {
-	//std::vector<Error> errors;
 	ErrorArray errors;
 	InterpretResult most_severe_error = InterpretResult::OK;
 	bool incomplete_code = false;
@@ -48,17 +48,21 @@ public:
 	bool is_incomplete_code(void) const
 	{ return incomplete_code; }
 
+	void report_errors(void) const
+	{ errors.report_errors(); }
 	void log_error(Error error, bool fatal = false);
 	// For convenience
-	void log_lexical_error(std::string_view message, size_t line, size_t column, size_t position, bool fatal = false);
-	void log_syntax_error(std::string_view message, size_t line, size_t column, size_t position, bool fatal = false);
-	void log_semantic_error(std::string_view message, size_t line, size_t column, size_t position, bool fatal = false);
-	void log_compiletime_error(std::string_view message, size_t line, size_t column, size_t position, bool fatal = false);
-	void log_runtime_error(std::string_view message, size_t line, size_t column, size_t position, bool fatal = false);
-	void log_warning(std::string_view message, size_t line, size_t column, size_t position, bool fatal = false);
+	void log_lexical_error(std::string_view message, SourceLocation location, size_t length, bool fatal = false, std::string_view suggestion = "");
+	void log_syntax_error(std::string_view message, SourceLocation location, size_t length, bool fatal = false, std::string_view suggestion = "");
+	void log_semantic_error(std::string_view message, SourceLocation location, size_t length, bool fatal = false, std::string_view suggestion = "");
+	void log_compiletime_error(std::string_view message, SourceLocation location, size_t length, bool fatal = false, std::string_view suggestion = "");
+	void log_runtime_error(std::string_view message, SourceLocation location, size_t length, bool fatal = false, std::string_view suggestion = "");
+	void log_warning(std::string_view message, SourceLocation location, size_t length, std::string_view suggestion = "");
 
 	bool has_errors(void) const
 	{ return errors.has_errors(); }
+	bool has_warnings(void) const
+	{ return errors.has_warnings(); }
 
 	// Function to check for errors and report them if there are any
 	void check_errors(void)

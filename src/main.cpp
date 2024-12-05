@@ -9,10 +9,10 @@
 #include "mathium_config.hpp"
 
 #include "vm/vm.hpp"
-#include "global/config.hpp"
+#include "util/config.hpp"
 #include "debug/verbose.hpp"
 
-#define EXTENSION ".mthl"
+#define EXTENSION ".mthx"
 #define EXTENSION_LENGTH 5
 
 namespace po = boost::program_options;
@@ -25,8 +25,13 @@ void print_usage(void);
 void print_version(void);
 
 void repl(void);
-void get_continuation(std::string & source);
+bool get_continuation(std::string & source);
 
+
+namespace globals
+{
+	std::string_view source;
+}
 
 bool version_printed = false;
 
@@ -81,24 +86,29 @@ void repl(void)
 		// Flag to check if the source has been interpreted at least once
 		// This is just to reduce repeated code
 		bool interpreted = false;
+		bool interrupted = false;
 		InterpretResult result;
-		while (!interpreted || result == InterpretResult::INCOMPLETE_CODE)
+		while (!interrupted && (!interpreted || result == InterpretResult::INCOMPLETE_CODE))
 		{
 			if (interpreted)
-				get_continuation(source);
+				interrupted = get_continuation(source);
 
-			result = vm.interpret_source(source);
+			globals::source = source;
+			result = vm.interpret_source(interrupted);
 			interpreted = true;
 		}
 	}
 }
 
-void get_continuation(std::string & source)
+/// @brief Get the continuation of a source code snippet
+/// @param source: The source code snippet
+/// @return `true` if the user wants to interrupt the continuation, `false` otherwise
+bool get_continuation(std::string & source)
 {
 	std::string continuation;
 	while (true)
 	{
-		std::cout << "  ... >>> ";
+		std::cout << " ... >>> ";
 		std::string line;
 		std::getline(std::cin, line);
 
@@ -106,7 +116,7 @@ void get_continuation(std::string & source)
 		line.erase(line.find_last_not_of(" \t\n\r\f\v") + 1);
 
 		if (line.empty())
-			break;
+			return true;
 
 		if (line.back() == '\\')
 		{
@@ -117,12 +127,14 @@ void get_continuation(std::string & source)
 		}
 		else
 		{
+			continuation += '\n';
 			continuation += line;
 			break;
 		}
 	}
 
 	source += continuation;
+	return false;
 }
 
 void define_options(po::options_description & desc)
@@ -130,10 +142,12 @@ void define_options(po::options_description & desc)
 	desc.add_options()
 		("help,h", "Display this help message")
 		("version,v", "Display interpreter version and additional information")
-		("file,f", po::value<std::string>()->value_name("<file>"), "Read from a file. <file> must have the `.mthl` extension")
+		("file,f", po::value<std::string>()->value_name("<file>"), "Read from a file. <file> must have the `" EXTENSION "` extension")
 		("dev,D", "Enable debug mode")
 		("verbose,V", "Enable verbose output")
-		("print-all,P", "Print all expressions that do not have a semicolon at the end (if this option is not enabled, only the last expression will be printed)");
+		("print-all,P", "Print all expressions that do not have a semicolon at the end (if this option is not enabled, only the last expression will be printed)")
+		("benchmark,b", "Print the time taken to execute the program at the end of execution (in microseconds)")
+		("no-warn,W", "Disable warnings")
 		;
 }
 
@@ -153,48 +167,57 @@ void parse_options(int argc, const char ** argv, po::options_description & desc)
 		exit(1);
 	}
 
-	bool repl_mode = true;
-
 	if (vmap.count("help"))
 	{
 		print_usage();
 		std::cout << desc << '\n';
 	}
-	else if (vmap.count("version"))
+	if (vmap.count("version"))
 	{
 		print_version();
 	}
 
 	//! For later use
-	else if (vmap.count("file"))
+	if (vmap.count("file"))
 	{
-		repl_mode = false;
+		config::repl_mode = false;
 		std::string file_name = vmap["file"].as<std::string>();
 		//open_file(file_name);
 		//interpret_file(file_name);
 	}
 
-	else if (vmap.count("dev"))
+	if (vmap.count("dev"))
 	{
 		// enable debug output
 		std::cout << "\033[1;31m* Developer mode enabled\033[0m\n";
 		config::dev = true;
 	}
-	else if (vmap.count("verbose"))
+	if (vmap.count("verbose"))
 	{
 		// enable verbose output
 		std::cout << "\033[1;33m* Verbose mode enabled\033[0m\n";
 		config::verbose = true;
 	}
-
-	else if (vmap.count("print-all"))
+	if (vmap.count("print-all"))
 	{
 		// print all expressions that do not have a semicolon at the end
 		std::cout << "\033[1;32m* Print-all enabled\033[0m\n";
 		config::print_all = true;
 	}
 
-	config::repl_mode = repl_mode;
+	if (vmap.count("benchmark"))
+	{
+		// enable benchmark mode
+		std::cout << "\033[1;34m* Benchmark mode enabled\033[0m\n";
+		config::benchmark = true;
+	}
+
+	if (vmap.count("no-warn"))
+	{
+		// disable warnings
+		std::cout << "\033[1;35m* Warnings disabled\033[0m\n";
+		config::warnings = false;
+	}
 }
 
 void print_usage(void)

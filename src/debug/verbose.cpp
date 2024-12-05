@@ -2,7 +2,7 @@
 #include <cstdarg>
 
 #include "debug/verbose.hpp"
-#include "global/config.hpp"
+#include "util/config.hpp"
 
 void log_v(std::string_view message, ...)
 {

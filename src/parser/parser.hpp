@@ -16,14 +16,19 @@ class Parser
 
 	AST ast;
 
-	std::unique_ptr<Token> curr_tk = nullptr;
-	std::unique_ptr<Token> next_tk = nullptr;
+	std::shared_ptr<Token> prev_tk = nullptr;
+	std::shared_ptr<Token> curr_tk = nullptr;
+	std::shared_ptr<Token> next_tk = nullptr;
 
 	bool panic_mode = false;
+	// Keep track of whether the current token is preceded by a newline character (or end of file)
+	bool at_newline = false;
 
 	/// @brief Consume the current token and get the next token.
 	/// @return `true` if the next token is not EOF, false otherwise.
 	bool consume_tk(void);
+	/// @brief Go back to the previous token.
+	void retreat_tk(void);
 	/// @brief Expect a token of a certain type.
 	/// @param type: The type of token to expect.
 	/// @param message: An optional message to display if the token is not of the expected type.
@@ -32,7 +37,7 @@ class Parser
 	/// @param types: A list of token types to expect.
 	/// @param message: An optional message to display if the token is not of the expected type.
 	void expect_tk(const std::initializer_list<Token::Type> & types, std::string_view message = "");
-	/// @brief Check if the current token is a semicolon and consume it if it is.
+	/// @brief Check if the current token is a semicolon.
 	/// @return `true` if the current token is a semicolon, `false` otherwise.
 	bool check_semicolon(void)
 	{
@@ -53,7 +58,7 @@ class Parser
 	std::unique_ptr<ASTNode>                 operand_n(void)                   ;
 	std::unique_ptr<OperatorNode>            operator_n(bool is_unary = false) ;
 	std::unique_ptr<ASTNode>                 primary_n(void)                   ;
-	std::unique_ptr<ASTNode>                 identifier_n(void)                ;
+	std::unique_ptr<IdentifierNode>          identifier_n(void)                ;
 	std::unique_ptr<LiteralNode>             literal_n(void)                   ;
 
 public:
@@ -69,12 +74,14 @@ public:
 	{
 		lexer->reset();
 		ast.statements.clear();
+		prev_tk = nullptr;
 		curr_tk = nullptr;
 		next_tk = nullptr;
 		panic_mode = false;
+		at_newline = false;
 	}
 
-	void parse_source(std::string_view source);
+	void parse_source(void);
 
 	const AST & get_ast(void) const
 	{ return ast; }

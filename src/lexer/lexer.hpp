@@ -5,6 +5,7 @@
 #include <string_view>
 
 #include "lexer/token.hpp"
+#include "util/globals.hpp" // for `globals::source`
 
 class Lexer
 {
@@ -20,40 +21,40 @@ public:
 
 private:
 	std::string_view source;
-	size_t pos = 0;
-	size_t line = 1, column = 1;
+	SourceLocation location;
 	Context context = Context::C_DEFAULT;
 
-	/// @brief Skip whitespaces and tabs
+	/// @brief Skip whitespaces and comments
 	/// @return true if a newline character is found, false otherwise
-	bool skip_whitespaces();
-	void skip_comment();
+	bool skip_whitespaces(void);
+	void skip_comment(void);
 
-	char peek() const
+	char peek(void) const
 	{ return peek(0); }
 	char peek(size_t offset) const
-	{ return (0 <= pos + offset && pos + offset < source.size()) ? source[pos + offset] : '\0'; }
-	char peek_next() const
+	{ return (0 <= location.position + offset && location.position + offset < source.size()) ?
+		source[location.position + offset] : '\0'; }
+	char peek_next(void) const
 	{ return peek(1); }
-	char advance()
+	char advance(void)
 	{ return advance(1); }
 	char advance(size_t offset);
-	void retreat()
+	void retreat(void)
 	{ retreat(1); }
 	void retreat(size_t offset)
-	{ pos -= offset; }
+	{ location.position -= offset; }
 
-	bool at_eol() const
-	{ return source[pos] == '\n'; }
-	bool at_eof() const
-	{ return pos >= source.size() || source[pos] == '\0'; }
+	bool at_eol(void) const
+	{ return source[location.position] == '\n'; }
+	bool at_eof(void) const
+	{ return location.position >= source.size() || source[location.position] == '\0'; }
 
-	std::unique_ptr<Token> make_tk(Token::Type type, std::string_view lexeme, size_t start_column, size_t start_position);
-	std::unique_ptr<Token> make_tk(Token::Type type, std::string_view lexeme)
-	{ return make_tk(type, lexeme, column, pos); }
-	std::unique_ptr<Token> make_number_tk(void); // Integer/Real number
-	std::unique_ptr<Token> make_word_tk(void); // Identifier/Keyword
-	std::unique_ptr<Token> make_operator_tk(void); // Operator symbol
+	std::shared_ptr<Token> make_tk(Token::Type type, std::string_view lexeme, SourceLocation location);
+	std::shared_ptr<Token> make_tk(Token::Type type, std::string_view lexeme)
+	{ return make_tk(type, lexeme, location); }
+	std::shared_ptr<Token> make_number_tk(void); // Integer/Real number
+	std::shared_ptr<Token> make_word_tk(void); // Identifier/Keyword
+	std::shared_ptr<Token> make_operator_tk(void); // Operator symbol
 
 	/// @brief Check if the current context is the same as the given context. Keywords that have a default context
 	/// will always be considered as keywords. Otherwise, if the context is not the same as the given context, the
@@ -69,19 +70,21 @@ public:
 	
 	void reset(void)
 	{
-		pos = 0;
-		line = 1;
-		column = 1;
+		location = SourceLocation();
 		source = "";
 	}
 
-	void set_source(std::string_view source)
-	{ this->source = source; }
+	void update_source(void)
+	{ this->source = globals::source; }
 	void set_context(Context context)
 	{ this->context = context; }
 
-	// A function to scan a single token from the source code
-	std::unique_ptr<Token> scan_tk(void);
+	/// @brief Scan the next token
+	/// @return The next token
+	std::shared_ptr<Token> scan_tk(void);
+	/// @brief Go back to the previous token.
+	/// @param prev_tk The previous token
+	void retreat_tk(std::shared_ptr<Token> & prev_tk);
 };
 
 std::pair<Token::Type, Lexer::Context> get_work_tk_type(std::string_view lexeme);

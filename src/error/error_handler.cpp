@@ -1,8 +1,8 @@
 #include <string>
 
 #include "error/error_handler.hpp" // for `ErrorHandler`
-#include "global/config.hpp" // for `config::verbose`
-#include "global/globals.hpp" // for `error_handler`
+#include "util/config.hpp" // for `config::verbose`
+#include "util/globals.hpp" // for `error_handler`
 
 namespace globals
 {
@@ -11,9 +11,7 @@ namespace globals
 
 void ErrorHandler::log_error(Error error, bool fatal)
 {
-	errors.log_error(error);
-
-	switch (error.get_type())
+	switch (error.type())
 	{
 	case Error::Type::LEXICAL:
 		if (most_severe_error < InterpretResult::LEXICAL_ERROR)
@@ -43,38 +41,42 @@ void ErrorHandler::log_error(Error error, bool fatal)
 	case Error::Type::WARNING:
 		if (most_severe_error < InterpretResult::OK)
 			most_severe_error = InterpretResult::OK;
-		break;
+		errors.log_warning(error);
+		return;
 
 	default:
 		break;
 	}
 
+	errors.log_error(error);
 	if (fatal)
 	{
 		throw errors;
 	}
 }
-void ErrorHandler::log_lexical_error(std::string_view message, size_t line, size_t column, size_t position, bool fatal)
+void ErrorHandler::log_lexical_error(std::string_view message, SourceLocation location, size_t length, bool fatal, std::string_view suggestion)
 {
-	log_error(LexicalError(std::string(message), line, column, position), fatal);
+	log_error(LexicalError(std::string(message), location, length, std::string(suggestion)), fatal);
 }
-void ErrorHandler::log_syntax_error(std::string_view message, size_t line, size_t column, size_t position, bool fatal)
+void ErrorHandler::log_syntax_error(std::string_view message, SourceLocation location, size_t length, bool fatal, std::string_view suggestion)
 {
-	log_error(SyntaxError(std::string(message), line, column, position), fatal);
+	log_error(SyntaxError(std::string(message), location, length, std::string(suggestion)), fatal);
 }
-void ErrorHandler::log_semantic_error(std::string_view message, size_t line, size_t column, size_t position, bool fatal)
+void ErrorHandler::log_semantic_error(std::string_view message, SourceLocation location, size_t length, bool fatal, std::string_view suggestion)
 {
-	log_error(SemanticError(std::string(message), line, column, position), fatal);
+	log_error(SemanticError(std::string(message), location, length, std::string(suggestion)), fatal);
 }
-void ErrorHandler::log_compiletime_error(std::string_view message, size_t line, size_t column, size_t position, bool fatal)
+void ErrorHandler::log_compiletime_error(std::string_view message, SourceLocation location, size_t length, bool fatal, std::string_view suggestion)
 {
-	log_error(CompiletimeError(std::string(message), line, column, position), fatal);
+	log_error(CompiletimeError(std::string(message), location, length, std::string(suggestion)), fatal);
 }
-void ErrorHandler::log_runtime_error(std::string_view message, size_t line, size_t column, size_t position, bool fatal)
+void ErrorHandler::log_runtime_error(std::string_view message, SourceLocation location, size_t length, bool fatal, std::string_view suggestion)
 {
-	log_error(RuntimeError(std::string(message), line, column, position), fatal);
+	log_error(RuntimeError(std::string(message), location, length, std::string(suggestion)), fatal);
 }
-void ErrorHandler::log_warning(std::string_view message, size_t line, size_t column, size_t position, bool fatal)
+void ErrorHandler::log_warning(std::string_view message, SourceLocation location, size_t length, std::string_view suggestion)
 {
-	log_error(Warning(std::string(message), line, column, position), fatal);
+	if (!config::warnings)
+		return;
+	log_error(Warning(std::string(message), location, length, std::string(suggestion)));
 }
