@@ -17,6 +17,15 @@ namespace Builtins::RealClass
 		{
 			return std::make_shared<RealObj>(std::any_cast<std::string_view>(value));
 		};
+		real_class->can_cast_to = [](ClassPtr cls) -> bool
+		{
+			return cls == real_class ||
+				   real_class->is_sub_class(cls);
+		};
+		real_class->cast = [](MathObjPtr obj) -> MathObjPtr
+		{
+			return obj->cast_to(real_class);
+		};
 
 		return real_class;
 	}

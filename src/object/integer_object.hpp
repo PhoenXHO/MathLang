@@ -26,11 +26,14 @@ public:
 	{}
 	~IntegerObj() = default;
 
-	mpz_int value(void) const { return m_value; }
-	size_t size(void) const { return m_size; }
+	mpz_int value(void) const
+	{ return m_value; }
+	size_t size(void) const
+	{ return m_size; }
 
-	Type type(void) const override { return Type::MO_INTEGER; }
-	std::string to_string(void) const override { return m_value.str(); }
+	MathObjPtr cast_to(const ClassPtr & cls) override;
 
+	std::string to_string(void) const override
+	{ return m_value.str(); }
 	MathObjPtr add(const MathObjPtr & rhs) const override;
 };

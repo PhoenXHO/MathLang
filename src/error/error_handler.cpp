@@ -55,29 +55,29 @@ void ErrorHandler::log_error(Error error, bool fatal)
 		throw errors;
 	}
 }
-void ErrorHandler::log_lexical_error(std::string_view message, SourceLocation location, size_t length, bool fatal, std::string_view suggestion)
+void ErrorHandler::log_lexical_error(ErrorInfo info, bool fatal)
 {
-	log_error(LexicalError(std::string(message), location, length, std::string(suggestion)), fatal);
+	log_error(LexicalError(info), fatal);
 }
-void ErrorHandler::log_syntax_error(std::string_view message, SourceLocation location, size_t length, bool fatal, std::string_view suggestion)
+void ErrorHandler::log_syntax_error(ErrorInfo info, bool fatal)
 {
-	log_error(SyntaxError(std::string(message), location, length, std::string(suggestion)), fatal);
+	log_error(SyntaxError(info), fatal);
 }
-void ErrorHandler::log_semantic_error(std::string_view message, SourceLocation location, size_t length, bool fatal, std::string_view suggestion)
+void ErrorHandler::log_semantic_error(ErrorInfo info, bool fatal)
 {
-	log_error(SemanticError(std::string(message), location, length, std::string(suggestion)), fatal);
+	log_error(SyntaxError(info), fatal);
 }
-void ErrorHandler::log_compiletime_error(std::string_view message, SourceLocation location, size_t length, bool fatal, std::string_view suggestion)
+void ErrorHandler::log_compiletime_error(ErrorInfo info, bool fatal)
 {
-	log_error(CompiletimeError(std::string(message), location, length, std::string(suggestion)), fatal);
+	log_error(SyntaxError(info), fatal);
 }
-void ErrorHandler::log_runtime_error(std::string_view message, SourceLocation location, size_t length, bool fatal, std::string_view suggestion)
+void ErrorHandler::log_runtime_error(ErrorInfo info, bool fatal)
 {
-	log_error(RuntimeError(std::string(message), location, length, std::string(suggestion)), fatal);
+	log_error(SyntaxError(info), fatal);
 }
-void ErrorHandler::log_warning(std::string_view message, SourceLocation location, size_t length, std::string_view suggestion)
+void ErrorHandler::log_warning(ErrorInfo info)
 {
 	if (!config::warnings)
 		return;
-	log_error(Warning(std::string(message), location, length, std::string(suggestion)));
+	log_error(Warning(info));
 }

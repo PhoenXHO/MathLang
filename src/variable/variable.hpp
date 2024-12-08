@@ -17,7 +17,7 @@ struct Variable : public MathObj
 	{}
 	~Variable() = default;
 
-	MathObj::Type type(void) const override { return m_value->type(); }
+	//MathObj::Type type(void) const override { return m_value->type(); }
 	std::string to_string(void) const override
 	{
 		std::ostringstream oss;

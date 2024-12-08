@@ -32,10 +32,27 @@ struct Class : public std::enable_shared_from_this<Class>
 	VariablePtr get_field(std::string_view name) const
 	{ return fields[name]; }
 
-	bool can_cast_to(const ClassPtr & cls) const;
+	bool is_sub_class(const ClassPtr & cls, bool strict = false) const;
+	/// @brief Compare the specificity of two classes.
+	/// The specificity is a measure of how well a class matches another class.
+	/// The higher the specificity, the better the match. If the specificity is equal,
+	/// the specificity will be `2`, `1` if this class is castable to `cls`, and `0` otherwise.
+	/// @param cls The class to compare with
+	/// @return The specificity of the class compared to `cls`
+	int measure_specificity(const ClassPtr & cls) const;
 
-	//virtual MathObjPtr instantiate(const std::any & value) const = 0;
+	/// @brief Instantiate a new object of this class
 	std::function<MathObjPtr(const std::any &)> instantiate;
+	/// @brief Cast an object to this class
+	std::function<MathObjPtr(MathObjPtr)> cast;
+	std::function<bool(ClassPtr)> can_cast_to;
+
+	std::string to_string(void) const
+	{
+		std::ostringstream oss;
+		oss << "<" << m_name << ">";
+		return oss.str();
+	}
 
 private:
 	std::string m_name;

@@ -104,12 +104,12 @@ std::unique_ptr<ExpressionStatementNode> Parser::expression_statement_n(void)
 				prev_tk->location().column + prev_tk->lexeme().size(),
 				prev_tk->location().position + prev_tk->lexeme().size()
 			};
-			globals::error_handler.log_warning(
+			globals::error_handler.log_warning({
 				"Statments separated by whitespace only",
 				location,
 				1,
 				"Consider using ';' or newlines to separate statements"
-			);
+			});
 		}
 
 		// If there is no semicolon, retreat the token so that the next statement can parse it
@@ -160,12 +160,7 @@ std::unique_ptr<ASTNode> Parser::expression_n(Precedence min_p)
 		}
 		else // Non-associative
 		{
-			globals::error_handler.log_syntax_error(
-				"Non-associative operators are not supported",
-				curr_tk->location(),
-				1,
-				true
-			);
+			expect_tk(Token::Type::T_NONE, "Non-associative operators are not supported");
 		}
 
 		left->location = left->location;
@@ -312,12 +307,11 @@ void Parser::expect_tk(Token::Type type, std::string_view message)
 			globals::error_handler.incomplete_code = true;
 		}
 
-		globals::error_handler.log_syntax_error(
+		globals::error_handler.log_syntax_error({
 			message,
 			curr_tk->location(),
-			curr_tk->lexeme().size(),
-			true
-		);
+			curr_tk->lexeme().size()
+		}, true);
 	}
 }
 
@@ -336,11 +330,11 @@ void Parser::expect_tk(const std::initializer_list<Token::Type> & types, std::st
 		globals::error_handler.incomplete_code = true;
 	}
 
-	globals::error_handler.log_syntax_error(
+	globals::error_handler.log_syntax_error({
 		message,
 		curr_tk->location(),
-		true
-	);
+		curr_tk->lexeme().size()
+	}, true);
 }
 
 bool Parser::consume_tk(void)

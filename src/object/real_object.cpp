@@ -2,6 +2,16 @@
 #include "object/integer_object.hpp"
 
 
+MathObjPtr RealObj::cast_to(const ClassPtr & cls)
+{
+	if (cls == Builtins::real_class)
+	{
+		return shared_from_this();
+	}
+
+	return nullptr;
+}
+
 MathObjPtr RealObj::add(const MathObjPtr & rhs) const
 {
 	if (rhs->is_instance_of(Builtins::integer_class))

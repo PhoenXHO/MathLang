@@ -7,6 +7,12 @@ const OperatorPtr OperatorRegistry::find(std::string_view symbol, bool is_unary)
 	return operators[symbol];
 }
 
+const OperatorPtr OperatorRegistry::find(size_t index, bool is_unary) const
+{
+	auto & operators = is_unary ? unary_operators : binary_operators;
+	return operators[index];
+}
+
 OperatorPtr OperatorRegistry::register_binary_operator(const std::string & symbol, Associativity associativity, Precedence precedence)
 {
 	return binary_operators.define(symbol, std::make_shared<Operator>(symbol, Fixity::F_INFIX, associativity, precedence));
@@ -73,4 +79,51 @@ void OperatorRegistry::register_builtin_operators(void)
 			Builtins::integer_class
 		)
 	);
+}
+
+
+
+//* OperatorImplentationRegistry
+OperatorImplentationPtr OperatorImplentationRegistry::define(const ClassPtr & lhs, const ClassPtr & rhs, OperatorImplentationPtr implementation)
+{
+	auto key = std::make_pair(lhs, rhs);
+	indices[key] = implementations.size();
+	implementations.push_back(implementation);
+	return implementation;
+}
+
+size_t OperatorImplentationRegistry::get_index(const ClassPtr & lhs, const ClassPtr & rhs) const
+{
+	auto it = indices.find({lhs, rhs});
+	if (it != indices.end())
+	{
+		return it->second;
+	}
+	return -1;
+}
+
+OperatorImplentationPtr OperatorImplentationRegistry::find(const ClassPtr & lhs, const ClassPtr & rhs) const
+{
+	size_t index = get_index(lhs, rhs);
+	if (index != -1)
+	{
+		return implementations[index];
+	}
+	return nullptr;
+}
+
+OperatorImplentationPtr OperatorImplentationRegistry::find_most_specific(const ClassPtr & lhs, const ClassPtr & rhs) const
+{
+	OperatorImplentationPtr most_specific = nullptr;
+	int highest_specificity = 0;
+	for (const auto & impl : implementations)
+	{
+		int specificity = impl->measure_specificity(lhs, rhs);
+		if (specificity > highest_specificity)
+		{
+			highest_specificity = specificity;
+			most_specific = impl;
+		}
+	}
+	return most_specific;
 }

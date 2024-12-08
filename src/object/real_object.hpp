@@ -32,11 +32,15 @@ public:
 	{}
 	~RealObj() = default;
 
-	mpfr_float value(void) const { return m_value; }
-	size_t integer_part(void) const { return m_integer_part; }
-	size_t decimal_part(void) const { return m_decimal_part; }
+	mpfr_float value(void) const
+	{ return m_value; }
+	size_t integer_part(void) const
+	{ return m_integer_part; }
+	size_t decimal_part(void) const
+	{ return m_decimal_part; }
 
-	Type type(void) const override { return Type::MO_REAL; }
+	MathObjPtr cast_to(const ClassPtr & cls) override;
+
 	std::string to_string(void) const override
 	{
 		std::ostringstream oss;

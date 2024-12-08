@@ -33,6 +33,29 @@ public:
 	{ return warning_count > 0; }
 };
 
+struct ErrorInfo
+{
+	std::string message;
+	std::string suggestion;
+	std::string extra_info;
+	SourceLocation location;
+	size_t length;
+
+	ErrorInfo(
+		std::string_view message,
+		SourceLocation location,
+		size_t length,
+		std::string_view suggestion = "",
+		std::string_view extra_info = ""
+	) :
+		message(message),
+		location(location),
+		length(length),
+		suggestion(suggestion),
+		extra_info(extra_info)
+	{}
+};
+
 struct Error
 {
 	enum class Type
@@ -46,13 +69,13 @@ struct Error
 		WARNING
 	};
 
-	Error(Type type, std::string message, SourceLocation location, size_t length, std::string suggestion = "") :
-		m_type(type), m_location(location), m_length(length)
+	Error(Type type, ErrorInfo info) :
+		m_type(type), m_location(info.location), m_length(info.length)
 	{
-		set_message(message, suggestion);
+		set_message(message, info.suggestion, info.extra_info);
 	}
 
-	void set_message(std::string_view message, std::string_view suggestion);
+	void set_message(std::string_view message, std::string_view suggestion, std::string_view extra_info);
 
 	Type type(void) const { return m_type; }
 	SourceLocation location(void) const { return m_location; }
@@ -72,37 +95,37 @@ protected:
 // These are simply for convenience's sake and to make the code more readable.
 struct LexicalError : public Error
 {
-	LexicalError(std::string message, SourceLocation location, size_t length, std::string suggestion = "") :
-		Error(Type::LEXICAL, message, location, length, suggestion)
+	LexicalError(ErrorInfo info) :
+		Error(Type::LEXICAL, info)
 	{}
 };
 struct SyntaxError : public Error
 {
-	SyntaxError(std::string message, SourceLocation location, size_t length, std::string suggestion = "") :
-		Error(Type::SYNTAX, message, location, length, suggestion)
+	SyntaxError(ErrorInfo info) :
+		Error(Type::SYNTAX, info)
 	{}
 };
 struct SemanticError : public Error
 {
-	SemanticError(std::string message, SourceLocation location, size_t length, std::string suggestion = "") :
-		Error(Type::SEMANTIC, message, location, length, suggestion)
+	SemanticError(ErrorInfo info) :
+		Error(Type::SEMANTIC, info)
 	{}
 };
 struct CompiletimeError : public Error
 {
-	CompiletimeError(std::string message, SourceLocation location, size_t length, std::string suggestion = "") :
-		Error(Type::COMPILETIME, message, location, length, suggestion)
+	CompiletimeError(ErrorInfo info) :
+		Error(Type::COMPILETIME, info)
 	{}
 };
 struct RuntimeError : public Error
 {
-	RuntimeError(std::string message, SourceLocation location, size_t length, std::string suggestion = "") :
-		Error(Type::RUNTIME, message, location, length, suggestion)
+	RuntimeError(ErrorInfo info) :
+		Error(Type::RUNTIME, info)
 	{}
 };
 struct Warning : public Error
 {
-	Warning(std::string message, SourceLocation location, size_t length, std::string suggestion = "") :
-		Error(Type::WARNING, message, location, length, suggestion)
+	Warning(ErrorInfo info) :
+		Error(Type::WARNING, info)
 	{}
 };

@@ -17,6 +17,16 @@ namespace Builtins::IntegerClass
 		{
 			return std::make_shared<IntegerObj>(std::any_cast<std::string_view>(value));
 		};
+		integer_class->can_cast_to = [](ClassPtr cls) -> bool
+		{
+			return cls == integer_class ||
+				   cls == Builtins::real_class ||
+				   integer_class->is_sub_class(cls);
+		};
+		integer_class->cast = [](MathObjPtr obj) -> MathObjPtr
+		{
+			return obj->cast_to(integer_class);
+		};
 
 		return integer_class;
 	}

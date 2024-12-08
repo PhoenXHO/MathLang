@@ -120,12 +120,11 @@ std::shared_ptr<Token> Lexer::scan_tk(void)
 	
 	default:
 		// Log an error for invalid characters
-		globals::error_handler.log_lexical_error(
+		globals::error_handler.log_lexical_error({
 			"Invalid character '" + std::string(1, curr) + "'",
 			location,
-			1,
-			true
-		);
+			1
+		}, true);
 	}
 	
 	advance();
@@ -166,12 +165,11 @@ std::shared_ptr<Token> Lexer::make_number_tk(void)
 
 	if (is_error)
 	{
-		globals::error_handler.log_lexical_error(
+		globals::error_handler.log_lexical_error({
 			"Invalid number format '" + lexeme_str + "'",
 			SourceLocation(location.line, start_column, start_position),
-			lexeme_length,
-			true
-		);
+			lexeme_length
+		}, true);
 
 		return make_tk(
 			Token::Type::T_ERROR,

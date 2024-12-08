@@ -52,12 +52,18 @@ public:
 	{ errors.report_errors(); }
 	void log_error(Error error, bool fatal = false);
 	// For convenience
-	void log_lexical_error(std::string_view message, SourceLocation location, size_t length, bool fatal = false, std::string_view suggestion = "");
-	void log_syntax_error(std::string_view message, SourceLocation location, size_t length, bool fatal = false, std::string_view suggestion = "");
-	void log_semantic_error(std::string_view message, SourceLocation location, size_t length, bool fatal = false, std::string_view suggestion = "");
-	void log_compiletime_error(std::string_view message, SourceLocation location, size_t length, bool fatal = false, std::string_view suggestion = "");
-	void log_runtime_error(std::string_view message, SourceLocation location, size_t length, bool fatal = false, std::string_view suggestion = "");
-	void log_warning(std::string_view message, SourceLocation location, size_t length, std::string_view suggestion = "");
+	//void log_lexical_error(std::string_view message, SourceLocation location, size_t length, bool fatal = false, std::string_view suggestion = "");
+	//void log_syntax_error(std::string_view message, SourceLocation location, size_t length, bool fatal = false, std::string_view suggestion = "");
+	//void log_semantic_error(std::string_view message, SourceLocation location, size_t length, bool fatal = false, std::string_view suggestion = "");
+	//void log_compiletime_error(std::string_view message, SourceLocation location, size_t length, bool fatal = false, std::string_view suggestion = "");
+	//void log_runtime_error(std::string_view message, SourceLocation location, size_t length, bool fatal = false, std::string_view suggestion = "");
+	//void log_warning(std::string_view message, SourceLocation location, size_t length, std::string_view suggestion = "");
+	void log_lexical_error(ErrorInfo info, bool fatal = false);
+	void log_syntax_error(ErrorInfo info, bool fatal = false);
+	void log_semantic_error(ErrorInfo info, bool fatal = false);
+	void log_compiletime_error(ErrorInfo info, bool fatal = false);
+	void log_runtime_error(ErrorInfo info, bool fatal = false);
+	void log_warning(ErrorInfo info);
 
 	bool has_errors(void) const
 	{ return errors.has_errors(); }

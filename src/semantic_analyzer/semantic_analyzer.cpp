@@ -27,12 +27,11 @@ SemanticAnalyzer::AnalysisResult SemanticAnalyzer::analyze(ASTNode * node)
 	case ASTNode::Type::N_LITERAL:
 		return analyze_literal(static_cast<LiteralNode *>(node));
 	default:
-		// This should never happen
-		globals::error_handler.log_semantic_error(
+		globals::error_handler.log_semantic_error({
 			"Unknown AST node type",
-			{0, 0, 0},
-			true
-		);
+			node->location,
+			node->length
+		}, true);
 	}
 
 	return {Builtins::none_class};
@@ -43,12 +42,11 @@ SemanticAnalyzer::AnalysisResult SemanticAnalyzer::analyze_variable_declaration(
 	// Check if the variable is already defined in the current scope
 	if (current_scope->is_variable_defined(variable_declaration->identifier->name))
 	{
-		globals::error_handler.log_semantic_error(
+		globals::error_handler.log_semantic_error({
 			"Variable '" + std::string(variable_declaration->identifier->name) + "' is already defined",
 			variable_declaration->identifier->location,
-			variable_declaration->identifier->length,
-			true
-		);
+			variable_declaration->identifier->length
+		}, true);
 	}
 
 	// Add the variable to the current scope
@@ -72,22 +70,22 @@ SemanticAnalyzer::AnalysisResult SemanticAnalyzer::analyze_expression(Expression
 	// If a candidate is found, return the result of the operation
 	// If no candidate is found, log an error
 	auto implentations = expression->op->get_implementations();
-	//! For now, there is are no implicit conversions
-	auto it = implentations.find({left.cls, right.cls});
-	if (it != implentations.end())
+	auto impl = implentations.find_most_specific(left.cls, right.cls);
+	if (impl)
 	{
 		// Store the implementation for the compiler
-		expression->op->implementation = it->second;
-		return it->second->result_class();
+		expression->op->implementation = impl;
+		return impl->result_class();
 	}
 	else
 	{
-		globals::error_handler.log_semantic_error(
+		globals::error_handler.log_semantic_error({
 			"No operator implementation found for the given operands",
 			expression->op->location,
 			expression->op->length,
-			true
-		);
+			"",
+			"Got: " + left.cls->to_string() + " and " + right.cls->to_string()
+		}, true);
 	}
 
 	return {Builtins::none_class};
@@ -106,22 +104,22 @@ SemanticAnalyzer::AnalysisResult SemanticAnalyzer::analyze_operand(OperandNode *
 	// If a candidate is found, return the result of the operation
 	// If no candidate is found, log an error
 	auto implentations = operand->op->get_implementations();
-	//! For now, there is are no implicit conversions
-	auto it = implentations.find({primary.cls, Builtins::none_class});
-	if (it != implentations.end())
+	auto impl = implentations.find_most_specific(primary.cls, Builtins::none_class);
+	if (impl)
 	{
 		// Store the implementation for the compiler
-		operand->op->implementation = it->second;
-		return it->second->result_class();
+		operand->op->implementation = impl;
+		return impl->result_class();
 	}
 	else
 	{
-		globals::error_handler.log_semantic_error(
+		globals::error_handler.log_semantic_error({
 			"No operator implementation found for the given operand",
 			operand->op->location,
 			operand->op->length,
-			true
-		);
+			"",
+			"Got: " + primary.cls->to_string()
+		}, true);
 	}
 
 	return {Builtins::none_class};
@@ -133,12 +131,11 @@ SemanticAnalyzer::AnalysisResult SemanticAnalyzer::analyze_identifier(Identifier
 	auto & variable = current_scope->get_variable(identifier->name);
 	if (!variable)
 	{
-		globals::error_handler.log_semantic_error(
+		globals::error_handler.log_semantic_error({
 			"Variable '" + std::string(identifier->name) + "' is not defined",
 			identifier->location,
-			identifier->length,
-			true
-		);
+			identifier->length
+		}, true);
 	}
 
 	//// Get the type of the variable

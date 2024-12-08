@@ -113,7 +113,12 @@ void VM::run(void)
 		{
 			auto result = stack.top();
 			stack.pop();
-			std::cout << result->to_string() << '\n';
+			std::cout << result->to_string();
+			if (config::dev)
+			{
+				std::cout << ' ' << result->get_class()->to_string();
+			}
+			std::cout << std::endl;
 		}
 		break;
 

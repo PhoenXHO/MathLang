@@ -12,7 +12,7 @@ class SemanticAnalyzer
 {
 	struct AnalysisResult
 	{
-		MathObj::Type type; // The type of the expression
+		//MathObj::Type type; // The type of the expression
 		ClassPtr cls; // The class of the expression
 		bool is_const; // Whether the expression is constant
 

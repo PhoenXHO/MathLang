@@ -3,12 +3,12 @@
 #include "object/none_object.hpp"
 
 
-const MathObjPtr MathObj::none = std::make_shared<NoneObj>();
+MathObjPtr MathObj::none = nullptr;
 
 
 bool MathObj::is_instance_of(ClassPtr cls) const
 {
-	return m_class->can_cast_to(cls);
+	return m_class->is_sub_class(cls);
 }
 
 mpfr_float add_reals(const mpfr_float & lhs, const mpfr_float & rhs)

@@ -81,11 +81,14 @@ public:
 	{ return m_result_class; }
 
 	virtual MathObjPtr execute(const MathObjPtr & lhs, const MathObjPtr & rhs) const = 0;
-
 	MathObjPtr operator()(const MathObjPtr & lhs, const MathObjPtr & rhs) const
+	{ return execute(lhs, rhs); }
+
+	int measure_specificity(const ClassPtr & lhs, const ClassPtr & rhs) const
 	{
-		std::cout << "OperatorImplentation::operator() called\n";
-		return execute(lhs, rhs);
+		int lhs_specificity = lhs->measure_specificity(m_result_class);
+		int rhs_specificity = rhs->measure_specificity(m_result_class);
+		return lhs_specificity * rhs_specificity;
 	}
 };
 
@@ -111,7 +114,38 @@ public:
 // class UserDefinedOperatorImplentation : public OperatorImplentation
 
 //using OperatorImplentationMap = std::unordered_map<std::pair<MathObj::Type, MathObj::Type>, std::shared_ptr<OperatorImplentation>>;
-using OperatorImplentationMap = std::unordered_map<std::pair<ClassPtr, ClassPtr>, OperatorImplentationPtr>;
+//using OperatorImplentationMap = std::unordered_map<std::pair<ClassPtr, ClassPtr>, OperatorImplentationPtr>;
+
+class OperatorImplentationRegistry
+{
+	std::unordered_map<std::pair<ClassPtr, ClassPtr>, size_t> indices;
+	std::vector<OperatorImplentationPtr> implementations;
+
+public:
+	OperatorImplentationRegistry() = default;
+	~OperatorImplentationRegistry() = default;
+
+	OperatorImplentationPtr define(const ClassPtr & lhs, const ClassPtr & rhs, OperatorImplentationPtr implementation);
+
+	/// @brief Get the index of the operator implementation for the given operands
+	/// @return The index of the operator implementation or -1 if no implementation is found
+	size_t get_index(const ClassPtr & lhs, const ClassPtr & rhs) const;
+	OperatorImplentationPtr find(const ClassPtr & lhs, const ClassPtr & rhs) const;
+
+	size_t size() const
+	{ return implementations.size(); }
+
+	const OperatorImplentationPtr operator[](size_t index) const
+	{ return implementations[index]; }
+
+	const OperatorImplentationPtr operator[](std::pair<const ClassPtr &, const ClassPtr &> & impl) const
+	{ return find(impl.first, impl.second); }
+
+	/// @brief Find the most specific operator implementation for the given operands
+	/// @return The most specific operator implementation or `nullptr` if no implementation is found
+	OperatorImplentationPtr find_most_specific(const ClassPtr & lhs, const ClassPtr & rhs) const;
+};
+
 class Operator
 {
 	std::string symbol; // Symbol of operator
@@ -119,7 +153,8 @@ class Operator
 	Associativity associativity; // Associativity of operator
 	Precedence precedence; // Precedence of operator
 
-	OperatorImplentationMap implementations; // Implementations of the operator
+	//OperatorImplentationMap implementations; // Implementations of the operator
+	OperatorImplentationRegistry implementations;
 
 public:
 	Operator(const std::string &symbol, Fixity fixity, Associativity associativity, Precedence precedence) :
@@ -135,11 +170,14 @@ public:
 	{ return associativity; }
 	Precedence get_precedence() const
 	{ return precedence; }
-	OperatorImplentationMap & get_implementations()
+	//OperatorImplentationMap & get_implementations()
+	//{ return implementations; }
+	OperatorImplentationRegistry & get_implementations()
 	{ return implementations; }
 
 	void add_implementation(const ClassPtr & lhs, const ClassPtr & rhs, const OperatorImplentationPtr & implementation)
-	{ implementations[{lhs, rhs}] = implementation; std::cout << "Added implementation: " << implementations[{lhs, rhs}]->result_class()->name() << std::endl; }
+	//{ implementations[{lhs, rhs}] = implementation; }
+	{ implementations.define(lhs, rhs, implementation); }
 };
 
 using OperatorMap = std::unordered_map<std::string, OperatorPtr>;
@@ -153,6 +191,7 @@ public:
 	~OperatorRegistry() = default;
 
 	const OperatorPtr find(std::string_view symbol, bool is_unary = false) const;
+	const OperatorPtr find(size_t index, bool is_unary = false) const;
 	OperatorPtr register_binary_operator(const std::string & symbol, Associativity associativity, Precedence precedence);
 	OperatorPtr register_unary_operator(const std::string & symbol, Fixity fixity);	
 	

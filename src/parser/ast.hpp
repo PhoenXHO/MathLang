@@ -146,7 +146,7 @@ struct OperatorNode : public ASTNode
 	{
 		return op->get_precedence();
 	}
-	OperatorImplentationMap & get_implementations(void)
+	OperatorImplentationRegistry & get_implementations(void)
 	{
 		return op->get_implementations();
 	}

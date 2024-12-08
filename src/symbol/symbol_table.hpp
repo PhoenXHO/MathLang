@@ -9,6 +9,7 @@
 #include "symbol/symbol_registry.hpp" // for `Registry`
 #include "operator/operator.hpp"
 #include "class/class.hpp"
+#include "object/none_object.hpp"
 
 
 class SymbolTable
@@ -74,11 +75,17 @@ public:
 	void init_builtin_classes(void)
 	{
 		define_class("MathObj", Builtins::MathObjClass::init());
+		// We don't want these classes to be defined in the symbol table
 		//define_class("Reference", Builtins::ReferenceClass::init());
+		Builtins::ReferenceClass::init();
 		//define_class("None", Builtins::NoneClass::init());
+		Builtins::NoneClass::init();
 
 		define_class("Integer", Builtins::IntegerClass::init());
 		define_class("Real", Builtins::RealClass::init());
+
+
+		MathObj::none = std::make_shared<NoneObj>();
 	}
 
 	void define_class(std::string_view name, const ClassPtr & cls)
