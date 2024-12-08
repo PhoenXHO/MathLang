@@ -72,7 +72,7 @@ struct Error
 	Error(Type type, ErrorInfo info) :
 		m_type(type), m_location(info.location), m_length(info.length)
 	{
-		set_message(message, info.suggestion, info.extra_info);
+		set_message(info.message, info.suggestion, info.extra_info);
 	}
 
 	void set_message(std::string_view message, std::string_view suggestion, std::string_view extra_info);

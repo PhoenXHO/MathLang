@@ -117,7 +117,7 @@ To start the REPL:
 
 ### REPL Commands
 - `quit` or `exit`: Terminate the interpreter
-- `\` at the end of a line: Continue on the next line (note that if the line is incomplete, the interpreter will wait for more input)
+- `\` at the end of a line: Continue on the next line. Note that if the line is incomplete, the interpreter will wait for more input, and if you want to cancel continuing on the next line, hit `Enter` without typing anything.
 
 ### Command Line Options
 - `-h, --help`: Display help message
