@@ -3,6 +3,7 @@
 #include "util/benchmark.hpp"
 #include "util/config.hpp"
 
+
 void Benchmark::start_benchmark(void)
 {
 	if (!config::benchmark)

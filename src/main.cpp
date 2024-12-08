@@ -12,8 +12,10 @@
 #include "util/config.hpp"
 #include "debug/verbose.hpp"
 
+
 #define EXTENSION ".mthx"
 #define EXTENSION_LENGTH 5
+
 
 namespace po = boost::program_options;
 
@@ -26,6 +28,7 @@ void print_version(void);
 
 void repl(void);
 bool get_continuation(std::string & source);
+void check_exit(std::string_view source);
 
 
 namespace globals
@@ -72,16 +75,16 @@ void repl(void)
 		// Strip leading and trailing whitespaces
 		source.erase(source.find_last_not_of(" \t\n\r\f\v") + 1);
 
-		if (source == "quit" || source == "exit")
-			break;
-
+		check_exit(source);
 		if (!source.empty() && source.back() == '\\')
 		{
 			// Strip the trailing backslash
 			source.pop_back();
-			source += '\n';
+			//source += '\n';
 			get_continuation(source);
 		}
+		if (source.empty())
+			continue;
 		
 		// Flag to check if the source has been interpreted at least once
 		// This is just to reduce repeated code
@@ -117,6 +120,7 @@ bool get_continuation(std::string & source)
 
 		if (line.empty())
 			return true;
+		check_exit(line);
 
 		if (line.back() == '\\')
 		{
@@ -135,6 +139,20 @@ bool get_continuation(std::string & source)
 
 	source += continuation;
 	return false;
+}
+
+/// @brief Check if the user wants to exit the interpreter
+/// @param source: The source code snippet
+/// @return `true` if the user wants to exit, `false` otherwise
+void check_exit(std::string_view source)
+{
+	// Strip leading and trailing whitespaces
+	source.remove_prefix(source.find_first_not_of(" \t\n\r\f\v"));
+	source.remove_suffix(source.size() - source.find_last_not_of(" \t\n\r\f\v") - 1);
+	if (source == "quit" || source == "exit")
+	{
+		exit(0);
+	}
 }
 
 void define_options(po::options_description & desc)

@@ -1,7 +1,7 @@
-#ifndef BENCMARK_HPP
-#define BENCMARK_HPP
+#pragma once
 
 #include <chrono>
+
 
 class Benchmark
 {
@@ -15,5 +15,3 @@ public:
 	void end_benchmark(void);
 	void print_benchmark_result(void);
 };
-
-#endif // BENCMARK_HPP

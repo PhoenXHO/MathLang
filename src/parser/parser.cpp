@@ -2,6 +2,8 @@
 
 #include "parser/parser.hpp"
 #include "util/globals.hpp"
+#include "class/builtins.hpp"
+
 
 void Parser::parse_source(void)
 {
@@ -219,27 +221,15 @@ std::unique_ptr<OperatorNode> Parser::operator_n(bool is_unary)
 		return nullptr;
 	}
 
-	auto op = operator_table.find(curr_tk->lexeme());
+	auto op = operators.find(curr_tk->lexeme());
 	if (!op)
 	{
 		if (is_unary)
 		{
-			//globals::error_handler.log_syntax_error(
-			//	"Invalid unary operator '" + std::string(curr_tk->lexeme()) + "'",
-			//	curr_tk->location(),
-			//	curr_tk->lexeme().size(),
-			//	true
-			//);
 			expect_tk(Token::Type::T_NONE, "Invalid unary operator '" + std::string(curr_tk->lexeme()) + "'");
 		}
 		else
 		{
-			//globals::error_handler.log_syntax_error(
-			//	"Invalid binary operator '" + std::string(curr_tk->lexeme()) + "'",
-			//	curr_tk->location(),
-			//	curr_tk->lexeme().size(),
-			//	true
-			//);
 			expect_tk(Token::Type::T_NONE, "Invalid binary operator '" + std::string(curr_tk->lexeme()) + "'");
 		}
 	}
@@ -297,11 +287,11 @@ std::unique_ptr<LiteralNode> Parser::literal_n(void)
 	switch (curr_tk->type())
 	{
 	case Token::Type::T_INTEGER_LITERAL:
-		literal->type = MathObj::Type::MO_INTEGER;
+		literal->cls = Builtins::integer_class;
 		break;
 
 	case Token::Type::T_REAL_LITERAL:
-		literal->type = MathObj::Type::MO_REAL;
+		literal->cls = Builtins::real_class;
 		break;
 
 	default:

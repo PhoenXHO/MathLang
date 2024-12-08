@@ -1,5 +1,4 @@
-#ifndef TOKEN_H
-#define TOKEN_H
+#pragma once
 
 #include <string_view>
 #include <string>
@@ -92,5 +91,3 @@ private:
 	std::string_view m_lexeme; // the actual token
 	SourceLocation m_location; // location of the token
 };
-
-#endif // TOKEN_H

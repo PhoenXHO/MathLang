@@ -1,11 +1,11 @@
-#ifndef SEMANTIC_ANALYZER_HPP
-#define SEMANTIC_ANALYZER_HPP
+#pragma once
 
 #include <memory>
 
 #include "parser/ast.hpp"
 #include "object/object.hpp"
 #include "scope/scope.hpp"
+#include "class/class.hpp"
 
 // This class will be responsible for type checking and other semantic analysis tasks
 class SemanticAnalyzer
@@ -13,6 +13,7 @@ class SemanticAnalyzer
 	struct AnalysisResult
 	{
 		MathObj::Type type; // The type of the expression
+		ClassPtr cls; // The class of the expression
 		bool is_const; // Whether the expression is constant
 
 		/**
@@ -20,7 +21,14 @@ class SemanticAnalyzer
 		 * @param type The type of the expression
 		 * @param is_const Whether the expression is constant
 		 **/
-		AnalysisResult(MathObj::Type type, bool is_const = true) : type(type), is_const(is_const) {}
+		//AnalysisResult(MathObj::Type type, bool is_const = true) :
+		//	type(type),
+		//	is_const(is_const)
+		//{}
+		AnalysisResult(ClassPtr cls, bool is_const = true) :
+			cls(cls),
+			is_const(is_const)
+		{}
 	};
 
 	std::shared_ptr<Scope> global_scope;
@@ -45,6 +53,3 @@ private:
 	AnalysisResult analyze_identifier(IdentifierNode * identifier);
 	AnalysisResult analyze_literal(LiteralNode * literal);
 };
-
-
-#endif // SEMANTIC_ANALYZER_HPP

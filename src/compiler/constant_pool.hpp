@@ -1,9 +1,9 @@
-#ifndef CONSTANT_POOL_HPP
-#define CONSTANT_POOL_HPP
+#pragma once
 
 #include <vector>
 
 #include "object/object.hpp"
+
 
 class ConstantPool
 {
@@ -28,5 +28,3 @@ public:
 		return constants.size();
 	}
 };
-
-#endif // CONSTANT_POOL_HPP

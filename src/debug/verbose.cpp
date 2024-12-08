@@ -4,6 +4,7 @@
 #include "debug/verbose.hpp"
 #include "util/config.hpp"
 
+
 void log_v(std::string_view message, ...)
 {
 	if (config::verbose)

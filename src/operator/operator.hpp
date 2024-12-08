@@ -1,5 +1,4 @@
-#ifndef OPERATOR_HPP
-#define OPERATOR_HPP
+#pragma once
 
 #include <string>
 #include <string_view>
@@ -9,7 +8,16 @@
 #include <functional>
 #include <utility> // for `std::pair`
 
-#include "object/object.hpp" // for hash specialization of std::pair<MathObj::Type, MathObj::Type>
+//#include "object/object.hpp" // for hash specialization of std::pair<MathObj::Type, MathObj::Type>
+#include "class/class.hpp"
+#include "symbol/symbol_registry.hpp"
+
+
+class Operator;
+using OperatorPtr = std::shared_ptr<Operator>;
+class OperatorImplentation;
+using OperatorImplentationPtr = std::shared_ptr<OperatorImplentation>;
+
 
 // Fixity of an operator
 enum class Fixity
@@ -52,17 +60,25 @@ public:
 	};
 
 protected:
-	Type type; // Type of the operator implementation
-	MathObj::Type result_type; // Result type of the operator
+	Type m_type; // Type of the operator implementation
+	//MathObj::Type m_result_type; // Result type of the operator
+	ClassPtr m_result_class; // Class of the operator
 
 public:
-	OperatorImplentation(Type type, MathObj::Type result_type) : type(type), result_type(result_type) {}
+	//OperatorImplentation(Type type, MathObj::Type result_type) :
+	//	m_type(type), m_result_type(result_type)
+	//{}
+	OperatorImplentation(Type type, ClassPtr result_class) :
+		m_type(type), m_result_class(result_class)
+	{}
 	~OperatorImplentation() = default;
 
-	Type get_type() const
-	{ return type; }
-	MathObj::Type get_result_type() const
-	{ return result_type; }
+	Type type() const
+	{ return m_type; }
+	//MathObj::Type result_type() const
+	//{ return m_result_type; }
+	const ClassPtr & result_class() const
+	{ return m_result_class; }
 
 	virtual MathObjPtr execute(const MathObjPtr & lhs, const MathObjPtr & rhs) const = 0;
 
@@ -79,7 +95,12 @@ class BuiltinOperatorImplentation : public OperatorImplentation
 	OperatorFunction function; // Function to execute
 
 public:
-	BuiltinOperatorImplentation(OperatorFunction function, MathObj::Type result_type) : OperatorImplentation(Type::O_BUILTIN, result_type), function(function) {}
+	//BuiltinOperatorImplentation(OperatorFunction function, MathObj::Type result_type) :
+	//	OperatorImplentation(Type::O_BUILTIN, result_type), function(function)
+	//{}
+	BuiltinOperatorImplentation(OperatorFunction function, ClassPtr result_class) :
+		OperatorImplentation(Type::O_BUILTIN, result_class), function(function)
+	{}
 	~BuiltinOperatorImplentation() = default;
 
 	MathObjPtr execute(const MathObjPtr & lhs, const MathObjPtr & rhs) const override
@@ -89,7 +110,8 @@ public:
 // User-defined operator implementation
 // class UserDefinedOperatorImplentation : public OperatorImplentation
 
-using OperatorImplentationMap = std::unordered_map<std::pair<MathObj::Type, MathObj::Type>, std::shared_ptr<OperatorImplentation>>;
+//using OperatorImplentationMap = std::unordered_map<std::pair<MathObj::Type, MathObj::Type>, std::shared_ptr<OperatorImplentation>>;
+using OperatorImplentationMap = std::unordered_map<std::pair<ClassPtr, ClassPtr>, OperatorImplentationPtr>;
 class Operator
 {
 	std::string symbol; // Symbol of operator
@@ -100,8 +122,9 @@ class Operator
 	OperatorImplentationMap implementations; // Implementations of the operator
 
 public:
-	Operator(const std::string &symbol, Fixity fixity, Associativity associativity, Precedence precedence)
-		: symbol(symbol), fixity(fixity), associativity(associativity), precedence(precedence) {}
+	Operator(const std::string &symbol, Fixity fixity, Associativity associativity, Precedence precedence) :
+		symbol(symbol), fixity(fixity), associativity(associativity), precedence(precedence)
+	{}
 	~Operator() = default;
 
 	const std::string & get_symbol() const
@@ -115,23 +138,23 @@ public:
 	OperatorImplentationMap & get_implementations()
 	{ return implementations; }
 
-	void add_implementation(MathObj::Type lhs, MathObj::Type rhs, std::shared_ptr<OperatorImplentation> implementation)
-	{ implementations[{lhs, rhs}] = implementation; }
+	void add_implementation(const ClassPtr & lhs, const ClassPtr & rhs, const OperatorImplentationPtr & implementation)
+	{ implementations[{lhs, rhs}] = implementation; std::cout << "Added implementation: " << implementations[{lhs, rhs}]->result_class()->name() << std::endl; }
 };
 
-using OperatorMap = std::unordered_map<std::string, std::shared_ptr<Operator>>;
-class OperatorTable
+using OperatorMap = std::unordered_map<std::string, OperatorPtr>;
+class OperatorRegistry
 {
-	OperatorMap binary_operators, unary_operators;
+	//OperatorMap binary_operators, unary_operators;
+	Registry<OperatorPtr> binary_operators, unary_operators;
 
 public:
-	OperatorTable() = default;
-	~OperatorTable() = default;
+	OperatorRegistry() = default;
+	~OperatorRegistry() = default;
 
-	std::shared_ptr<Operator> find(std::string_view symbol, bool is_unary = false) const;
-	std::shared_ptr<Operator> register_binary_operator(const std::string & symbol, Associativity associativity, Precedence precedence);
-	std::shared_ptr<Operator> register_unary_operator(const std::string & symbol, Fixity fixity);	
+	const OperatorPtr find(std::string_view symbol, bool is_unary = false) const;
+	OperatorPtr register_binary_operator(const std::string & symbol, Associativity associativity, Precedence precedence);
+	OperatorPtr register_unary_operator(const std::string & symbol, Fixity fixity);	
+	
 	void register_builtin_operators(void);
 };
-
-#endif // OPERATOR_HPP

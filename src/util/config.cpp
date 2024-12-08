@@ -1,5 +1,6 @@
 #include "util/config.hpp"
 
+
 namespace config
 {
 	bool repl_mode = true;

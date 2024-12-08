@@ -1,5 +1,4 @@
-#ifndef OBJECT_HPP
-#define OBJECT_HPP
+#pragma once
 
 #include <string>
 #include <memory>
@@ -9,21 +8,25 @@
 #include <boost/multiprecision/gmp.hpp> // for `mpz_int`
 #include <boost/multiprecision/mpfr.hpp> // for `mpfr_float`
 
-#include "util/globals.hpp"
+#include "util/globals.hpp" // for `globals::error_handler`
+#include "class/builtins.hpp" // for `ClassPtr`
 
-//using mpz = boost::multiprecision::mpz_int; // Arbitrary precision integer
-//using mpfr = boost::multiprecision::mpfr_float; // Arbitrary precision floating point
+
 using namespace boost::multiprecision;
 
-//TODO: Make all objects instances of a base class (e.g. IntegerObj from Integer, RealObj from Real, etc.)
-//TODO: Make all classes inherit from MathObj
 
 class MathObj;
 using MathObjPtr = std::shared_ptr<MathObj>;
 
+
 class MathObj
 {
+protected:
+	ClassPtr m_class;
+
 public:
+	static const MathObjPtr none;
+
 	enum class Type
 	{
 		MO_NONE,
@@ -33,8 +36,12 @@ public:
 		MO_REFERENCE
 	};
 
-	MathObj() = default;
+	MathObj(ClassPtr cls) : m_class(cls) {}
+	MathObj() : m_class(Builtins::mathobj_class) {}
 	virtual ~MathObj() = default;
+
+	ClassPtr get_class(void) const { return m_class; }
+	bool is_instance_of(ClassPtr cls) const;
 
 	virtual Type type(void) const = 0;
 	virtual std::string to_string(void) const = 0;
@@ -46,63 +53,6 @@ public:
 		os << to_string();
 		return os;
 	}
-};
-
-class IntegerObj : public MathObj
-{
-	mpz_int m_value;
-	size_t m_size;
-
-public:
-	IntegerObj(const mpz_int & value) : m_value(value), m_size(value.str().size()) {}
-	~IntegerObj() = default;
-
-	mpz_int value(void) const { return m_value; }
-	size_t size(void) const { return m_size; }
-
-	Type type(void) const override { return Type::MO_INTEGER; }
-	std::string to_string(void) const override { return m_value.str(); }
-
-	MathObjPtr add(const MathObjPtr & rhs) const override;
-};
-
-class RealObj : public MathObj
-{
-	mpfr_float m_value;
-	size_t m_integer_part;
-	size_t m_decimal_part;
-
-public:
-	RealObj(std::string_view value) : m_value(value)
-	{
-		size_t dot_pos = value.find('.');
-		m_integer_part = dot_pos;
-		m_decimal_part = value.size() - dot_pos - 1;
-	}
-	RealObj(const mpfr_float & value, size_t integer_part, size_t decimal_part)
-		: m_value(value), m_integer_part(integer_part), m_decimal_part(decimal_part)
-	{}
-	~RealObj() = default;
-
-	mpfr_float value(void) const { return m_value; }
-	size_t integer_part(void) const { return m_integer_part; }
-	size_t decimal_part(void) const { return m_decimal_part; }
-
-	Type type(void) const override { return Type::MO_REAL; }
-	std::string to_string(void) const override
-	{
-		std::ostringstream oss;
-		oss << std::setprecision(m_integer_part + m_decimal_part) << m_value;
-		return oss.str();
-
-		//char * str = new char[integer_part + decimal_part + 2];
-		//mpfr_sprintf(str, "%.*Rf", integer_part + decimal_part, value.backend().data());
-		//std::string result(str);
-		//delete[] str;
-		//return result;
-	}
-
-	MathObjPtr add(const MathObjPtr & rhs) const override;
 };
 
 // Hash specialization for std::pair<MathObj::Type, MathObj::Type>
@@ -118,8 +68,6 @@ namespace std
 			return h1 ^ (h2 << 1);
 		}
 	};
-};
+}
 
 mpfr_float add_reals(const mpfr_float & lhs, const mpfr_float & rhs);
-
-#endif // OBJECT_HPP

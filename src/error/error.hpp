@@ -1,5 +1,4 @@
-#ifndef ERROR_HPP
-#define ERROR_HPP
+#pragma once
 
 #include <iostream>
 #include <string_view>
@@ -9,7 +8,9 @@
 
 #include "util/util.hpp" // for `SourceLocation`
 
+
 struct Error;
+
 
 class ErrorArray : public std::exception
 {
@@ -105,5 +106,3 @@ struct Warning : public Error
 		Error(Type::WARNING, message, location, length, suggestion)
 	{}
 };
-
-#endif // ERROR_HPP

@@ -1,57 +1,14 @@
+#include "class/class.hpp"
 #include "object/object.hpp"
+#include "object/none_object.hpp"
 
-mpfr_float add_reals(const mpfr_float & lhs, const mpfr_float & rhs);
 
-MathObjPtr IntegerObj::add(const MathObjPtr & rhs) const
+const MathObjPtr MathObj::none = std::make_shared<NoneObj>();
+
+
+bool MathObj::is_instance_of(ClassPtr cls) const
 {
-	if (rhs->type() == Type::MO_INTEGER)
-	{
-		auto rhs_int = std::dynamic_pointer_cast<IntegerObj>(rhs);
-		return std::make_shared<IntegerObj>(m_value + rhs_int->value());
-	}
-	else if (rhs->type() == Type::MO_REAL)
-	{
-		auto rhs_real = std::dynamic_pointer_cast<RealObj>(rhs);
-		return std::make_shared<RealObj>(
-			add_reals(m_value, rhs_real->value()),
-			std::max(m_size, rhs_real->integer_part()),
-			std::max(m_size, rhs_real->decimal_part())
-		);
-	}
-	else
-	{
-		throw std::runtime_error("Invalid type for addition");
-	}
-}
-
-MathObjPtr RealObj::add(const MathObjPtr & rhs) const
-{
-	if (rhs->type() == Type::MO_INTEGER)
-	{
-		auto rhs_int = std::dynamic_pointer_cast<IntegerObj>(rhs);
-		mpfr_float real_value(m_value);
-		mpfr_float int_value(rhs_int->value()); // Convert the integer to a real with the sufficient precision
-		real_value = add_reals(real_value, int_value);
-		return std::make_shared<RealObj>(
-			real_value,
-			std::max(m_integer_part, rhs_int->size()),
-			m_decimal_part
-		);
-	}
-	else if (rhs->type() == Type::MO_REAL)
-	{
-		auto rhs_real = std::dynamic_pointer_cast<RealObj>(rhs);
-		auto result = add_reals(m_value, rhs_real->value());
-		return std::make_shared<RealObj>(
-			result,
-			std::max(m_integer_part, rhs_real->integer_part()),
-			std::max(m_decimal_part, rhs_real->decimal_part())
-		);
-	}
-	else
-	{
-		throw std::runtime_error("Invalid type for addition");
-	}
+	return m_class->can_cast_to(cls);
 }
 
 mpfr_float add_reals(const mpfr_float & lhs, const mpfr_float & rhs)

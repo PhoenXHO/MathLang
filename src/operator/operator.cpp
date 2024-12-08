@@ -1,29 +1,25 @@
 #include "operator/operator.hpp"
 
-std::shared_ptr<Operator> OperatorTable::find(std::string_view symbol, bool is_unary) const
+
+const OperatorPtr OperatorRegistry::find(std::string_view symbol, bool is_unary) const
 {
 	auto & operators = is_unary ? unary_operators : binary_operators;
-
-	auto it = operators.find(std::string(symbol));
-	if (it != operators.end())
-	{
-		return it->second;
-	}
-
-	return nullptr;
+	return operators[symbol];
 }
 
-std::shared_ptr<Operator> OperatorTable::register_binary_operator(const std::string & symbol, Associativity associativity, Precedence precedence)
+OperatorPtr OperatorRegistry::register_binary_operator(const std::string & symbol, Associativity associativity, Precedence precedence)
 {
-	return binary_operators.insert({ symbol, std::make_unique<Operator>(symbol, Fixity::F_INFIX, associativity, precedence) }).first->second;
+	return binary_operators.define(symbol, std::make_shared<Operator>(symbol, Fixity::F_INFIX, associativity, precedence));
+	//return binary_operators.insert({ symbol, std::make_unique<Operator>(symbol, Fixity::F_INFIX, associativity, precedence) }).first->second;
 }
 
-std::shared_ptr<Operator> OperatorTable::register_unary_operator(const std::string & symbol, Fixity fixity)
+OperatorPtr OperatorRegistry::register_unary_operator(const std::string & symbol, Fixity fixity)
 {
-	return unary_operators.insert({ symbol, std::make_unique<Operator>(symbol, fixity, Associativity::A_NONE, Precedence::P_UNARY) }).first->second;
+	return unary_operators.define(symbol, std::make_shared<Operator>(symbol, fixity, Associativity::A_NONE, Precedence::P_UNARY));
+	//return unary_operators.insert({ symbol, std::make_unique<Operator>(symbol, fixity, Associativity::A_NONE, Precedence::P_UNARY) }).first->second;
 }
 
-void OperatorTable::register_builtin_operators(void)
+void OperatorRegistry::register_builtin_operators(void)
 {
 	////* Binary operators
 	//register_binary_operator("+", Associativity::A_LEFT, Precedence::P_ADDITION);
@@ -53,28 +49,28 @@ void OperatorTable::register_builtin_operators(void)
 	auto bang = register_unary_operator("!", Fixity::F_POSTFIX);
 
 
+
 	// Implementations
-	//TODO: Implement implicit type conversion
 	add->add_implementation(
-		MathObj::Type::MO_REAL,
-		MathObj::Type::MO_REAL,
+		Builtins::real_class,
+		Builtins::real_class,
 		std::make_shared<BuiltinOperatorImplentation>(
 			[](const MathObjPtr & lhs, const MathObjPtr & rhs) -> MathObjPtr
 			{
 				return lhs->add(rhs);
 			},
-			MathObj::Type::MO_REAL
+			Builtins::real_class
 		)
 	);
 	add->add_implementation(
-		MathObj::Type::MO_INTEGER,
-		MathObj::Type::MO_INTEGER,
+		Builtins::integer_class,
+		Builtins::integer_class,
 		std::make_shared<BuiltinOperatorImplentation>(
 			[](const MathObjPtr & lhs, const MathObjPtr & rhs) -> MathObjPtr
 			{
 				return lhs->add(rhs);
 			},
-			MathObj::Type::MO_INTEGER
+			Builtins::integer_class
 		)
 	);
 }

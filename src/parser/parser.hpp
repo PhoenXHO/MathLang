@@ -1,5 +1,4 @@
-#ifndef PARSER_HPP
-#define PARSER_HPP
+#pragma once
 
 #include <string_view>
 #include <memory>
@@ -8,6 +7,7 @@
 #include "parser/ast.hpp"
 #include "lexer/token.hpp"
 #include "operator/operator.hpp"
+
 
 class Parser
 {
@@ -62,12 +62,12 @@ class Parser
 	std::unique_ptr<LiteralNode>             literal_n(void)                   ;
 
 public:
-	OperatorTable operator_table;
+	OperatorRegistry & operators;
 
-	Parser() : lexer(std::make_unique<Lexer>())
-	{
-		operator_table.register_builtin_operators();
-	}
+	Parser(OperatorRegistry & operators) :
+		lexer(std::make_unique<Lexer>()),
+		operators(operators)
+	{}
 	~Parser() = default;
 
 	void reset(void)
@@ -86,5 +86,3 @@ public:
 	const AST & get_ast(void) const
 	{ return ast; }
 };
-
-#endif // PARSER_HPP

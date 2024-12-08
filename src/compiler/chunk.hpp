@@ -1,5 +1,4 @@
-#ifndef CHUNK_HPP
-#define CHUNK_HPP
+#pragma once
 
 #include <string>
 #include <vector>
@@ -100,5 +99,3 @@ private:
 	//* Debugging
 	std::vector<uint8_t>::const_iterator disassemble_instruction(std::vector<uint8_t>::const_iterator ip) const;
 };
-
-#endif // CHUNK_HPP

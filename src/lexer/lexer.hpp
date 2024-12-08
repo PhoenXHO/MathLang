@@ -1,5 +1,4 @@
-#ifndef LEXER_HPP
-#define LEXER_HPP
+#pragma once
 
 #include <memory>
 #include <string_view>
@@ -88,5 +87,3 @@ public:
 };
 
 std::pair<Token::Type, Lexer::Context> get_work_tk_type(std::string_view lexeme);
-
-#endif // LEXER_HPP

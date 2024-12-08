@@ -1,5 +1,4 @@
-#ifndef ERROR_HANDLER_HPP
-#define ERROR_HANDLER_HPP
+#pragma once
 
 #include <iostream>
 #include <string_view>
@@ -7,6 +6,7 @@
 
 #include "error/error.hpp" // for `Error`
 #include "util/util.hpp" // for `SourceLocation`
+
 
 enum class InterpretResult
 {
@@ -73,5 +73,3 @@ public:
 		}
 	}
 };
-
-#endif // ERROR_HANDLER_HPP

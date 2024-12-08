@@ -1,8 +1,6 @@
 #include "semantic_analyzer/semantic_analyzer.hpp"
 #include "util/globals.hpp"
-#include "symbol/symbol.hpp"
-
-const std::shared_ptr<Symbol> Symbol::empty_symbol(new Symbol("", Symbol::Type::S_NONE, nullptr));
+#include "class/builtins.hpp"
 
 void SemanticAnalyzer::analyze(const AST & ast)
 {
@@ -37,7 +35,7 @@ SemanticAnalyzer::AnalysisResult SemanticAnalyzer::analyze(ASTNode * node)
 		);
 	}
 
-	return {MathObj::Type::MO_NONE};
+	return {Builtins::none_class};
 }
 
 SemanticAnalyzer::AnalysisResult SemanticAnalyzer::analyze_variable_declaration(VariableDeclarationNode * variable_declaration)
@@ -62,7 +60,7 @@ SemanticAnalyzer::AnalysisResult SemanticAnalyzer::analyze_variable_declaration(
 		return analyze(variable_declaration->expression.get());
 	}
 
-	return {MathObj::Type::MO_NONE};
+	return {Builtins::none_class};
 }
 
 SemanticAnalyzer::AnalysisResult SemanticAnalyzer::analyze_expression(ExpressionNode * expression)
@@ -75,12 +73,12 @@ SemanticAnalyzer::AnalysisResult SemanticAnalyzer::analyze_expression(Expression
 	// If no candidate is found, log an error
 	auto implentations = expression->op->get_implementations();
 	//! For now, there is are no implicit conversions
-	auto it = implentations.find({left.type, right.type});
+	auto it = implentations.find({left.cls, right.cls});
 	if (it != implentations.end())
 	{
 		// Store the implementation for the compiler
 		expression->op->implementation = it->second;
-		return it->second->get_result_type();
+		return it->second->result_class();
 	}
 	else
 	{
@@ -92,7 +90,7 @@ SemanticAnalyzer::AnalysisResult SemanticAnalyzer::analyze_expression(Expression
 		);
 	}
 
-	return {MathObj::Type::MO_NONE};
+	return {Builtins::none_class};
 }
 
 SemanticAnalyzer::AnalysisResult SemanticAnalyzer::analyze_operand(OperandNode * operand)
@@ -109,12 +107,12 @@ SemanticAnalyzer::AnalysisResult SemanticAnalyzer::analyze_operand(OperandNode *
 	// If no candidate is found, log an error
 	auto implentations = operand->op->get_implementations();
 	//! For now, there is are no implicit conversions
-	auto it = implentations.find({primary.type, MathObj::Type::MO_NONE});
+	auto it = implentations.find({primary.cls, Builtins::none_class});
 	if (it != implentations.end())
 	{
 		// Store the implementation for the compiler
 		operand->op->implementation = it->second;
-		return it->second->get_result_type();
+		return it->second->result_class();
 	}
 	else
 	{
@@ -126,14 +124,14 @@ SemanticAnalyzer::AnalysisResult SemanticAnalyzer::analyze_operand(OperandNode *
 		);
 	}
 
-	return {MathObj::Type::MO_NONE};
+	return {Builtins::none_class};
 }
 
 SemanticAnalyzer::AnalysisResult SemanticAnalyzer::analyze_identifier(IdentifierNode * identifier)
 {
 	// Check if the variable is defined in the current scope
 	auto & variable = current_scope->get_variable(identifier->name);
-	if (!variable || variable->get_type() == Symbol::Type::S_NONE)
+	if (!variable)
 	{
 		globals::error_handler.log_semantic_error(
 			"Variable '" + std::string(identifier->name) + "' is not defined",
@@ -143,22 +141,22 @@ SemanticAnalyzer::AnalysisResult SemanticAnalyzer::analyze_identifier(Identifier
 		);
 	}
 
-	// Get the type of the variable
-	if (!variable->get_value())
-	{
-		// The variable is not initialized
-		globals::error_handler.log_semantic_error(
-			"Variable '" + std::string(identifier->name) + "' is not initialized",
-			identifier->location,
-			identifier->length,
-			true
-		);
-	}
+	//// Get the type of the variable
+	//if (!variable->value())
+	//{
+	//	// The variable is not initialized
+	//	globals::error_handler.log_semantic_error(
+	//		"Variable '" + std::string(identifier->name) + "' is not initialized",
+	//		identifier->location,
+	//		identifier->length,
+	//		true
+	//	);
+	//}
 
-	return variable->get_value()->type();
+	return variable->value_class();
 }
 
 SemanticAnalyzer::AnalysisResult SemanticAnalyzer::analyze_literal(LiteralNode * literal)
 {
-	return literal->type;
+	return literal->cls;
 }

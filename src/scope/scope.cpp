@@ -3,10 +3,10 @@
 size_t Scope::get_variable_index(std::string_view name) const
 {
 	// Check the current scope
-	size_t symbol_index = symbols.get_index(name, Symbol::Type::S_VARIABLE);
-	if (symbol_index != -1)
+	size_t variable_index = symbols.get_variable_index(name);
+	if (variable_index != -1)
 	{
-		return symbol_index;
+		return variable_index;
 	}
 
 	// Check the parent scope
@@ -23,8 +23,7 @@ const std::shared_ptr<Variable> Scope::get_variable(std::string_view name) const
 	size_t index = get_variable_index(name);
 	if (index != -1)
 	{
-		return std::static_pointer_cast<Variable>(symbols[index]);
+		return symbols.get_variable(index);
 	}
-	
 	return nullptr;
 }

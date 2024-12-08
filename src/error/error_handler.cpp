@@ -4,6 +4,7 @@
 #include "util/config.hpp" // for `config::verbose`
 #include "util/globals.hpp" // for `error_handler`
 
+
 namespace globals
 {
 	ErrorHandler error_handler;

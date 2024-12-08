@@ -1,5 +1,4 @@
-#ifndef AST_HPP
-#define AST_HPP
+#pragma once
 
 #include <memory>
 #include <vector>
@@ -9,6 +8,8 @@
 #include "operator/operator.hpp"
 #include "object/object.hpp"
 #include "util/util.hpp"
+#include "class/class.hpp"
+
 
 struct AST;
 struct ASTNode;
@@ -19,6 +20,7 @@ struct OperandNode;
 struct OperatorNode;
 struct IdentifierNode;
 struct LiteralNode;
+
 
 // <program> ::= <statement>*
 // <statement> ::= <expression-statement> (for now)
@@ -169,7 +171,7 @@ struct IdentifierNode : public ASTNode
 // <literal> ::= <integer> | <real> (for now)
 struct LiteralNode : public ASTNode
 {
-	MathObj::Type type;
+	ClassPtr cls;
 	std::string_view value;
 
 	LiteralNode() : ASTNode(Type::N_LITERAL) {}
@@ -179,5 +181,3 @@ struct LiteralNode : public ASTNode
 	//* Debugging
 	void print(int depth = 0) const override;
 };
-
-#endif // AST_HPP

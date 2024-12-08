@@ -6,6 +6,7 @@
 #include "memory/memory.hpp" // for `set_dynamic_precision`
 #include "util/benchmark.hpp" // for `Benchmark`
 
+
 InterpretResult VM::interpret_source(bool interrupted)
 {
 	set_dynamic_precision();
@@ -76,7 +77,7 @@ void VM::run(void)
 	case OP_GET_VARIABLE:
 		{
 			auto index = READ_BYTE();
-			auto value = current_scope->get_variable(index)->get_value();
+			auto value = current_scope->get_variable(index)->value();
 			stack.push(value);
 		}
 		break;

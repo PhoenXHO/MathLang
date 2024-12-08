@@ -1,7 +1,7 @@
-#ifndef UTIL_HPP
-#define UTIL_HPP
+#pragma once
 
 #include <cstddef>
+
 
 // Struct to store the line, column, and position in the source code
 struct SourceLocation
@@ -15,5 +15,3 @@ struct SourceLocation
 	{}
 	SourceLocation() : SourceLocation(1, 1, 0) {}
 };
-
-#endif // UTIL_HPP

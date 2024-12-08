@@ -1,5 +1,4 @@
-#ifndef VM_HPP
-#define VM_HPP
+#pragma once
 
 #include <memory>
 #include <string_view>
@@ -7,6 +6,7 @@
 
 #include "compiler/compiler.hpp"
 #include "error/error_handler.hpp"
+
 
 class VM
 {
@@ -23,7 +23,9 @@ public:
 		chunk("<main>", constant_pool, global_scope),
 		global_scope(std::make_shared<Scope>()),
 		compiler(std::make_unique<Compiler>(chunk, constant_pool, global_scope))
-	{}
+	{
+		global_scope->init_global_scope();
+	}
 	~VM() = default;
 
 	// This function will return false if there was an error
@@ -31,5 +33,3 @@ public:
 	InterpretResult interpret_source(bool interrupted = false);
 	void run(void);
 };
-
-#endif // VM_HPP

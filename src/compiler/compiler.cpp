@@ -1,7 +1,11 @@
+#include <any>
+
 #include "compiler/compiler.hpp"
-#include "object/object.hpp"
+#include "object/integer_object.hpp"
+#include "object/real_object.hpp"
 #include "util/globals.hpp"
 #include "util/config.hpp"
+#include "class/builtins.hpp"
 
 void Compiler::compile_source(void)
 {
@@ -77,12 +81,11 @@ void Compiler::compile_variable_declaration(const VariableDeclarationNode * vari
 	if (index >= UINT8_MAX)
 	{
 		// We have reached the maximum number of variables
-		globals::error_handler.log_compiletime_error(
+		globals::error_handler.log_compiletime_error({
 			"Maximum number of variables reached",
 			variable_declaration->identifier->location,
-			variable_declaration->identifier->length,
-			true
-		);
+			variable_declaration->identifier->length
+		}, true);
 		return;
 	}
 
@@ -167,12 +170,11 @@ void Compiler::compile_operator(const OperatorNode * op, bool is_unary)
 	if (operator_stack.size() >= UINT8_MAX)
 	{
 		// We have reached the maximum number of operators
-		globals::error_handler.log_compiletime_error(
+		globals::error_handler.log_compiletime_error({
 			"Maximum number of operators reached",
 			op->location,
-			op->length,
-			true
-		);
+			op->length
+		}, true);
 		return;
 	}
 
@@ -192,12 +194,11 @@ void Compiler::compile_identifier(const IdentifierNode * identifier_n)
 	if (index >= UINT8_MAX)
 	{
 		// We have reached the maximum number of variables
-		globals::error_handler.log_compiletime_error(
+		globals::error_handler.log_compiletime_error({
 			"Maximum number of variables reached",
 			identifier_n->location,
-			identifier_n->length,
-			true
-		);
+			identifier_n->length
+		}, true);
 		return;
 	}
 
@@ -209,56 +210,27 @@ void Compiler::compile_literal(const LiteralNode * literal_n)
 	if (constant_pool.size() >= UINT8_MAX)
 	{
 		// We have reached the maximum number of constants
-		globals::error_handler.log_compiletime_error(
+		globals::error_handler.log_compiletime_error({
 			"Maximum number of constants reached",
 			literal_n->location,
-			literal_n->length,
-			true
-		);
+			literal_n->length
+		}, true);
 		return;
 	}
 
 	try
 	{
-		switch (literal_n->type)
-		{
-		case MathObj::Type::MO_INTEGER:
-			{
-				std::string value_str(literal_n->value);
-				mpz_int value(value_str);
-				constant_pool.add_constant(std::make_shared<IntegerObj>(value));
-				chunk.emit_constant(constant_pool.size() - 1);
-			}
-			break;
-		case MathObj::Type::MO_REAL:
-			{
-				std::string value_str(literal_n->value);
-				// precision bits ~= number of significant digits * log2(10)
-				//int s = value_str.size() - 1;
-				//size_t precision_bits = static_cast<size_t>(std::ceil(s * 3.32192809489));
-
-				mpfr_float value(value_str);
-				//value.precision(value_str.size() - 1);
-				//mpfr_init2(value, precision_bits);
-				//mpfr_set_str(value, value_str.c_str(), 10, MPFR_RNDN);
-
-				constant_pool.add_constant(std::make_shared<RealObj>(literal_n->value));
-				chunk.emit_constant(constant_pool.size() - 1);
-			}
-			break;
-
-		default:
-			break;
-		}
+		auto value = literal_n->cls->instantiate(std::any(literal_n->value));
+		constant_pool.add_constant(value);
+		chunk.emit_constant(constant_pool.size() - 1);
 	}
 	catch (const std::exception & e)
 	{
-		globals::error_handler.log_compiletime_error(
+		globals::error_handler.log_compiletime_error({
 			"Exception occurred while compiling literal: " + std::string(e.what()),
 			literal_n->location,
-			literal_n->length,
-			true
-		);
+			literal_n->length
+		}, true);
 	}
 }
 

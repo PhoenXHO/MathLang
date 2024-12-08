@@ -1,8 +1,6 @@
-#ifndef VERBOSE_HPP
-#define VERBOSE_HPP
+#pragma once
 
 #include <string_view>
 
-void log_v(std::string_view, ...); // Log verbose message
 
-#endif // VERBOSE_HPP
+void log_v(std::string_view, ...); // Log verbose message

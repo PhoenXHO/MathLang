@@ -4,14 +4,14 @@
 #include "util/config.hpp" // for `config::repl_mode`
 #include "util/globals.hpp" // for `globals::source`
 
+
 // To make the error the most readable, we use the following format:
 // <ERROR_TYPE>: message at line <line>, column <column>
 // The error type will have the red color for an error and yellow for a warning.
 
 // The error message will be followed by a suggestion, if any.
 //  	<source line>
-//  	<caret pointing to the exact column>
-// Squiggly lines might also be added to the source line to indicate the error, but only for the lexical errors.
+//  	<caret pointing to the exact column with squiggly lines>
 
 void Error::set_message(std::string_view message, std::string_view suggestion)
 {

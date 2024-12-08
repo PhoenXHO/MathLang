@@ -1,5 +1,4 @@
-#ifndef CONFIG_HPP
-#define CONFIG_HPP
+#pragma once
 
 namespace config
 {
@@ -15,5 +14,3 @@ namespace config
 	extern const char * const DESTROY_COLOR;
 	extern const char * const PROCESS_COLOR;
 }
-
-#endif // CONFIG_HPP

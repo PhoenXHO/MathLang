@@ -110,7 +110,7 @@ To start the REPL:
 <!-- Not yet implemented -->
 <!--To run a Mathium script:
 ```sh
-./Mathium -f <script.mthl>
+./Mathium -f <script.mthx>
 ```-->
 
 ## Usage

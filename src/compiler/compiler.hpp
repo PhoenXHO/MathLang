@@ -1,5 +1,4 @@
-#ifndef COMPILER_H
-#define COMPILER_H
+#pragma once
 
 #include <string_view>
 #include <memory>
@@ -10,7 +9,6 @@
 #include "compiler/chunk.hpp"
 #include "parser/ast.hpp"
 #include "scope/scope.hpp"
-#include "symbol/symbol.hpp"
 
 class Compiler
 {
@@ -37,7 +35,7 @@ class Compiler
 public:
 	Compiler(Chunk & chunk, ConstantPool & constant_pool, std::shared_ptr<Scope> global_scope) :
 		chunk(chunk),
-		parser(std::make_unique<Parser>()),
+		parser(std::make_unique<Parser>(global_scope->get_operators())),
 		constant_pool(constant_pool),
 		global_scope(global_scope),
 		semantic_analyzer(std::make_unique<SemanticAnalyzer>(global_scope))
@@ -57,5 +55,3 @@ public:
 	const std::shared_ptr<OperatorImplentation> & get_operator(size_t index) const
 	{ return operator_stack.at(index); }
 };
-
-#endif // COMPILER_H

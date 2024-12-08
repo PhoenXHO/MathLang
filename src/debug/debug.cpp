@@ -6,8 +6,10 @@
 #include "compiler/chunk.hpp"
 #include "util/config.hpp"
 
+
 // Function to indent the output
 void indent(int indent);
+
 
 void Chunk::disassemble(void) const
 {
@@ -47,7 +49,7 @@ std::vector<uint8_t>::const_iterator Chunk::disassemble_instruction(std::vector<
 		std::cout << "SET_VARIABLE" 
 				  << std::setw(6) << std::setfill(' ') << std::right
 				  << static_cast<int>(*(ip + 1)) << std::left
-				  << "  (`" << variable->get_name() << "` " << variable.get() << ')';
+				  << "  " << variable->to_string();
 		return ip + 2;
 	}
 	case OP_GET_VARIABLE:
@@ -56,7 +58,7 @@ std::vector<uint8_t>::const_iterator Chunk::disassemble_instruction(std::vector<
 		std::cout << "GET_VARIABLE" 
 				  << std::setw(6) << std::setfill(' ') << std::right
 				  << static_cast<int>(*(ip + 1)) << std::left
-				  << "  (`" << variable->get_name() << "` " << variable.get() << ')';
+				  << "  " << variable->to_string();
 		return ip + 2;
 	}
 

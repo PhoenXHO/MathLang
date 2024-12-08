@@ -123,9 +123,9 @@ std::shared_ptr<Token> Lexer::scan_tk(void)
 		globals::error_handler.log_lexical_error(
 			"Invalid character '" + std::string(1, curr) + "'",
 			location,
+			1,
 			true
 		);
-		break;
 	}
 	
 	advance();
