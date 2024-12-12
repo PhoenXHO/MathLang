@@ -10,32 +10,38 @@
 enum OpCode : uint8_t
 {
 	// Instruction to load a constant from the constant pool into the stack
-	// - operand: `index` (1 byte); the index of the constant in the constant pool (`Compiler.constant_pool`)
+	// + operand: `index` (1 byte); the index of the constant in the constant pool
 	OP_LOAD_CONSTANT,
 
 	// Instruction to set a variable in the current scope to the value on the top of the stack (the top of the stack is not popped)
-	// - operand: `index` (1 byte); the index of the variable in the current scope
+	// + operand: `index` (1 byte); the index of the variable in the current scope
 	OP_SET_VARIABLE,
 	// Instruction to get a variable from the current scope
-	// - operand: `index` (1 byte); the index of the variable in the current scope
+	// + operand: `index` (1 byte); the index of the variable in the current scope
 	OP_GET_VARIABLE,
 
+	// Instruction to call a function
+	// + operands:
+	//   - `function_index` (1 byte); the index of the function in the current scope
+	//   - `function_implementation_index` (1 byte); the index of the implementation of the function
+	OP_CALL_FUNCTION,
+
 	// Instruction to call a unary operator
-	// - operand: `index` (1 byte); the index of the operator in the operator stack (`Compiler.operator_stack`)
+	// + operand: `index` (1 byte); the index of the operator in the current scope
 	OP_CALL_UNARY,
 	// Instruction to call a binary operator
-	// - operand: `index` (1 byte); the index of the operator in the operator stack (`Compiler.operator_stack`)
+	// + operand: `index` (1 byte); the index of the operator in the current scope
 	OP_CALL_BINARY,
 
 	// Instruction to print the top of the stack (the top of the stack is popped)
-	// - no operand
+	// + no operands
 	OP_PRINT,
 
 	// Instruction to pop the top of the stack
-	// - no operand
+	// + no operands
 	OP_POP,
 	// Instruction to signal the end of a chunk
-	// - no operand
+	// + no operands
 	OP_RETURN
 };
 
@@ -57,6 +63,12 @@ struct Chunk
 	{
 		code.push_back(static_cast<uint8_t>(op));
 		code.push_back(operand);
+	}
+	void emit(OpCode op, uint8_t operand1, uint8_t operand2)
+	{
+		code.push_back(static_cast<uint8_t>(op));
+		code.push_back(operand1);
+		code.push_back(operand2);
 	}
 	void emit_at(uint8_t index, OpCode op)
 	{

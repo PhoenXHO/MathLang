@@ -46,10 +46,12 @@ public:
 	void analyze(const AST & ast);
 
 private:
-	AnalysisResult analyze(ASTNode * node);
-	AnalysisResult analyze_variable_declaration(VariableDeclarationNode * variable_declaration);
-	AnalysisResult analyze_expression(ExpressionNode * expression);
-	AnalysisResult analyze_operand(OperandNode * operand);
-	AnalysisResult analyze_identifier(IdentifierNode * identifier);
-	AnalysisResult analyze_literal(LiteralNode * literal);
+	AnalysisResult analyze                      (ASTNode * node)                                 ;
+	AnalysisResult analyze_variable_declaration (VariableDeclarationNode * variable_declaration) ;
+	AnalysisResult analyze_expression           (ExpressionNode * expression)                    ;
+	AnalysisResult analyze_operand              (OperandNode * operand)                          ;
+	AnalysisResult analyze_function_call        (FunctionCallNode * function_call)               ;
+	AnalysisResult analyze_identifier           (IdentifierNode * identifier)                    ;
+	AnalysisResult analyze_type                 (TypeNode * type)                                ;
+	AnalysisResult analyze_literal              (LiteralNode * literal)                          ;
 };

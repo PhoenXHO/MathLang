@@ -18,7 +18,9 @@ struct ExpressionStatementNode;
 struct ExpressionNode;
 struct OperandNode;
 struct OperatorNode;
+struct FunctionCallNode;
 struct IdentifierNode;
+struct TypeNode;
 struct LiteralNode;
 
 
@@ -45,7 +47,9 @@ struct ASTNode
 		N_EXPRESSION,
 		N_OPERAND,
 		N_OPERATOR,
+		N_FUNCTION_CALL,
 		N_IDENTIFIER,
+		N_TYPE,
 		N_LITERAL
 	};
 
@@ -60,10 +64,10 @@ struct ASTNode
 	virtual void print(int depth = 0) const = 0;
 };
 
-// <variable-declaration> ::= "let" <identifier> [ ":=" <expression> ] [ ";" ]
+// <variable-declaration> ::= "let" [ <type> ] <identifier> [ ":=" <expression> ] [ ";" ]
 struct VariableDeclarationNode : public ASTNode
 {
-	//std::string_view identifier;
+	std::unique_ptr<TypeNode> type;
 	std::unique_ptr<IdentifierNode> identifier;
 	std::unique_ptr<ASTNode> expression;
 	bool print_expression = false;
@@ -130,26 +134,34 @@ struct OperatorNode : public ASTNode
 {
 	std::shared_ptr<Operator> op;
 	std::shared_ptr<OperatorImplentation> implementation; // To store the implementation of the operator for the given operands (for the compiler)
+	size_t operator_index = 0;
 
 	OperatorNode(std::shared_ptr<Operator> op) : ASTNode(Type::N_OPERATOR), op(op) {}
 	~OperatorNode() = default;
 
-	Fixity get_fixity(void) const
-	{
-		return op->get_fixity();
-	}
-	Associativity get_associativity(void) const
-	{
-		return op->get_associativity();
-	}
-	Precedence get_precedence(void) const
-	{
-		return op->get_precedence();
-	}
-	OperatorImplentationRegistry & get_implementations(void)
-	{
-		return op->get_implementations();
-	}
+	Fixity fixity(void) const
+	{ return op->fixity(); }
+	Associativity associativity(void) const
+	{ return op->associativity(); }
+	Precedence precedence(void) const
+	{ return op->precedence(); }
+	OperatorImplentationRegistry & implementations(void)
+	{ return op->implementations(); }
+
+	//* Debugging
+	void print(int depth = 0) const override;
+};
+
+// <function-call> ::= <identifier> "(" [ <expression> [ "," <expression> ]* ] ")"
+struct FunctionCallNode : public ASTNode
+{
+	std::unique_ptr<IdentifierNode> identifier;
+	std::vector<std::unique_ptr<ASTNode>> arguments;
+	size_t function_index = 0;
+	size_t function_implementation_index = 0;
+
+	FunctionCallNode() : ASTNode(Type::N_FUNCTION_CALL) {}
+	~FunctionCallNode() = default;
 
 	//* Debugging
 	void print(int depth = 0) const override;
@@ -159,10 +171,24 @@ struct OperatorNode : public ASTNode
 struct IdentifierNode : public ASTNode
 {
 	std::string_view name;
+	size_t variable_index = 0;
 
 	IdentifierNode() : ASTNode(Type::N_IDENTIFIER) {}
 	IdentifierNode(std::string_view name) : ASTNode(Type::N_IDENTIFIER), name(name) {}
 	~IdentifierNode() = default;
+
+	//* Debugging
+	void print(int depth = 0) const override;
+};
+
+// <type> ::= <identifier>
+struct TypeNode : public ASTNode
+{
+	std::string_view name;
+
+	TypeNode() : ASTNode(Type::N_TYPE) {}
+	TypeNode(std::string_view name) : ASTNode(Type::N_TYPE), name(name) {}
+	~TypeNode() = default;
 
 	//* Debugging
 	void print(int depth = 0) const override;

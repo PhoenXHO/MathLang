@@ -22,11 +22,14 @@ bool Class::is_sub_class(const ClassPtr & cls, bool strict) const
 
 int Class::measure_specificity(const ClassPtr & cls) const
 {
-	// Check if the class is the same
+	// Check if the current class is the same as the given class
 	if (shared_from_this() == cls)
 	{
 		return 2;
 	}
+
+	// Check if one class is a reference to the other
+	//if 
 
 	// Check if this class is castable to the given class
 	if (can_cast_to(cls))

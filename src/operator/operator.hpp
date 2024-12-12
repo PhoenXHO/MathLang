@@ -61,13 +61,9 @@ public:
 
 protected:
 	Type m_type; // Type of the operator implementation
-	//MathObj::Type m_result_type; // Result type of the operator
 	ClassPtr m_result_class; // Class of the operator
 
 public:
-	//OperatorImplentation(Type type, MathObj::Type result_type) :
-	//	m_type(type), m_result_type(result_type)
-	//{}
 	OperatorImplentation(Type type, ClassPtr result_class) :
 		m_type(type), m_result_class(result_class)
 	{}
@@ -75,8 +71,6 @@ public:
 
 	Type type() const
 	{ return m_type; }
-	//MathObj::Type result_type() const
-	//{ return m_result_type; }
 	const ClassPtr & result_class() const
 	{ return m_result_class; }
 
@@ -98,9 +92,6 @@ class BuiltinOperatorImplentation : public OperatorImplentation
 	OperatorFunction function; // Function to execute
 
 public:
-	//BuiltinOperatorImplentation(OperatorFunction function, MathObj::Type result_type) :
-	//	OperatorImplentation(Type::O_BUILTIN, result_type), function(function)
-	//{}
 	BuiltinOperatorImplentation(OperatorFunction function, ClassPtr result_class) :
 		OperatorImplentation(Type::O_BUILTIN, result_class), function(function)
 	{}
@@ -109,12 +100,6 @@ public:
 	MathObjPtr execute(const MathObjPtr & lhs, const MathObjPtr & rhs) const override
 	{ return function(lhs, rhs); }
 };
-
-// User-defined operator implementation
-// class UserDefinedOperatorImplentation : public OperatorImplentation
-
-//using OperatorImplentationMap = std::unordered_map<std::pair<MathObj::Type, MathObj::Type>, std::shared_ptr<OperatorImplentation>>;
-//using OperatorImplentationMap = std::unordered_map<std::pair<ClassPtr, ClassPtr>, OperatorImplentationPtr>;
 
 class OperatorImplentationRegistry
 {
@@ -148,42 +133,37 @@ public:
 
 class Operator
 {
-	std::string symbol; // Symbol of operator
-	Fixity fixity; // Fixity of operator
-	Associativity associativity; // Associativity of operator
-	Precedence precedence; // Precedence of operator
+	std::string m_symbol; // Symbol of operator
+	Fixity m_fixity; // Fixity of operator
+	Associativity m_associativity; // Associativity of operator
+	Precedence m_precedence; // Precedence of operator
 
-	//OperatorImplentationMap implementations; // Implementations of the operator
-	OperatorImplentationRegistry implementations;
+	OperatorImplentationRegistry m_implementations;
 
 public:
-	Operator(const std::string &symbol, Fixity fixity, Associativity associativity, Precedence precedence) :
-		symbol(symbol), fixity(fixity), associativity(associativity), precedence(precedence)
+	Operator(const std::string & symbol, Fixity fixity, Associativity associativity, Precedence precedence) :
+		m_symbol(symbol), m_fixity(fixity), m_associativity(associativity), m_precedence(precedence)
 	{}
 	~Operator() = default;
 
-	const std::string & get_symbol() const
-	{ return symbol; }
-	Fixity get_fixity() const
-	{ return fixity; }
-	Associativity get_associativity() const
-	{ return associativity; }
-	Precedence get_precedence() const
-	{ return precedence; }
-	//OperatorImplentationMap & get_implementations()
-	//{ return implementations; }
-	OperatorImplentationRegistry & get_implementations()
-	{ return implementations; }
+	const std::string & symbol() const
+	{ return m_symbol; }
+	Fixity fixity() const
+	{ return m_fixity; }
+	Associativity associativity() const
+	{ return m_associativity; }
+	Precedence precedence() const
+	{ return m_precedence; }
+	OperatorImplentationRegistry & implementations()
+	{ return m_implementations; }
 
 	void add_implementation(const ClassPtr & lhs, const ClassPtr & rhs, const OperatorImplentationPtr & implementation)
-	//{ implementations[{lhs, rhs}] = implementation; }
-	{ implementations.define(lhs, rhs, implementation); }
+	{ m_implementations.define(lhs, rhs, implementation); }
 };
 
 using OperatorMap = std::unordered_map<std::string, OperatorPtr>;
 class OperatorRegistry
 {
-	//OperatorMap binary_operators, unary_operators;
 	Registry<OperatorPtr> binary_operators, unary_operators;
 
 public:

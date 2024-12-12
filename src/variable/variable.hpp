@@ -10,23 +10,20 @@ using VariablePtr = std::shared_ptr<Variable>;
 
 struct Variable : public MathObj
 {
+	bool static_type = false;
+
 	Variable(std::string_view name, MathObjPtr value) :
 		MathObj(Builtins::reference_class),
 		m_name(name),
 		m_value(value)
 	{}
+	Variable(std::string_view name, ClassPtr cls);
 	~Variable() = default;
 
-	//MathObj::Type type(void) const override { return m_value->type(); }
-	std::string to_string(void) const override
-	{
-		std::ostringstream oss;
-		oss << '<' << m_name << " (" << std::uppercase << this << ") = "
-			<< value()->to_string() << '>';
-		return oss.str();
-	}
+	std::string to_string(void) const override;
 
-	MathObjPtr add(const MathObjPtr & rhs) const override { return m_value->add(rhs); }
+	MathObjPtr add(const MathObjPtr & rhs) const override
+	{ return m_value->add(rhs); }
 
 	void set(MathObjPtr value)
 	{ this->m_value = value; }

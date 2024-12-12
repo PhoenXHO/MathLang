@@ -29,8 +29,6 @@ void Chunk::disassemble(void) const
 
 std::vector<uint8_t>::const_iterator Chunk::disassemble_instruction(std::vector<uint8_t>::const_iterator ip) const
 {
-	//std::cout << "0x" << std::hex << std::uppercase << std::setw(2) << std::setfill('0') << static_cast<int>(*ip) << ' '
-	//		  << std::dec << std::setw(20) << std::setfill(' ') << std::left;
 	std::cout << "0x" << std::hex << std::uppercase << std::setw(2) << std::setfill('0')
 			  << static_cast<int>(*ip) << ' '
 			  << std::dec << std::setw(20) << std::setfill(' ') << std::left;
@@ -61,6 +59,14 @@ std::vector<uint8_t>::const_iterator Chunk::disassemble_instruction(std::vector<
 				  << "  " << variable->to_string();
 		return ip + 2;
 	}
+
+	case OP_CALL_FUNCTION:
+		std::cout << "CALL_FUNCTION"
+				  << std::setw(6) << std::setfill(' ') << std::right
+				  << static_cast<int>(*(ip + 1)) << std::left
+				  << "  " << static_cast<int>(*(ip + 2))
+				  << "  '" << current_scope->get_function(static_cast<int>(*(ip + 1)))->to_string() << '\'';
+		return ip + 3;
 
 	case OP_CALL_UNARY:
 		std::cout << "CALL_UNARY"
@@ -213,7 +219,7 @@ void VariableDeclarationNode::print(int depth) const
 	std::cout << "Variable Declaration:\n";
 
 	indent(depth + 1);
-	std::cout << "Identifier: " << identifier << '\n';
+	std::cout << "Identifier: " << identifier->name << '\n';
 
 	if (expression)
 	{
@@ -271,7 +277,20 @@ void OperandNode::print(int depth) const
 void OperatorNode::print(int depth) const
 {
 	indent(depth);
-	std::cout << "Operator: " << op->get_symbol() << '\n';
+	std::cout << "Operator: " << op->symbol() << '\n';
+}
+
+void FunctionCallNode::print(int depth) const
+{
+	indent(depth);
+	std::cout << "Function Call:\n";
+
+	identifier->print(depth + 1);
+
+	for (const auto & arg : arguments)
+	{
+		arg->print(depth + 1);
+	}
 }
 
 void IdentifierNode::print(int depth) const
@@ -280,10 +299,16 @@ void IdentifierNode::print(int depth) const
 	std::cout << "Identifier: " << name << '\n';
 }
 
+void TypeNode::print(int depth) const
+{
+	indent(depth);
+	std::cout << "Type: " << name << '\n';
+}
+
 void LiteralNode::print(int depth) const
 {
 	indent(depth);
-	std::cout << "Literal: " << value << '\n';
+	std::cout << "Literal: " << value << ' ' << cls->to_string() << '\n';
 }
 
 void indent(int indent)

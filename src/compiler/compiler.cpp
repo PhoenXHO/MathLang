@@ -116,21 +116,14 @@ void Compiler::compile_expression(const ASTNode * expression_n)
 			compile_binary_operator(expression->op.get());
 		}
 		break;
-	case ASTNode::Type::N_IDENTIFIER:
-		{
-			auto identifier = static_cast<const IdentifierNode *>(expression_n);
-			compile_identifier(identifier);
-		}
-		break;
-	case ASTNode::Type::N_LITERAL:
-		{
-			auto literal = static_cast<const LiteralNode *>(expression_n);
-			compile_literal(literal);
-		}
-		break;
 
 	default:
-		break;
+		// For debugging purposes
+		globals::error_handler.log_compiletime_error({
+			"Unhandled expression type",
+			expression_n->location,
+			expression_n->length
+		}, true);
 	}
 }
 
@@ -147,6 +140,18 @@ void Compiler::compile_operand(const OperandNode * operand_n)
 		{
 			auto operand = static_cast<const OperandNode *>(operand_n->primary.get());
 			compile_operand(operand);
+		}
+		break;
+	case ASTNode::Type::N_FUNCTION_CALL:
+		{
+			auto function_call = static_cast<const FunctionCallNode *>(operand_n->primary.get());
+			compile_function_call(function_call);
+		}
+		break;
+	case ASTNode::Type::N_IDENTIFIER:
+		{
+			auto identifier = static_cast<const IdentifierNode *>(operand_n->primary.get());
+			compile_identifier(identifier);
 		}
 		break;
 	case ASTNode::Type::N_LITERAL:
@@ -166,6 +171,7 @@ void Compiler::compile_operand(const OperandNode * operand_n)
 
 void Compiler::compile_operator(const OperatorNode * op, bool is_unary)
 {
+	//TODO: Update this code to use the operator registry in the current scope
 	auto & implementation = op->implementation;
 	if (operator_stack.size() >= UINT8_MAX)
 	{
@@ -188,8 +194,42 @@ void Compiler::compile_unary_operator(const OperatorNode * op)
 void Compiler::compile_binary_operator(const OperatorNode * op)
 { compile_operator(op); }
 
+void Compiler::compile_function_call(const FunctionCallNode * function_call_n)
+{
+	size_t index = function_call_n->function_index;
+	if (index >= UINT8_MAX)
+	{
+		// We have reached the maximum number of functions
+		globals::error_handler.log_compiletime_error({
+			"Maximum number of functions reached",
+			function_call_n->location,
+			function_call_n->length
+		}, true);
+		return;
+	}
+	size_t impl_index = function_call_n->function_implementation_index;
+	if (impl_index >= UINT8_MAX)
+	{
+		// We have reached the maximum number of function implementations
+		globals::error_handler.log_compiletime_error({
+			"Maximum number of function implementations reached",
+			function_call_n->location,
+			function_call_n->length
+		}, true);
+		return;
+	}
+
+	for (const auto & argument : function_call_n->arguments)
+	{
+		compile_expression(argument.get());
+	}
+
+	chunk.emit(OP_CALL_FUNCTION, index, impl_index);
+}
+
 void Compiler::compile_identifier(const IdentifierNode * identifier_n)
 {
+	//TODO: Store the index during semantic analysis to avoid searching for the variable again
 	size_t index = current_scope->get_variable_index(identifier_n->name);
 	if (index >= UINT8_MAX)
 	{

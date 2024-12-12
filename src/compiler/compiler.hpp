@@ -28,6 +28,7 @@ class Compiler
 	void compile_operator             (const OperatorNode *, bool is_unary = false) ;
 	void compile_unary_operator       (const OperatorNode *)                        ;
 	void compile_binary_operator      (const OperatorNode *)                        ;
+	void compile_function_call        (const FunctionCallNode *)                    ;
 	void compile_identifier           (const IdentifierNode *)                      ;
 	void compile_literal              (const LiteralNode *)                         ;
 	void compile_print                (bool print)                                  ;

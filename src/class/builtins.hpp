@@ -16,17 +16,5 @@ namespace Builtins
 	extern ClassPtr integer_class; // The class for integer objects
 	extern ClassPtr real_class; // The class for real objects
 
-	void init_builtin_classes(void);
-
-	namespace MathObjClass
-	{ ClassPtr init(void); }
-	namespace ReferenceClass
-	{ ClassPtr init(void); }
-	namespace NoneClass
-	{ ClassPtr init(void); }
-
-	namespace IntegerClass
-	{ ClassPtr init(void); }
-	namespace RealClass
-	{ ClassPtr init(void); }
+	extern void init_builtin_classes(void);
 }

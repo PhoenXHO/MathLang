@@ -58,6 +58,7 @@ class Parser
 	std::unique_ptr<ASTNode>                 operand_n(void)                   ;
 	std::unique_ptr<OperatorNode>            operator_n(bool is_unary = false) ;
 	std::unique_ptr<ASTNode>                 primary_n(void)                   ;
+	std::unique_ptr<FunctionCallNode>        function_call_n(void)             ;
 	std::unique_ptr<IdentifierNode>          identifier_n(void)                ;
 	std::unique_ptr<LiteralNode>             literal_n(void)                   ;
 

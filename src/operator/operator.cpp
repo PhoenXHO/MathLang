@@ -4,7 +4,7 @@
 const OperatorPtr OperatorRegistry::find(std::string_view symbol, bool is_unary) const
 {
 	auto & operators = is_unary ? unary_operators : binary_operators;
-	return operators[symbol];
+	return operators[symbol].second;
 }
 
 const OperatorPtr OperatorRegistry::find(size_t index, bool is_unary) const

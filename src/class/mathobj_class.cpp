@@ -1,12 +1,6 @@
 #include "class/builtins.hpp"
-#include "class/class.hpp"
+#include "class/mathobj_class.hpp"
 
 
-namespace Builtins::MathObjClass
-{
-	ClassPtr init(void)
-	{
-		mathobj_class = std::make_shared<Class>("MathObj");
-		return mathobj_class;
-	}
-}
+void MathObjClass::init(void)
+{}

@@ -60,6 +60,14 @@ std::unique_ptr<VariableDeclarationNode> Parser::variable_declaration_n(void)
 		expect_tk(Token::Type::T_IDENTIFIER, "Expected an identifier");
 	}
 
+	// Parse optional type
+	if (curr_tk->type() == Token::Type::T_IDENTIFIER && next_tk->type() == Token::Type::T_IDENTIFIER)
+	{
+		variable_declaration->type = std::make_unique<TypeNode>(curr_tk->lexeme());
+		consume_tk(); // Consume the identifier token
+	}
+
+	// Parse identifier
 	variable_declaration->identifier = identifier_n();
 	consume_tk(); // Consume the identifier token
 
@@ -131,16 +139,16 @@ std::unique_ptr<ASTNode> Parser::expression_n(Precedence min_p)
 	while (!curr_tk->is_eof() && curr_tk->is_operator())
 	{
 		auto op = operator_n();
-		if (!op || op->get_precedence() < min_p)
+		if (!op || op->precedence() < min_p)
 		{
 			break;
 		}
 
 		consume_tk(); // Consume the operator token
 
-		if (op->get_associativity() == Associativity::A_LEFT) // Left-associative
+		if (op->associativity() == Associativity::A_LEFT) // Left-associative
 		{
-			auto right = expression_n(static_cast<Precedence>(op->get_precedence() + 1));
+			auto right = expression_n(static_cast<Precedence>(op->precedence() + 1));
 			if (!right)
 			{
 				expect_tk(Token::Type::T_NONE, "Expected an expression");
@@ -148,9 +156,9 @@ std::unique_ptr<ASTNode> Parser::expression_n(Precedence min_p)
 
 			left = std::make_unique<ExpressionNode>(std::move(left), std::move(op), std::move(right));
 		}
-		else if (op->get_associativity() == Associativity::A_RIGHT) // Right-associative
+		else if (op->associativity() == Associativity::A_RIGHT) // Right-associative
 		{
-			auto right = expression_n(op->get_precedence());
+			auto right = expression_n(op->precedence());
 			if (!right)
 			{
 				expect_tk(Token::Type::T_NONE, "Expected an expression");
@@ -188,17 +196,6 @@ std::unique_ptr<ASTNode> Parser::operand_n(void)
 	}
 
 	//TODO: Handle postfix operators
-
-	// If the operand is a primary, return it
-	// This is to reduce the number of nodes in the AST and simplify the evaluation process
-	if (!operand->op)
-	{
-		auto & primary = operand->primary;
-		if (primary)
-		{
-			return std::move(primary);
-		}
-	}
 
 	operand->length = curr_tk->location().position - operand->location.position + 1;
 	return operand;
@@ -243,7 +240,14 @@ std::unique_ptr<ASTNode> Parser::primary_n(void)
 	}
 	else if (curr_tk->type() == Token::Type::T_IDENTIFIER)
 	{
-		return identifier_n();
+		if (next_tk->type() == Token::Type::T_LEFT_PAREN)
+		{
+			return function_call_n();
+		}
+		else
+		{
+			return identifier_n();
+		}
 	}
 	else if (curr_tk->type() == Token::Type::T_LEFT_PAREN)
 	{
@@ -264,6 +268,34 @@ std::unique_ptr<ASTNode> Parser::primary_n(void)
 	}
 
 	return nullptr;
+}
+
+std::unique_ptr<FunctionCallNode> Parser::function_call_n(void)
+{
+	auto function_call = std::make_unique<FunctionCallNode>();
+	function_call->location = curr_tk->location();
+
+	function_call->identifier = identifier_n();
+	consume_tk(); // Consume the identifier token
+	consume_tk(); // Consume the left parenthesis token
+
+	while (curr_tk->type() != Token::Type::T_RIGHT_PAREN)
+	{
+		auto expression = expression_n(Precedence::P_MIN);
+		if (!expression)
+		{
+			expect_tk(Token::Type::T_NONE, "Expected an expression");
+		}
+
+		function_call->arguments.push_back(std::move(expression));
+		if (curr_tk->type() == Token::Type::T_COMMA)
+		{
+			consume_tk(); // Consume the comma token
+		}
+	}
+
+	function_call->length = curr_tk->location().position - function_call->location.position + 1;
+	return function_call;
 }
 
 std::unique_ptr<IdentifierNode> Parser::identifier_n(void)

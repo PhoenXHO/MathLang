@@ -38,22 +38,28 @@ public:
 		}
 		return -1;
 	}
-	const T find(std::string_view name) const
+	/// @brief Get the object at the given index
+	/// @return The object at the given index or `nullptr` if the index is out of bounds
+	std::pair<size_t, T> find(std::string_view name) const
 	{
 		size_t index = get_index(name);
 		if (index != -1)
 		{
-			return objects[index];
+			return { index, objects[index] };
 		}
-		return nullptr;
+		return { -1, nullptr };
 	}
 
 	size_t size() const
 	{ return objects.size(); }
 
-	const T operator[](size_t index) const
-	{ return objects[index]; }
+	/// @brief Get the object at the given index
+	/// @return The object at the given index or `nullptr` if the index is out of bounds
+	T operator[](size_t index) const
+	{ return index < objects.size() ? objects[index] : nullptr; }
 
-	const T operator[](std::string_view name) const
+	/// @brief Get the object at the given index
+	/// @return The object at the given index or `nullptr` if the index is out of bounds
+	std::pair<size_t, T> operator[](std::string_view name) const
 	{ return find(name); }
 };

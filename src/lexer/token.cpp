@@ -10,10 +10,10 @@ constexpr std::pair<std::string_view, std::pair<Token::Type, Lexer::Context>> ke
 	// * A - Z
 	{"Else",    {Token::Type::T_ELSE,             Lexer::Context::C_DEFAULT}},
 	{"If",      {Token::Type::T_IF,               Lexer::Context::C_DEFAULT}},
-	{"Integer", {Token::Type::T_INTEGER,          Lexer::Context::C_DEFAULT}},
+	//{"Integer", {Token::Type::T_INTEGER,          Lexer::Context::C_DEFAULT}},
 	{"Iterate", {Token::Type::T_ITERATE,          Lexer::Context::C_DEFAULT}},
 	{"Prod",    {Token::Type::T_PROD,             Lexer::Context::C_DEFAULT}},
-	{"Real",    {Token::Type::T_REAL,             Lexer::Context::C_DEFAULT}},
+	//{"Real",    {Token::Type::T_REAL,             Lexer::Context::C_DEFAULT}},
 	{"Sum",     {Token::Type::T_SUM,              Lexer::Context::C_DEFAULT}},
 
 	// * a - z
@@ -25,7 +25,7 @@ constexpr std::pair<std::string_view, std::pair<Token::Type, Lexer::Context>> ke
 	{"let",      {Token::Type::T_LET,             Lexer::Context::C_DEFAULT}},
 	{"none",     {Token::Type::T_NONE,            Lexer::Context::C_DEFAULT}},
 	{"operator", {Token::Type::T_OPERATOR,        Lexer::Context::C_DEFINE}},
-	{"print",    {Token::Type::T_OPERATOR_SYMBOL, Lexer::Context::C_DEFAULT}},
+	//{"print",    {Token::Type::T_OPERATOR_SYMBOL, Lexer::Context::C_DEFAULT}},
 	{"return",   {Token::Type::T_RETURN,          Lexer::Context::C_DEFAULT}},
 	{"use",      {Token::Type::T_USE,             Lexer::Context::C_DEFAULT}},
 };

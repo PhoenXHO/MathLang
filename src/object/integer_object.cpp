@@ -36,6 +36,5 @@ MathObjPtr IntegerObj::add(const MathObjPtr & rhs) const
 			std::max(m_size, rhs_real->decimal_part())
 		);
 	}
-
 	return MathObj::none;
 }

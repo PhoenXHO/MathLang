@@ -82,6 +82,34 @@ void VM::run(void)
 		}
 		break;
 
+	case OP_CALL_FUNCTION:
+		{
+			auto function_index = READ_BYTE();
+			auto function_implementation_index = READ_BYTE();
+
+			auto function = current_scope->get_function(function_index);
+			auto implementation = function->get_implementation(function_implementation_index);
+			
+			if (implementation->type() == FunctionImplentation::Type::F_BUILTIN)
+			{
+				auto builtin = std::dynamic_pointer_cast<BuiltinFunctionImplentation>(implementation);
+				size_t arity = builtin->arity();
+				std::vector<MathObjPtr> arguments;
+				for (size_t i = 0; i < arity; ++i)
+				{
+					arguments.push_back(stack.top());
+					stack.pop();
+				}
+				std::reverse(arguments.begin(), arguments.end());
+				auto result = builtin->call(arguments);
+				stack.push(result);
+			}
+			else
+			{
+			}
+		}
+		break;
+
 	case OP_CALL_UNARY:
 		{
 			auto index = READ_BYTE();
@@ -112,6 +140,9 @@ void VM::run(void)
 	case OP_PRINT:
 		{
 			auto result = stack.top();
+			if (result->get_class() == Builtins::none_class)
+				break;
+
 			stack.pop();
 			std::cout << result->to_string();
 			if (config::dev)

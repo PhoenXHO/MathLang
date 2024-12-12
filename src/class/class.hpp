@@ -30,31 +30,32 @@ struct Class : public std::enable_shared_from_this<Class>
 	}
 
 	VariablePtr get_field(std::string_view name) const
-	{ return fields[name]; }
+	{ return fields[name].second; }
 
 	bool is_sub_class(const ClassPtr & cls, bool strict = false) const;
 	/// @brief Compare the specificity of two classes.
 	/// The specificity is a measure of how well a class matches another class.
-	/// The higher the specificity, the better the match. If the specificity is equal,
-	/// the specificity will be `2`, `1` if this class is castable to `cls`, and `0` otherwise.
+	/// The higher the specificity, the better the match.
 	/// @param cls The class to compare with
-	/// @return The specificity of the class compared to `cls`
+	/// @return `2` if the classes are the same, `1` if this class is castable to `cls`, and `0` otherwise
 	int measure_specificity(const ClassPtr & cls) const;
 
 	/// @brief Instantiate a new object of this class
 	std::function<MathObjPtr(const std::any &)> instantiate;
+	/// @brief Get the default value of this class
+	std::function<MathObjPtr(void)> default_value;
 	/// @brief Cast an object to this class
 	std::function<MathObjPtr(MathObjPtr)> cast;
 	std::function<bool(ClassPtr)> can_cast_to;
 
-	std::string to_string(void) const
+	virtual std::string to_string(void) const
 	{
 		std::ostringstream oss;
 		oss << "<" << m_name << ">";
 		return oss.str();
 	}
 
-private:
+protected:
 	std::string m_name;
 	Registry<VariablePtr> fields; // Fields
 	//std::vector<ClassPtr> bases; // Inheritance (for later)
