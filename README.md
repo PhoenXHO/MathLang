@@ -24,18 +24,21 @@ _Note: This project is a complete rewrite of the Mathium interpreter, with clean
 ### Current Features
 - Basic expressions with numbers, parentheses, and built-in operators
 	- Currently, only the addition operator (`+`) is supported (more operators will be added for this version)
+	- Precise operations with integers and floating-point numbers using GMP and MPFR libraries
 - REPL (Read-Eval-Print Loop) for interactive programming
 - Variable declarations and retrievals
 	- `let <variable>` to declare a variable
 	- `let <variable> := <expression>` to initialize a variable
+	- `let <type> <variable> := <expression>` to declare a variable with a specific type
+- Function calls (built-in functions only)
 
 ### Planned Features for 0.2.0-alpha.1
 - Read from a file with `.mthx` extension
 - More built-in operators
-- Precise operations with integers and floating-point numbers using GMP and MPFR libraries
 - Variables and constants (with different scopes)
-- Function definitions and calls
+- Function definitions
 - Built-in functions
+- Classes and objects
 
 ### Future Features
 - Class definitions and object creation
