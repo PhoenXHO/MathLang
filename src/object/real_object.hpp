@@ -3,7 +3,7 @@
 #include "object/object.hpp"
 
 
-class RealObj : public MathObj
+class RealObj : public Object
 {
 	mpfr_float m_value;
 	size_t m_integer_part;
@@ -11,7 +11,7 @@ class RealObj : public MathObj
 
 public:
 	RealObj(std::string_view value) :
-		MathObj(Builtins::real_class),
+		Object(Builtins::real_class),
 		m_value(value)
 	{
 		size_t dot_pos = value.find('.');
@@ -19,13 +19,13 @@ public:
 		m_decimal_part = value.size() - dot_pos - 1;
 	}
 	RealObj(const mpfr_float & value, size_t integer_part, size_t decimal_part) :
-		MathObj(Builtins::real_class),
+		Object(Builtins::real_class),
 		m_value(value),
 		m_integer_part(integer_part),
 		m_decimal_part(decimal_part)
 	{}
 	RealObj() :
-		MathObj(Builtins::real_class),
+		Object(Builtins::real_class),
 		m_value(0),
 		m_integer_part(1),
 		m_decimal_part(0)
@@ -39,7 +39,7 @@ public:
 	size_t decimal_part(void) const
 	{ return m_decimal_part; }
 
-	MathObjPtr cast_to(const ClassPtr & cls) override;
+	ObjectPtr cast_to(const ClassPtr & cls) override;
 
 	std::string to_string(void) const override
 	{
@@ -54,5 +54,5 @@ public:
 		//return result;
 	}
 
-	MathObjPtr add(const MathObjPtr & rhs) const override;
+	ObjectPtr add(const ObjectPtr & rhs) const override;
 };

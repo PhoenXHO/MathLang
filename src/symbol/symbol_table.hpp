@@ -28,7 +28,7 @@ public:
 	Registry<VariablePtr> & get_variables(void)
 	{ return variables; }
 
-	VariablePtr define_variable(std::string_view name, MathObjPtr value = nullptr);
+	VariablePtr define_variable(std::string_view name, ObjectPtr value = nullptr);
 
 	size_t v_size() const
 	{ return variables.size(); }
@@ -48,7 +48,7 @@ public:
 	std::pair<size_t, VariablePtr> get_variable(std::string_view name) const
 	{ return variables.find(name); }
 
-	void set_variable(size_t index, MathObjPtr value)
+	void set_variable(size_t index, ObjectPtr value)
 	{ variables[index]->set(value); }
 	#pragma endregion
 
@@ -92,7 +92,7 @@ public:
 	{
 		Builtins::init_builtin_classes();
 
-		MathObj::none = std::make_shared<NoneObj>();
+		Object::none = std::make_shared<NoneObj>();
 	}
 
 	void define_class(std::string_view name, const ClassPtr & cls)

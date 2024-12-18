@@ -266,6 +266,7 @@ void Compiler::compile_literal(const LiteralNode * literal_n)
 	}
 	catch (const std::exception & e)
 	{
+		// For debugging purposes
 		globals::error_handler.log_compiletime_error({
 			"Exception occurred while compiling literal: " + std::string(e.what()),
 			literal_n->location,

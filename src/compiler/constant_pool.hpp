@@ -7,18 +7,18 @@
 
 class ConstantPool
 {
-	std::vector<MathObjPtr> constants;
+	std::vector<ObjectPtr> constants;
 
 public:
 	ConstantPool() = default;
 	~ConstantPool() = default;
 
-	void add_constant(MathObjPtr obj)
+	void add_constant(ObjectPtr obj)
 	{
 		constants.push_back(obj);
 	}
 
-	MathObjPtr operator[](size_t index) const
+	ObjectPtr operator[](size_t index) const
 	{
 		return constants.at(index);
 	}

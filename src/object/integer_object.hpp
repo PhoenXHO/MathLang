@@ -3,24 +3,24 @@
 #include "object/object.hpp"
 
 
-class IntegerObj : public MathObj
+class IntegerObj : public Object
 {
 	mpz_int m_value;
 	size_t m_size;
 
 public:
 	IntegerObj(std::string_view value) :
-		MathObj(Builtins::integer_class),
+		Object(Builtins::integer_class),
 		m_value(value),
 		m_size(value.size())
 	{}
 	IntegerObj(const mpz_int & value) :
-		MathObj(Builtins::integer_class),
+		Object(Builtins::integer_class),
 		m_value(value),
 		m_size(value.str().size())
 	{}
 	IntegerObj() :
-		MathObj(Builtins::integer_class),
+		Object(Builtins::integer_class),
 		m_value(0),
 		m_size(1)
 	{}
@@ -31,9 +31,9 @@ public:
 	size_t size(void) const
 	{ return m_size; }
 
-	MathObjPtr cast_to(const ClassPtr & cls) override;
+	ObjectPtr cast_to(const ClassPtr & cls) override;
 
 	std::string to_string(void) const override
 	{ return m_value.str(); }
-	MathObjPtr add(const MathObjPtr & rhs) const override;
+	ObjectPtr add(const ObjectPtr & rhs) const override;
 };

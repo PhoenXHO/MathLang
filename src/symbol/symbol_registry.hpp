@@ -62,4 +62,13 @@ public:
 	/// @return The object at the given index or `nullptr` if the index is out of bounds
 	std::pair<size_t, T> operator[](std::string_view name) const
 	{ return find(name); }
+
+	std::vector<T>::iterator begin()
+	{ return objects.begin(); }
+	std::vector<T>::iterator end()
+	{ return objects.end(); }
+	std::vector<T>::const_iterator begin() const
+	{ return objects.begin(); }
+	std::vector<T>::const_iterator end() const
+	{ return objects.end(); }
 };

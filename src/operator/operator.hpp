@@ -46,8 +46,8 @@ enum Precedence
 	P_UNARY, // Unary operators
 };
 
-// Operator function which takes two MathObjPtrs and returns a MathObjPtr
-using OperatorFunction = std::function<MathObjPtr(const MathObjPtr & lhs, const MathObjPtr & rhs)>;
+// Operator function which takes two ObjectPtrs and returns a ObjectPtr
+using OperatorFunction = std::function<ObjectPtr(const ObjectPtr & lhs, const ObjectPtr & rhs)>;
 
 // Base class for different implementations of an operator (to allow for operator overloading)
 class OperatorImplentation
@@ -74,8 +74,8 @@ public:
 	const ClassPtr & result_class() const
 	{ return m_result_class; }
 
-	virtual MathObjPtr execute(const MathObjPtr & lhs, const MathObjPtr & rhs) const = 0;
-	MathObjPtr operator()(const MathObjPtr & lhs, const MathObjPtr & rhs) const
+	virtual ObjectPtr execute(const ObjectPtr & lhs, const ObjectPtr & rhs) const = 0;
+	ObjectPtr operator()(const ObjectPtr & lhs, const ObjectPtr & rhs) const
 	{ return execute(lhs, rhs); }
 
 	int measure_specificity(const ClassPtr & lhs, const ClassPtr & rhs) const
@@ -97,7 +97,7 @@ public:
 	{}
 	~BuiltinOperatorImplentation() = default;
 
-	MathObjPtr execute(const MathObjPtr & lhs, const MathObjPtr & rhs) const override
+	ObjectPtr execute(const ObjectPtr & lhs, const ObjectPtr & rhs) const override
 	{ return function(lhs, rhs); }
 };
 

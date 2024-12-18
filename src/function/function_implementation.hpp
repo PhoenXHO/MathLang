@@ -77,8 +77,8 @@ public:
 	ClassPtr return_class() const
 	{ return m_signature.return_type; }
 
-	virtual MathObjPtr call(const std::vector<MathObjPtr> & arguments) const = 0;
-	MathObjPtr operator()(const std::vector<MathObjPtr> & arguments) const
+	virtual ObjectPtr call(const std::vector<ObjectPtr> & arguments) const = 0;
+	ObjectPtr operator()(const std::vector<ObjectPtr> & arguments) const
 	{ return call(arguments); }
 
 	int measure_specificity(const FunctionSignature & signature) const
@@ -87,12 +87,12 @@ public:
 
 class BuiltinFunctionImplentation : public FunctionImplentation
 {
-	std::function<MathObjPtr(const std::vector<MathObjPtr> &)> m_function;
+	std::function<ObjectPtr(const std::vector<ObjectPtr> &)> m_function;
 
 public:
 	BuiltinFunctionImplentation(
 		const FunctionSignature & signature,
-		std::function<MathObjPtr(const std::vector<MathObjPtr> &)> function
+		std::function<ObjectPtr(const std::vector<ObjectPtr> &)> function
 	) :
 		FunctionImplentation(signature),
 		m_function(function)
@@ -102,7 +102,7 @@ public:
 	Type type() const override
 	{ return Type::F_BUILTIN; }
 
-	MathObjPtr call(const std::vector<MathObjPtr> & arguments) const override
+	ObjectPtr call(const std::vector<ObjectPtr> & arguments) const override
 	{ return m_function(arguments); }
 };
 

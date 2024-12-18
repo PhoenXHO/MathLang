@@ -13,26 +13,26 @@ namespace Builtins
 {
 	FunctionImplentationPtr print0 = std::make_shared<BuiltinFunctionImplentation>(
 		FunctionSignature(),
-		[](const std::vector<MathObjPtr> & arguments) -> MathObjPtr
+		[](const std::vector<ObjectPtr> & arguments) -> ObjectPtr
 		{
 			std::cout << "None" << std::endl;
-			return MathObj::none;
+			return Object::none;
 		}
 	);
 	FunctionImplentationPtr print1 = std::make_shared<BuiltinFunctionImplentation>(
 		FunctionSignature({ { "object", Builtins::mathobj_class } }),
-		[](const std::vector<MathObjPtr> & arguments) -> MathObjPtr
+		[](const std::vector<ObjectPtr> & arguments) -> ObjectPtr
 		{
 			std::cout << arguments[0]->to_string() << std::endl;
-			return MathObj::none;
+			return Object::none;
 		}
 	);
 	FunctionImplentationPtr print2 = std::make_shared<BuiltinFunctionImplentation>(
 		FunctionSignature({ { "object1", Builtins::mathobj_class }, { "object2", Builtins::mathobj_class } }),
-		[](const std::vector<MathObjPtr> & arguments) -> MathObjPtr
+		[](const std::vector<ObjectPtr> & arguments) -> ObjectPtr
 		{
 			std::cout << arguments[0]->to_string() << ' ' << arguments[1]->to_string() << std::endl;
-			return MathObj::none;
+			return Object::none;
 		}
 	);
 }

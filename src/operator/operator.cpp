@@ -61,7 +61,7 @@ void OperatorRegistry::register_builtin_operators(void)
 		Builtins::real_class,
 		Builtins::real_class,
 		std::make_shared<BuiltinOperatorImplentation>(
-			[](const MathObjPtr & lhs, const MathObjPtr & rhs) -> MathObjPtr
+			[](const ObjectPtr & lhs, const ObjectPtr & rhs) -> ObjectPtr
 			{
 				return lhs->add(rhs);
 			},
@@ -72,7 +72,7 @@ void OperatorRegistry::register_builtin_operators(void)
 		Builtins::integer_class,
 		Builtins::integer_class,
 		std::make_shared<BuiltinOperatorImplentation>(
-			[](const MathObjPtr & lhs, const MathObjPtr & rhs) -> MathObjPtr
+			[](const ObjectPtr & lhs, const ObjectPtr & rhs) -> ObjectPtr
 			{
 				return lhs->add(rhs);
 			},

@@ -10,60 +10,47 @@
 
 #include "util/globals.hpp" // for `globals::error_handler`
 #include "class/builtins.hpp" // for `ClassPtr`
+#include "symbol/symbol_registry.hpp"
 
 
 using namespace boost::multiprecision;
 
 
-class MathObj;
-using MathObjPtr = std::shared_ptr<MathObj>;
+class Object;
+using ObjectPtr = std::shared_ptr<Object>;
+struct Variable;
+using VariablePtr = std::shared_ptr<Variable>;
 
 
-class MathObj : public std::enable_shared_from_this<MathObj>
+class Object : public std::enable_shared_from_this<Object>
 {
 protected:
 	ClassPtr m_class;
+	Registry<VariablePtr> properties;
 
 public:
-	static MathObjPtr none;
+	static ObjectPtr none;
 
-	MathObj(ClassPtr cls) : m_class(cls) {}
-	MathObj() : m_class(Builtins::mathobj_class) {}
-	virtual ~MathObj() = default;
+	Object(ClassPtr cls) : m_class(cls) { init_properties(); }
+	virtual ~Object() = default;
+
+	void init_properties(void);
+
+	VariablePtr get_property(std::string_view name) const
+	{ return properties[name].second; }
+	void set_property(std::string_view name, const ObjectPtr & value);
 
 	ClassPtr get_class(void) const { return m_class; }
 	bool is_instance_of(ClassPtr cls) const;
 	/// @brief Cast this object to the given class
-	/// @param cls The class to cast to
 	/// @return The casted object or `nullptr` if the cast is not possible
-	virtual MathObjPtr cast_to(const ClassPtr & cls)
-	{
-		return shared_from_this();
-	}
+	virtual ObjectPtr cast_to(const ClassPtr & cls) = 0;
 
 	virtual std::string to_string(void) const = 0;
-	virtual MathObjPtr add(const MathObjPtr & rhs) const = 0;
+	virtual ObjectPtr add(const ObjectPtr & rhs) const = 0;
 
 	std::ostream & operator<<(std::ostream & os) const
-	{
-		os << to_string();
-		return os;
-	}
+	{ return os << to_string(); }
 };
-
-// Hash specialization for std::pair<MathObj::Type, MathObj::Type>
-//namespace std
-//{
-//	template <>
-//	struct hash<std::pair<MathObj::Type, MathObj::Type>>
-//	{
-//		std::size_t operator()(const std::pair<MathObj::Type, MathObj::Type> & pair) const noexcept
-//		{
-//			std::size_t h1 = std::hash<MathObj::Type>{}(pair.first);
-//			std::size_t h2 = std::hash<MathObj::Type>{}(pair.second);
-//			return h1 ^ (h2 << 1);
-//		}
-//	};
-//}
 
 mpfr_float add_reals(const mpfr_float & lhs, const mpfr_float & rhs);

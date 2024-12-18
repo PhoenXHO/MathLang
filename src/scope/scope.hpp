@@ -23,7 +23,7 @@ struct Scope
 	Registry<VariablePtr> & get_variables(void)
 	{ return symbols.get_variables(); }
 
-	void define_variable(std::string_view name, MathObjPtr value = MathObj::none)
+	void define_variable(std::string_view name, ObjectPtr value = Object::none)
 	{ symbols.define_variable(name, value); }
 
 	VariablePtr define_variable(std::string_view name, ClassPtr cls)
@@ -47,7 +47,7 @@ struct Scope
 	/// @return The variable with the given name or `nullptr` if the variable is not defined
 	const std::shared_ptr<Variable> get_variable(std::string_view name) const;
 
-	void set_variable(size_t index, MathObjPtr value)
+	void set_variable(size_t index, ObjectPtr value)
 	{ symbols.set_variable(index, value); }
 	#pragma endregion
 

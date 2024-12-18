@@ -10,7 +10,7 @@
 
 class VM
 {
-	std::stack<MathObjPtr> stack;
+	std::stack<ObjectPtr> stack;
 	ConstantPool constant_pool; //TODO: Optimize storage of constants to storing duplicates
 	std::shared_ptr<Scope> global_scope;
 	std::shared_ptr<Scope> current_scope = global_scope;

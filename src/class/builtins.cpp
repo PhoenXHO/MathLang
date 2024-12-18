@@ -23,5 +23,13 @@ namespace Builtins
 
 		integer_class = std::make_shared<IntegerClass>();
 		real_class = std::make_shared<RealClass>();
+
+		// Initialize the classes
+		mathobj_class->init();
+		reference_class->init();
+		none_class->init();
+
+		integer_class->init();
+		real_class->init();
 	}
 }

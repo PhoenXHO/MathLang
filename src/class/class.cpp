@@ -9,13 +9,13 @@ bool Class::is_sub_class(const ClassPtr & cls, bool strict) const
 	}
 
 	// Check if the class is a subclass
-	//for (const auto & base : bases)
-	//{
-	//	if (base->can_cast_to(cls))
-	//	{
-	//		return true;
-	//	}
-	//}
+	for (const auto & base : bases)
+	{
+		if (base->can_cast_to(cls))
+		{
+			return true;
+		}
+	}
 
 	return false;
 }

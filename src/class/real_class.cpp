@@ -4,26 +4,29 @@
 
 
 void RealClass::init(void)
-{
-	// Define the fields
-	auto value = std::make_shared<Variable>("value", std::make_shared<RealObj>());
-	add_field(value);
+{}
 
-	instantiate = [](const std::any & value) -> MathObjPtr
+ObjectPtr RealClass::instantiate(const std::any & value) const
+{
+	if (value.has_value())
 	{
 		return std::make_shared<RealObj>(std::any_cast<std::string_view>(value));
-	};
-	default_value = []() -> MathObjPtr
-	{
-		return std::make_shared<RealObj>();
-	};
-	can_cast_to = [](ClassPtr cls) -> bool
-	{
-		return cls == Builtins::real_class ||
-			   Builtins::real_class->is_sub_class(cls);
-	};
-	cast = [](MathObjPtr obj) -> MathObjPtr
-	{
-		return obj->cast_to(Builtins::real_class);
-	};
+	}
+	return std::make_shared<RealObj>();
+}
+
+ObjectPtr RealClass::default_value(void) const
+{
+	return std::make_shared<RealObj>();
+}
+
+bool RealClass::can_cast_to(const ClassPtr & cls) const
+{
+	return cls == Builtins::real_class ||
+		   Builtins::real_class->is_sub_class(cls);
+}
+
+ObjectPtr RealClass::cast(const ObjectPtr & obj) const
+{
+	return obj->cast_to(Builtins::real_class);
 }

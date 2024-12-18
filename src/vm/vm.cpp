@@ -94,7 +94,7 @@ void VM::run(void)
 			{
 				auto builtin = std::dynamic_pointer_cast<BuiltinFunctionImplentation>(implementation);
 				size_t arity = builtin->arity();
-				std::vector<MathObjPtr> arguments;
+				std::vector<ObjectPtr> arguments;
 				for (size_t i = 0; i < arity; ++i)
 				{
 					arguments.push_back(stack.top());

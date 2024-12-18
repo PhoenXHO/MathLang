@@ -3,7 +3,7 @@
 
 
 Variable::Variable(std::string_view name, ClassPtr cls) :
-	MathObj(Builtins::reference_class),
+	Object(Builtins::reference_class),
 	m_name(name),
 	m_value(cls->default_value()),
 	static_type(true)

@@ -2,7 +2,7 @@
 #include "object/integer_object.hpp"
 
 
-MathObjPtr RealObj::cast_to(const ClassPtr & cls)
+ObjectPtr RealObj::cast_to(const ClassPtr & cls)
 {
 	if (cls == Builtins::real_class)
 	{
@@ -12,7 +12,7 @@ MathObjPtr RealObj::cast_to(const ClassPtr & cls)
 	return nullptr;
 }
 
-MathObjPtr RealObj::add(const MathObjPtr & rhs) const
+ObjectPtr RealObj::add(const ObjectPtr & rhs) const
 {
 	auto rhs_real = std::dynamic_pointer_cast<RealObj>(rhs->cast_to(Builtins::real_class));
 	if (rhs_real)
@@ -24,5 +24,5 @@ MathObjPtr RealObj::add(const MathObjPtr & rhs) const
 			std::max(m_decimal_part, rhs_real->decimal_part())
 		);
 	}
-	return MathObj::none;
+	return Object::none;
 }
